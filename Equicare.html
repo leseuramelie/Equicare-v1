@@ -1,0 +1,1913 @@
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4A6B5D">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>ÉquiCare — Gestion Chevaux & Météo</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons pour des icônes nettes et chaleureuses -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Configuration Tailwind personnalisée (Palette Sauge, Terracotta, Sable) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        sauge: {
+                            50: '#F4F7F5',
+                            100: '#E3EBE6',
+                            200: '#C6D7CE',
+                            300: '#9FBBAE',
+                            400: '#769B8B',
+                            500: '#567D6D',
+                            600: '#4A6B5D',
+                            700: '#3B554A',
+                            800: '#31453D',
+                            900: '#293933',
+                        },
+                        terracotta: {
+                            50: '#FDF6F3',
+                            100: '#FAEAE3',
+                            200: '#F5D2C4',
+                            300: '#EDB19B',
+                            400: '#E28768',
+                            500: '#D66844',
+                            600: '#C2512E',
+                            700: '#A24023',
+                        },
+                        sable: {
+                            50: '#FAF8F5',
+                            100: '#F4EFE6',
+                            200: '#E8DEC8',
+                            300: '#D8C6A3',
+                            400: '#C5AA7B',
+                            500: '#B5935B',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Styles mobile-first et ergonomie tactile */
+        body {
+            background-color: #FAF8F5;
+            color: #293933;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: 88px; /* Espace pour la navigation inférieure fixe */
+        }
+
+        h1, h2, h3, .font-display {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Masquer la barre de défilement horizontale tout en gardant le scroll fluide */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Animation douce des cartes et modales */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+
+        /* Effet tactile sur les boutons */
+        .btn-tap:active {
+            transform: scale(0.97);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-sauge-200 selection:text-sauge-900">
+
+    <!-- ==================== EN-TÊTE FIXE ==================== -->
+    <header class="sticky top-0 z-30 bg-sable-50/95 backdrop-blur-md border-b border-sable-200 px-4 py-3 shadow-xs">
+        <div class="max-w-lg mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-2xl bg-sauge-600 text-white flex items-center justify-center shadow-sm">
+                    <i class="ph-fill ph-horse text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-extrabold text-sauge-900 leading-tight tracking-tight">ÉquiCare</h1>
+                    <button onclick="openCityModal()" class="flex items-center gap-1 text-xs font-medium text-sauge-600 hover:text-terracotta-600 transition">
+                        <i class="ph-fill ph-map-pin text-terracotta-500"></i>
+                        <span id="header-city-name">Labarthe-sur-Lèze (31860)</span>
+                        <i class="ph ph-caret-down text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Bouton Notifications -->
+                <button onclick="requestNotificationPermission()" id="btn-notif" title="Activer les alertes" class="btn-tap w-10 h-10 rounded-xl bg-white border border-sable-200 text-sauge-700 flex items-center justify-center shadow-2xs relative">
+                    <i class="ph ph-bell text-xl"></i>
+                    <span id="notif-dot" class="hidden absolute top-2 right-2 w-2 h-2 rounded-full bg-terracotta-500"></span>
+                </button>
+                <!-- Bouton Sauvegarde / Export -->
+                <button onclick="openBackupModal()" title="Sauvegarde & Données" class="btn-tap w-10 h-10 rounded-xl bg-white border border-sable-200 text-sauge-700 flex items-center justify-center shadow-2xs">
+                    <i class="ph ph-database text-xl"></i>
+                </button>
+                <!-- Bouton Aide / Installation Android -->
+                <button onclick="openHelpModal()" title="Installer sur smartphone" class="btn-tap w-10 h-10 rounded-xl bg-sauge-100 text-sauge-800 flex items-center justify-center font-bold">
+                    <i class="ph-bold ph-info text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== ZONE DE NOTIFICATIONS / TOAST ==================== -->
+    <div id="toast-container" class="fixed top-18 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md pointer-events-none flex flex-col gap-2"></div>
+
+    <!-- ==================== CONTENU PRINCIPAL ==================== -->
+    <main class="max-w-lg mx-auto px-4 pt-4 space-y-5">
+
+        <!-- BANNIÈRE D'ALERTES MÉTÉO AUTOMATIQUES (Affichée sur tous les onglets si alerte active) -->
+        <section id="global-weather-alerts" class="hidden space-y-2 animate-fade-in"></section>
+
+        <!-- ==================== ONGLET 1 : TABLEAU DE BORD ==================== -->
+        <div id="tab-dashboard" class="tab-content space-y-5 animate-fade-in">
+            
+            <!-- WIDGET D'ALERTES INTELLIGENTES (Masqué/vide si aucune des 3 alertes n'est active) -->
+            <section id="smart-care-widget" class="hidden space-y-2.5 animate-fade-in"></section>
+
+            <!-- Carte Résumé Météo en Direct -->
+            <div class="bg-gradient-to-br from-sauge-700 to-sauge-900 rounded-3xl p-5 text-white shadow-md relative overflow-hidden">
+                <div class="absolute -right-6 -top-6 w-32 h-32 rounded-full bg-white/5 pointer-events-none"></div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 text-xs font-medium backdrop-blur-xs">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Météo locale • <span id="dash-city">Labarthe-sur-Lèze</span>
+                        </span>
+                        <div class="mt-3 flex items-baseline gap-2">
+                            <span id="dash-temp" class="text-4xl font-extrabold tracking-tight">--°C</span>
+                            <span id="dash-weather-desc" class="text-sm text-sauge-100 font-medium">Chargement...</span>
+                        </div>
+                    </div>
+                    <button onclick="fetchWeather(true)" class="btn-tap p-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white transition" title="Actualiser la météo">
+                        <i id="refresh-icon" class="ph-bold ph-arrows-clockwise text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Indicateurs clés 24-48h -->
+                <div class="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-white/15 text-center">
+                    <div class="bg-white/10 rounded-2xl p-2">
+                        <div class="text-[10px] text-sauge-200 uppercase font-semibold">Min 24h</div>
+                        <div id="dash-min-temp" class="text-sm font-bold mt-0.5">--°C</div>
+                    </div>
+                    <div class="bg-white/10 rounded-2xl p-2">
+                        <div class="text-[10px] text-sauge-200 uppercase font-semibold">UV Max</div>
+                        <div id="dash-max-uv" class="text-sm font-bold mt-0.5">--</div>
+                    </div>
+                    <div class="bg-white/10 rounded-2xl p-2">
+                        <div class="text-[10px] text-sauge-200 uppercase font-semibold">Rafales</div>
+                        <div id="dash-max-wind" class="text-sm font-bold mt-0.5">-- km/h</div>
+                    </div>
+                    <div class="bg-white/10 rounded-2xl p-2">
+                        <div class="text-[10px] text-sauge-200 uppercase font-semibold">Pluie</div>
+                        <div id="dash-rain" class="text-sm font-bold mt-0.5">-- mm</div>
+                    </div>
+                </div>
+
+                <button onclick="switchTab('weather')" class="mt-3 w-full py-2 text-xs font-semibold text-sauge-100 hover:text-white flex items-center justify-center gap-1">
+                    Voir les prévisions détaillées 48h & 7 jours <i class="ph-bold ph-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Mes Chevaux (Profils rapides) -->
+            <div>
+                <div class="flex items-center justify-between mb-2.5">
+                    <h2 class="text-base font-bold text-sauge-900 flex items-center gap-2">
+                        <i class="ph-fill ph-heart-straight text-terracotta-500"></i> Mes Chevaux
+                    </h2>
+                    <button onclick="openHorseModal()" class="text-xs font-semibold text-sauge-600 hover:text-sauge-800 flex items-center gap-1 bg-sauge-100 px-2.5 py-1 rounded-full">
+                        <i class="ph-bold ph-plus"></i> Ajouter
+                    </button>
+                </div>
+                <div id="dashboard-horses-list" class="grid grid-cols-1 gap-3">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </div>
+
+            <!-- Échéances Sanitaires & Stocks à surveiller -->
+            <div>
+                <h2 class="text-base font-bold text-sauge-900 flex items-center gap-2 mb-2.5">
+                    <i class="ph-fill ph-bell-ringing text-terracotta-500"></i> À prévoir prochainement
+                </h2>
+                <div id="dashboard-upcoming-list" class="space-y-2.5">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ONGLET 2 : MÉTÉO & ALERTES ==================== -->
+        <div id="tab-weather" class="tab-content hidden space-y-5 animate-fade-in">
+            
+            <!-- Réglage des seuils d'alerte -->
+            <div class="bg-white rounded-3xl p-4 border border-sable-200 shadow-2xs">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-base font-bold text-sauge-900 flex items-center gap-2">
+                        <i class="ph-fill ph-sliders text-sauge-600"></i> Seuils d'alerte (48h)
+                    </h2>
+                    <button onclick="openCityModal()" class="text-xs font-semibold text-terracotta-600 bg-terracotta-50 px-3 py-1.5 rounded-xl">
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="bg-sable-50 p-2.5 rounded-2xl border border-sable-200">
+                        <label class="block text-[11px] font-semibold text-sauge-700 mb-1">Couverture / Froid (&lt; °C)</label>
+                        <input type="number" id="threshold-cold" value="5" onchange="updateThresholds()" class="w-full bg-white border border-sable-300 rounded-xl px-2 py-1.5 text-center font-bold text-sauge-900 text-sm focus:outline-none focus:border-sauge-500">
+                    </div>
+                    <div class="bg-sable-50 p-2.5 rounded-2xl border border-sable-200">
+                        <label class="block text-[11px] font-semibold text-sauge-700 mb-1">Masque Anti-UV (≥ UV)</label>
+                        <input type="number" id="threshold-uv" value="6" min="1" max="15" step="0.5" onchange="updateThresholds()" class="w-full bg-white border border-sable-300 rounded-xl px-2 py-1.5 text-center font-bold text-sauge-900 text-sm focus:outline-none focus:border-sauge-500">
+                    </div>
+                    <div class="bg-sable-50 p-2.5 rounded-2xl border border-sable-200">
+                        <label class="block text-[11px] font-semibold text-sauge-700 mb-1">Vent (&gt; km/h)</label>
+                        <input type="number" id="threshold-wind" value="45" onchange="updateThresholds()" class="w-full bg-white border border-sable-300 rounded-xl px-2 py-1.5 text-center font-bold text-sauge-900 text-sm focus:outline-none focus:border-sauge-500">
+                    </div>
+                    <div class="bg-sable-50 p-2.5 rounded-2xl border border-sable-200">
+                        <label class="block text-[11px] font-semibold text-sauge-700 mb-1">Pluie (&gt; mm)</label>
+                        <input type="number" id="threshold-rain" value="2" step="0.5" onchange="updateThresholds()" class="w-full bg-white border border-sable-300 rounded-xl px-2 py-1.5 text-center font-bold text-sauge-900 text-sm focus:outline-none focus:border-sauge-500">
+                    </div>
+                </div>
+                <p class="text-[11px] text-sauge-600 mt-2.5 flex items-center gap-1.5">
+                    <i class="ph-fill ph-info text-sauge-500"></i>
+                    Surveille couverture (&lt; 5°C), masque UV, abreuvoir, abri tunnel (vent) et pluie.
+                </p>
+            </div>
+
+            <!-- Prévisions Horaires (48h) -->
+            <div class="bg-white rounded-3xl p-4 border border-sable-200 shadow-2xs">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-base font-bold text-sauge-900">Heure par heure (48h)</h3>
+                    <span id="weather-last-update" class="text-[11px] text-sauge-500">Mis à jour</span>
+                </div>
+                <div id="hourly-forecast-list" class="flex overflow-x-auto gap-2.5 pb-2 no-scrollbar">
+                    <!-- Cartes horaires générées dynamiquement -->
+                </div>
+            </div>
+
+            <!-- Prévisions 7 jours -->
+            <div class="bg-white rounded-3xl p-4 border border-sable-200 shadow-2xs">
+                <h3 class="text-base font-bold text-sauge-900 mb-3">Tendance sur 7 jours</h3>
+                <div id="daily-forecast-list" class="divide-y divide-sable-100">
+                    <!-- Lignes journalières générées dynamiquement -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ONGLET 3 : SANTÉ (VERMIFUGES & VACCINS) ==================== -->
+        <div id="tab-health" class="tab-content hidden space-y-5 animate-fade-in">
+            
+            <!-- Sous-navigation Santé -->
+            <div class="bg-sable-200/70 p-1.5 rounded-2xl grid grid-cols-2 gap-1.5">
+                <button onclick="switchHealthSubtab('deworming')" id="subtab-btn-deworming" class="py-2.5 px-3 rounded-xl font-bold text-sm bg-white text-sauge-900 shadow-2xs transition">
+                    <i class="ph-fill ph-pill mr-1 text-terracotta-500"></i> Vermifuges
+                </button>
+                <button onclick="switchHealthSubtab('vaccines')" id="subtab-btn-vaccines" class="py-2.5 px-3 rounded-xl font-bold text-sm text-sauge-700 hover:text-sauge-900 transition">
+                    <i class="ph-fill ph-syringe mr-1 text-sauge-600"></i> Vaccins
+                </button>
+            </div>
+
+            <!-- Section Vermifuges -->
+            <div id="health-section-deworming" class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-sauge-900">Suivi des Vermifuges</h2>
+                    <button onclick="openHealthModal('deworming')" class="btn-tap bg-sauge-600 hover:bg-sauge-700 text-white text-sm font-bold px-4 py-2.5 rounded-2xl shadow-sm flex items-center gap-1.5">
+                        <i class="ph-bold ph-plus"></i> Ajouter
+                    </button>
+                </div>
+                <div id="deworming-list" class="space-y-3">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </div>
+
+            <!-- Section Vaccins -->
+            <div id="health-section-vaccines" class="hidden space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-sauge-900">Suivi des Vaccins</h2>
+                    <button onclick="openHealthModal('vaccine')" class="btn-tap bg-sauge-600 hover:bg-sauge-700 text-white text-sm font-bold px-4 py-2.5 rounded-2xl shadow-sm flex items-center gap-1.5">
+                        <i class="ph-bold ph-plus"></i> Ajouter
+                    </button>
+                </div>
+                <div id="vaccines-list" class="space-y-3">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ONGLET 4 : STOCK ALIMENTATION ==================== -->
+        <div id="tab-feed" class="tab-content hidden space-y-4 animate-fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-sauge-900">Stocks & Aliments</h2>
+                    <p class="text-xs text-sauge-600">Suivi des achats et estimation de fin de sac</p>
+                </div>
+                <button onclick="openFeedModal()" class="btn-tap bg-terracotta-500 hover:bg-terracotta-600 text-white text-sm font-bold px-4 py-2.5 rounded-2xl shadow-sm flex items-center gap-1.5">
+                    <i class="ph-bold ph-plus"></i> Référence
+                </button>
+            </div>
+
+            <!-- Liste des références alimentaires -->
+            <div id="feed-list" class="space-y-3">
+                <!-- Généré dynamiquement -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ==================== NAVIGATION INFÉRIEURE FIXE (4 ONGLETS) ==================== -->
+    <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-sable-200 px-2 py-2 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
+        <div class="max-w-lg mx-auto grid grid-cols-4 gap-1">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn btn-tap flex flex-col items-center justify-center py-1.5 rounded-2xl text-sauge-700 bg-sauge-100/80 font-bold transition">
+                <i class="ph-fill ph-house text-2xl mb-0.5"></i>
+                <span class="text-[11px]">Accueil</span>
+            </button>
+            <button onclick="switchTab('weather')" id="nav-weather" class="nav-btn btn-tap flex flex-col items-center justify-center py-1.5 rounded-2xl text-sauge-500 hover:text-sauge-800 font-medium transition relative">
+                <i class="ph ph-cloud-sun text-2xl mb-0.5"></i>
+                <span class="text-[11px]">Météo</span>
+                <span id="nav-weather-badge" class="hidden absolute top-1.5 right-5 w-2.5 h-2.5 rounded-full bg-terracotta-500 ring-2 ring-white"></span>
+            </button>
+            <button onclick="switchTab('health')" id="nav-health" class="nav-btn btn-tap flex flex-col items-center justify-center py-1.5 rounded-2xl text-sauge-500 hover:text-sauge-800 font-medium transition relative">
+                <i class="ph ph-first-aid-kit text-2xl mb-0.5"></i>
+                <span class="text-[11px]">Santé</span>
+                <span id="nav-health-badge" class="hidden absolute top-1.5 right-5 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-white"></span>
+            </button>
+            <button onclick="switchTab('feed')" id="nav-feed" class="nav-btn btn-tap flex flex-col items-center justify-center py-1.5 rounded-2xl text-sauge-500 hover:text-sauge-800 font-medium transition relative">
+                <i class="ph ph-grains text-2xl mb-0.5"></i>
+                <span class="text-[11px]">Aliments</span>
+                <span id="nav-feed-badge" class="hidden absolute top-1.5 right-5 w-2.5 h-2.5 rounded-full bg-terracotta-500 ring-2 ring-white"></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ==================== MODALES INTERACTIVES ==================== -->
+    
+    <!-- Overlay fond sombre -->
+    <div id="modal-backdrop" onclick="closeAllModals()" class="hidden fixed inset-0 z-40 bg-sauge-950/50 backdrop-blur-xs transition-opacity"></div>
+
+    <!-- 1. Modale Cheval (Ajouter / Modifier) -->
+    <div id="modal-horse" class="hidden fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-md mx-auto bg-white rounded-3xl p-5 shadow-2xl border border-sable-200 animate-fade-in">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="modal-horse-title" class="text-lg font-bold text-sauge-900">Profil du cheval</h3>
+            <button onclick="closeAllModals()" class="p-2 rounded-full bg-sable-100 text-sauge-700"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <form id="form-horse" onsubmit="saveHorse(event)" class="space-y-3.5">
+            <input type="hidden" id="horse-id">
+            <div>
+                <label class="block text-xs font-bold text-sauge-800 mb-1">Nom du cheval *</label>
+                <input type="text" id="horse-name" required placeholder="Ex: Ouragan, Shams..." class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-sauge-800 mb-1">Race *</label>
+                    <input type="text" id="horse-breed" required placeholder="Trotteur Français..." class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-sauge-800 mb-1">Âge (ans) *</label>
+                    <input type="number" id="horse-age" required min="0" max="45" class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-sauge-800 mb-1">Robe / Particularités / Ration</label>
+                <textarea id="horse-notes" rows="2" placeholder="Ex: Bai, besoin de couverture sous 5°C, sensibilité métabolique..." class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600"></textarea>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button type="button" id="btn-delete-horse" onclick="deleteHorse()" class="hidden px-4 py-3 rounded-2xl bg-red-50 text-red-600 font-bold text-sm">Supprimer</button>
+                <button type="submit" class="flex-1 py-3 rounded-2xl bg-sauge-600 text-white font-bold text-sm shadow-sm">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 2. Modale Santé (Vermifuge / Vaccin) -->
+    <div id="modal-health" class="hidden fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-md mx-auto bg-white rounded-3xl p-5 shadow-2xl border border-sable-200 max-h-[90vh] overflow-y-auto animate-fade-in">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="modal-health-title" class="text-lg font-bold text-sauge-900">Ajouter un soin</h3>
+            <button onclick="closeAllModals()" class="p-2 rounded-full bg-sable-100 text-sauge-700"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <form id="form-health" onsubmit="saveHealthItem(event)" class="space-y-3.5">
+            <input type="hidden" id="health-id">
+            <input type="hidden" id="health-category">
+            
+            <div>
+                <label class="block text-xs font-bold text-sauge-800 mb-1">Cheval concerné *</label>
+                <select id="health-horse" required class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                    <!-- Options peuplées dynamiquement -->
+                </select>
+            </div>
+
+            <div>
+                <label id="health-product-label" class="block text-xs font-bold text-sauge-800 mb-1">Produit / Molécule *</label>
+                <input type="text" id="health-product" required list="health-suggestions" placeholder="Ex: Eqvalan Duo, ProteqFlu-Te..." class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                <datalist id="health-suggestions"></datalist>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-sauge-800 mb-1">Date d'administration *</label>
+                    <input type="date" id="health-date" required onchange="autoCalculateNextHealthDate()" class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-sauge-800 mb-1">Fréquence rappel</label>
+                    <select id="health-interval" onchange="autoCalculateNextHealthDate()" class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                        <option value="90">3 mois (Saisonnier)</option>
+                        <option value="120">4 mois</option>
+                        <option value="180" selected>6 mois</option>
+                        <option value="365">1 an (Annuel)</option>
+                        <option value="custom">Date manuelle</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-sauge-800 mb-1">Date du prochain rappel *</label>
+                <input type="date" id="health-next-date" required class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-sauge-800 mb-1">Notes / Vétérinaire / Lot</label>
+                <input type="text" id="health-notes" placeholder="Ex: Rappel printemps, Dr. Martin..." class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button type="button" id="btn-delete-health" onclick="deleteHealthItem()" class="hidden px-4 py-3 rounded-2xl bg-red-50 text-red-600 font-bold text-sm">Supprimer</button>
+                <button type="submit" class="flex-1 py-3 rounded-2xl bg-sauge-600 text-white font-bold text-sm shadow-sm">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 3. Modale Alimentation (Ajouter / Modifier référence) -->
+    <div id="modal-feed" class="hidden fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-md mx-auto bg-white rounded-3xl p-5 shadow-2xl border border-sable-200 max-h-[90vh] overflow-y-auto animate-fade-in">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="modal-feed-title" class="text-lg font-bold text-sauge-900">Référence Alimentaire</h3>
+            <button onclick="closeAllModals()" class="p-2 rounded-full bg-sable-100 text-sauge-700"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <form id="form-feed" onsubmit="saveFeedItem(event)" class="space-y-3.5">
+            <input type="hidden" id="feed-id">
+            
+            <div>
+                <label class="block text-xs font-bold text-sauge-800 mb-1">Nom du produit *</label>
+                <input type="text" id="feed-name" required placeholder="Ex: Exquis Confort Digest, Pulpe..." class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-sauge-800 mb-1">Marque / Fournisseur</label>
+                    <input type="text" id="feed-brand" placeholder="Ex: Exquis, Hartog..." class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-sauge-800 mb-1">Conditionnement *</label>
+                    <input type="text" id="feed-packaging" required placeholder="Ex: Sac 20 kg, Seau 5 kg" class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-sauge-800 mb-1">Date dernier achat *</label>
+                    <input type="date" id="feed-last-purchase" required class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-sauge-800 mb-1">Durée estimée (jours) *</label>
+                    <input type="number" id="feed-duration" required min="1" max="365" value="30" class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-sauge-800 mb-1">Quantité achetée</label>
+                    <input type="number" id="feed-qty" min="1" value="1" class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-sauge-800 mb-1">Prix indicatif (€)</label>
+                    <input type="number" id="feed-price" step="0.01" placeholder="Optionnel" class="w-full rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                </div>
+            </div>
+
+            <!-- Historique des achats (visible en édition) -->
+            <div id="feed-history-box" class="hidden bg-sable-50 p-3 rounded-2xl border border-sable-200">
+                <div class="text-xs font-bold text-sauge-800 mb-1.5">Derniers achats enregistrés :</div>
+                <ul id="feed-history-list" class="text-xs text-sauge-600 space-y-1 max-h-24 overflow-y-auto"></ul>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button type="button" id="btn-delete-feed" onclick="deleteFeedItem()" class="hidden px-4 py-3 rounded-2xl bg-red-50 text-red-600 font-bold text-sm">Supprimer</button>
+                <button type="submit" class="flex-1 py-3 rounded-2xl bg-terracotta-500 text-white font-bold text-sm shadow-sm">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 4. Modale Recherche Ville Météo -->
+    <div id="modal-city" class="hidden fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-md mx-auto bg-white rounded-3xl p-5 shadow-2xl border border-sable-200 animate-fade-in">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-sauge-900">Localisation Météo</h3>
+            <button onclick="closeAllModals()" class="p-2 rounded-full bg-sable-100 text-sauge-700"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="space-y-3">
+            <div class="flex gap-2">
+                <input type="text" id="city-search-input" placeholder="Nom de la commune (ex: Muret, Auterive...)" class="flex-1 rounded-2xl border border-sable-300 bg-sable-50 px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:border-sauge-600">
+                <button onclick="searchCity()" class="btn-tap px-4 py-2.5 rounded-2xl bg-sauge-600 text-white font-bold text-sm">Chercher</button>
+            </div>
+            <button onclick="resetDefaultCity()" class="w-full py-2.5 px-3 rounded-2xl bg-sable-100 text-sauge-800 text-xs font-bold flex items-center justify-center gap-1.5">
+                <i class="ph-fill ph-map-pin text-terracotta-500"></i> Revenir à Labarthe-sur-Lèze (31860)
+            </button>
+            <div id="city-search-results" class="space-y-1.5 max-h-48 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- 5. Modale Sauvegarde / Export / Import JSON -->
+    <div id="modal-backup" class="hidden fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-md mx-auto bg-white rounded-3xl p-5 shadow-2xl border border-sable-200 animate-fade-in">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-bold text-sauge-900">Sauvegarde des données</h3>
+            <button onclick="closeAllModals()" class="p-2 rounded-full bg-sable-100 text-sauge-700"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <p class="text-xs text-sauge-600 mb-4 leading-relaxed">
+            Vos données sont sauvegardées automatiquement sur ce téléphone. Vous pouvez exporter un fichier de secours ou restaurer une sauvegarde.
+        </p>
+        <div class="space-y-2.5">
+            <button onclick="exportDataJSON()" class="btn-tap w-full py-3 px-4 rounded-2xl bg-sauge-600 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm">
+                <i class="ph-bold ph-download-simple text-lg"></i> Exporter mes données (JSON)
+            </button>
+            <label class="btn-tap w-full py-3 px-4 rounded-2xl bg-sable-100 hover:bg-sable-200 text-sauge-900 font-bold text-sm flex items-center justify-center gap-2 cursor-pointer">
+                <i class="ph-bold ph-upload-simple text-lg"></i> Importer un fichier JSON
+                <input type="file" accept=".json" onchange="importDataJSON(event)" class="hidden">
+            </label>
+        </div>
+    </div>
+
+    <!-- 6. Modale Mode d'emploi / Installer sur Android -->
+    <div id="modal-help" class="hidden fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-md mx-auto bg-white rounded-3xl p-5 shadow-2xl border border-sable-200 max-h-[85vh] overflow-y-auto animate-fade-in">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-bold text-sauge-900 flex items-center gap-2">
+                <i class="ph-fill ph-device-mobile text-sauge-600"></i> Installer sur smartphone
+            </h3>
+            <button onclick="closeAllModals()" class="p-2 rounded-full bg-sable-100 text-sauge-700"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="space-y-3 text-sm text-sauge-800">
+            <div class="bg-sauge-50 p-3.5 rounded-2xl border border-sauge-200">
+                <h4 class="font-bold text-sauge-900 mb-1.5 flex items-center gap-1.5">
+                    <i class="ph-fill ph-android-logo text-emerald-600 text-lg"></i> Sur Android (Google Chrome)
+                </h4>
+                <ol class="list-decimal list-inside space-y-1.5 text-xs text-sauge-700">
+                    <li>Ouvrez cette page dans <strong>Google Chrome</strong>.</li>
+                    <li>Appuyez sur les <strong>3 petits points (⋮)</strong> en haut à droite de l'écran.</li>
+                    <li>Sélectionnez <strong>« Ajouter à l'écran d'accueil »</strong> (ou « Installer l'application »).</li>
+                    <li>Validez : l'icône <strong>ÉquiCare</strong> apparaîtra comme une vraie application sur votre téléphone !</li>
+                </ol>
+            </div>
+            <div class="bg-sable-50 p-3.5 rounded-2xl border border-sable-200">
+                <h4 class="font-bold text-sauge-900 mb-1.5 flex items-center gap-1.5">
+                    <i class="ph-fill ph-apple-logo text-sauge-800 text-lg"></i> Sur iPhone (Safari)
+                </h4>
+                <ol class="list-decimal list-inside space-y-1.5 text-xs text-sauge-700">
+                    <li>Appuyez sur l'icône <strong>Partager</strong> (carré avec flèche vers le haut) en bas de Safari.</li>
+                    <li>Faites défiler et appuyez sur <strong>« Sur l'écran d'accueil »</strong>.</li>
+                </ol>
+            </div>
+            <div class="bg-terracotta-50 p-3 rounded-2xl border border-terracotta-200 text-xs text-terracotta-800">
+                <strong>Astuce alertes :</strong> Cliquez sur la cloche <i class="ph-bold ph-bell"></i> en haut pour autoriser les notifications d'alerte météo (froid &lt; 5°C, vent fort, pluie).
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== LOGIQUE JAVASCRIPT ==================== -->
+    <script>
+        // Clé de stockage localStorage
+        const STORAGE_KEY = 'equicare_app_data_v1';
+
+        // Coordonnées par défaut : Labarthe-sur-Lèze (31860)
+        const DEFAULT_LOCATION = {
+            name: 'Labarthe-sur-Lèze (31860)',
+            lat: 43.4519,
+            lon: 1.4003
+        };
+
+        // État global de l'application avec données pré-remplies réalistes
+        let appState = {
+            location: { ...DEFAULT_LOCATION },
+            thresholds: {
+                cold: 5,
+                uv: 6,
+                wind: 45,
+                rain: 2
+            },
+            horses: [
+                {
+                    id: 'h1',
+                    name: 'Trotteur Français',
+                    breed: 'Trotteur Français',
+                    age: 20,
+                    notes: 'Senior (20 ans) • Surveiller le froid (< 5°C) et le confort articulaire/digestif.'
+                },
+                {
+                    id: 'h2',
+                    name: 'Jument Pur-Sang Arabe',
+                    breed: 'Pur-Sang Arabe',
+                    age: 15,
+                    notes: '15 ans • Alimentation pauvre en sucres/amidon, attention aux UV et au vent.'
+                }
+            ],
+            health: [
+                {
+                    id: 'hl1',
+                    category: 'deworming',
+                    horseId: 'all',
+                    product: 'Ivermectine + Praziquantel (Duo)',
+                    date: getRelativeDate(-75),
+                    interval: '90',
+                    nextDate: getRelativeDate(15),
+                    notes: 'Vermifuge d’automne/hiver large spectre'
+                },
+                {
+                    id: 'hl2',
+                    category: 'deworming',
+                    horseId: 'h1',
+                    product: 'Moxidectine (Equest)',
+                    date: getRelativeDate(-150),
+                    interval: '180',
+                    nextDate: getRelativeDate(30),
+                    notes: 'Ciblage petits strongles enkystés'
+                },
+                {
+                    id: 'hl3',
+                    category: 'vaccine',
+                    horseId: 'all',
+                    product: 'Grippe équine + Tétanos',
+                    date: getRelativeDate(-310),
+                    interval: '365',
+                    nextDate: getRelativeDate(55),
+                    notes: 'Rappel annuel obligatoire'
+                },
+                {
+                    id: 'hl4',
+                    category: 'vaccine',
+                    horseId: 'h2',
+                    product: 'Rhinopneumonie (EHV-1 / EHV-4)',
+                    date: getRelativeDate(-165),
+                    interval: '180',
+                    nextDate: getRelativeDate(15),
+                    notes: 'Rappel semestriel'
+                }
+            ],
+            feed: [
+                {
+                    id: 'f3',
+                    name: 'Exquis Confort Digest',
+                    brand: 'Exquis',
+                    packaging: 'Seau 4 kg',
+                    lastPurchase: getRelativeDate(-26),
+                    durationDays: 30,
+                    qty: 1,
+                    price: 42.00,
+                    history: [
+                        { date: getRelativeDate(-26), qty: 1, price: 42.00 }
+                    ]
+                },
+                {
+                    id: 'f4',
+                    name: 'Pulpe de betterave déshydratée',
+                    brand: 'Fournisseur local',
+                    packaging: 'Sac 25 kg',
+                    lastPurchase: getRelativeDate(-18),
+                    durationDays: 40,
+                    qty: 1,
+                    price: 18.00,
+                    history: [
+                        { date: getRelativeDate(-18), qty: 1, price: 18.00 }
+                    ]
+                },
+                {
+                    id: 'f5',
+                    name: 'Huile de lin pure',
+                    brand: 'Équi-Nature',
+                    packaging: 'Bidon 5 L',
+                    lastPurchase: getRelativeDate(-40),
+                    durationDays: 45,
+                    qty: 1,
+                    price: 29.00,
+                    history: [
+                        { date: getRelativeDate(-40), qty: 1, price: 29.00 }
+                    ]
+                },
+                {
+                    id: 'f6',
+                    name: 'Hartog Luzerne / Foin déshydraté',
+                    brand: 'Hartog',
+                    packaging: 'Balle 20 kg',
+                    lastPurchase: getRelativeDate(-12),
+                    durationDays: 21,
+                    qty: 2,
+                    price: 21.00,
+                    history: [
+                        { date: getRelativeDate(-12), qty: 2, price: 21.00 }
+                    ]
+                }
+            ]
+        };
+
+        // Données météo en mémoire
+        let weatherData = null;
+
+        // ==================== UTILITAIRES DE DATES ====================
+        function getRelativeDate(offsetDays) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            return d.toISOString().split('T')[0];
+        }
+
+        function getTodayStr() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function formatDateFR(dateStr) {
+            if (!dateStr) return '--';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function daysBetween(dateStr1, dateStr2) {
+            const d1 = new Date(dateStr1 + 'T00:00:00');
+            const d2 = new Date(dateStr2 + 'T00:00:00');
+            return Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+        }
+
+        function addDays(dateStr, days) {
+            const d = new Date(dateStr + 'T00:00:00');
+            d.setDate(d.getDate() + parseInt(days, 10));
+            return d.toISOString().split('T')[0];
+        }
+
+        // ==================== PERSISTANCE LOCALSTORAGE ====================
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState = {
+                        ...appState,
+                        ...parsed,
+                        thresholds: {
+                            cold: 5,
+                            uv: 6,
+                            wind: 45,
+                            rain: 2,
+                            ...(parsed.thresholds || {})
+                        }
+                    };
+                    // Migration propre : suppression automatique des références Mila Moka existantes
+                    if (Array.isArray(appState.feed)) {
+                        const beforeLen = appState.feed.length;
+                        appState.feed = appState.feed.filter(item => {
+                            const txt = `${item.name || ''} ${item.brand || ''}`.toLowerCase();
+                            return !txt.includes('mila moka') && !txt.includes('mille-à-mouka') && !txt.includes('métabolik') && !txt.includes('metabolik');
+                        });
+                        if (appState.feed.length !== beforeLen) {
+                            saveState();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Erreur chargement localStorage:', e);
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                showToast('Erreur de sauvegarde locale', 'error');
+            }
+        }
+
+        // ==================== NAVIGATION & ONGLETS ====================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+            // Mise à jour style boutons navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-sauge-100/80', 'text-sauge-700', 'font-bold');
+                btn.classList.add('text-sauge-500', 'font-medium');
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = icon.className.replace('ph-fill', 'ph');
+                }
+            });
+
+            const activeBtn = document.getElementById(`nav-${tabName}`);
+            activeBtn.classList.remove('text-sauge-500', 'font-medium');
+            activeBtn.classList.add('bg-sauge-100/80', 'text-sauge-700', 'font-bold');
+            const activeIcon = activeBtn.querySelector('i');
+            if (activeIcon) {
+                activeIcon.className = activeIcon.className.replace('ph ', 'ph-fill ');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function switchHealthSubtab(subtab) {
+            const btnDeworm = document.getElementById('subtab-btn-deworming');
+            const btnVacc = document.getElementById('subtab-btn-vaccines');
+            const secDeworm = document.getElementById('health-section-deworming');
+            const secVacc = document.getElementById('health-section-vaccines');
+
+            if (subtab === 'deworming') {
+                btnDeworm.className = 'py-2.5 px-3 rounded-xl font-bold text-sm bg-white text-sauge-900 shadow-2xs transition';
+                btnVacc.className = 'py-2.5 px-3 rounded-xl font-bold text-sm text-sauge-700 hover:text-sauge-900 transition';
+                secDeworm.classList.remove('hidden');
+                secVacc.classList.add('hidden');
+            } else {
+                btnVacc.className = 'py-2.5 px-3 rounded-xl font-bold text-sm bg-white text-sauge-900 shadow-2xs transition';
+                btnDeworm.className = 'py-2.5 px-3 rounded-xl font-bold text-sm text-sauge-700 hover:text-sauge-900 transition';
+                secVacc.classList.remove('hidden');
+                secDeworm.classList.add('hidden');
+            }
+        }
+
+        // ==================== API MÉTÉO OPEN-METEO & ALERTES ====================
+        async function fetchWeather(manualRefresh = false) {
+            const refreshIcon = document.getElementById('refresh-icon');
+            if (refreshIcon) refreshIcon.classList.add('animate-spin');
+
+            // Mise à jour noms ville dans l'interface
+            document.getElementById('header-city-name').textContent = appState.location.name;
+            document.getElementById('dash-city').textContent = appState.location.name.split('(')[0].trim();
+
+            try {
+                const { lat, lon } = appState.location;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,uv_index&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_gusts_10m_max,uv_index_max&timezone=Europe%2FParis&forecast_days=7`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Erreur réseau météo');
+                
+                weatherData = await response.json();
+                renderWeather();
+                evaluateWeatherAlerts(manualRefresh);
+                renderSmartCareWidget();
+
+                if (manualRefresh) {
+                    showToast('Météo actualisée pour ' + appState.location.name.split('(')[0], 'success');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Impossible de récupérer la météo (vérifiez la connexion)', 'error');
+                renderSmartCareWidget();
+            } finally {
+                if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+            }
+        }
+
+        function getWeatherIconAndLabel(code) {
+            if (code === 0) return { icon: 'ph-sun text-amber-500', label: 'Ciel dégagé' };
+            if (code <= 3) return { icon: 'ph-cloud-sun text-amber-400', label: 'Partiellement nuageux' };
+            if (code <= 48) return { icon: 'ph-cloud-fog text-slate-400', label: 'Brouillard' };
+            if (code <= 67) return { icon: 'ph-cloud-rain text-sky-500', label: 'Pluie' };
+            if (code <= 77) return { icon: 'ph-snowflake text-cyan-400', label: 'Neige' };
+            if (code <= 82) return { icon: 'ph-cloud-rain text-blue-600', label: 'Averses' };
+            return { icon: 'ph-cloud-lightning text-purple-600', label: 'Orage' };
+        }
+
+        function renderWeather() {
+            if (!weatherData) return;
+
+            const current = weatherData.current;
+            const hourly = weatherData.hourly;
+            const daily = weatherData.daily;
+
+            // Carte actuelle Dashboard
+            document.getElementById('dash-temp').textContent = `${Math.round(current.temperature_2m)}°C`;
+            const wInfo = getWeatherIconAndLabel(current.weather_code);
+            document.getElementById('dash-weather-desc').textContent = `${wInfo.label} • Vent ${Math.round(current.wind_speed_10m)} km/h`;
+
+            // Trouver l'index de l'heure actuelle dans hourly
+            const nowISO = new Date().toISOString().slice(0, 13);
+            let startIdx = hourly.time.findIndex(t => t.startsWith(nowISO));
+            if (startIdx === -1) startIdx = 0;
+
+            // Calculs sur les prochaines 24h et 48h
+            const next24Temps = hourly.temperature_2m.slice(startIdx, startIdx + 24);
+            const next24UVs = hourly.uv_index ? hourly.uv_index.slice(startIdx, startIdx + 24) : [0];
+            const next48Gusts = hourly.wind_gusts_10m.slice(startIdx, startIdx + 48);
+            const next48Rain = hourly.precipitation.slice(startIdx, startIdx + 48);
+
+            const minTemp24 = Math.min(...next24Temps);
+            const maxUV24 = Math.max(...next24UVs, daily.uv_index_max ? daily.uv_index_max[0] : 0);
+            const maxGust48 = Math.max(...next48Gusts);
+            const totalRain48 = next48Rain.reduce((a, b) => a + b, 0);
+
+            document.getElementById('dash-min-temp').textContent = `${minTemp24.toFixed(1)}°C`;
+            document.getElementById('dash-max-uv').textContent = `${maxUV24.toFixed(1)}`;
+            document.getElementById('dash-max-wind').textContent = `${Math.round(maxGust48)} km/h`;
+            document.getElementById('dash-rain').textContent = `${totalRain48.toFixed(1)} mm`;
+
+            // Heure mise à jour
+            const now = new Date();
+            document.getElementById('weather-last-update').textContent = `MàJ ${now.getHours()}h${String(now.getMinutes()).padStart(2, '0')}`;
+
+            // Rendu prévisions horaires (48h)
+            const hourlyContainer = document.getElementById('hourly-forecast-list');
+            hourlyContainer.innerHTML = '';
+
+            for (let i = startIdx; i < Math.min(startIdx + 48, hourly.time.length); i++) {
+                const timeStr = hourly.time[i];
+                const hourLabel = timeStr.split('T')[1].slice(0, 5);
+                const dayNum = timeStr.split('T')[0].slice(8, 10);
+                const temp = hourly.temperature_2m[i];
+                const gust = hourly.wind_gusts_10m[i];
+                const rain = hourly.precipitation[i];
+                const prob = hourly.precipitation_probability[i];
+                const uv = hourly.uv_index ? hourly.uv_index[i] : 0;
+                const iconData = getWeatherIconAndLabel(hourly.weather_code[i]);
+
+                const isCold = temp < appState.thresholds.cold;
+                const isHighUV = uv >= appState.thresholds.uv;
+                const isWindy = gust > appState.thresholds.wind;
+                const isRainy = rain > appState.thresholds.rain || prob > 60;
+                const hasAlert = isCold || isHighUV || isWindy || isRainy;
+
+                const cardBorder = hasAlert ? 'border-terracotta-300 bg-terracotta-50/60' : 'border-sable-200 bg-sable-50';
+
+                hourlyContainer.innerHTML += `
+                    <div class="min-w-[82px] p-2.5 rounded-2xl border ${cardBorder} flex flex-col items-center text-center shrink-0">
+                        <span class="text-[10px] font-semibold text-sauge-500">J${dayNum} • ${hourLabel}</span>
+                        <i class="ph-fill ${iconData.icon} text-2xl my-1.5"></i>
+                        <span class="text-sm font-extrabold ${isCold ? 'text-blue-600' : 'text-sauge-900'}">${Math.round(temp)}°</span>
+                        <div class="mt-1.5 space-y-0.5 text-[10px] w-full">
+                            <div class="${isHighUV ? 'text-amber-600 font-bold' : 'text-sauge-500'} flex items-center justify-center gap-0.5">
+                                <i class="ph ph-sun"></i> UV ${uv.toFixed(0)}
+                            </div>
+                            <div class="${isWindy ? 'text-terracotta-600 font-bold' : 'text-sauge-600'} flex items-center justify-center gap-0.5">
+                                <i class="ph ph-wind"></i> ${Math.round(gust)}
+                            </div>
+                            <div class="${isRainy ? 'text-sky-600 font-bold' : 'text-sauge-500'} flex items-center justify-center gap-0.5">
+                                <i class="ph ph-drop"></i> ${rain > 0 ? rain.toFixed(1)+'mm' : prob+'%'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Rendu prévisions 7 jours
+            const dailyContainer = document.getElementById('daily-forecast-list');
+            dailyContainer.innerHTML = '';
+            const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+
+            for (let d = 0; d < daily.time.length; d++) {
+                const dateObj = new Date(daily.time[d] + 'T00:00:00');
+                const dayLabel = d === 0 ? "Aujourd'hui" : `${dayNames[dateObj.getDay()]} ${dateObj.getDate()}/${dateObj.getMonth()+1}`;
+                const tMin = daily.temperature_2m_min[d];
+                const tMax = daily.temperature_2m_max[d];
+                const gustMax = daily.wind_gusts_10m_max[d];
+                const rainSum = daily.precipitation_sum[d];
+                const uvMax = daily.uv_index_max ? daily.uv_index_max[d] : 0;
+                const iconData = getWeatherIconAndLabel(daily.weather_code[d]);
+
+                const isCold = tMin < appState.thresholds.cold;
+                const isHighUV = uvMax >= appState.thresholds.uv;
+                const isWindy = gustMax > appState.thresholds.wind;
+
+                dailyContainer.innerHTML += `
+                    <div class="py-2.5 flex items-center justify-between text-sm">
+                        <div class="w-24 font-bold text-sauge-900">${dayLabel}</div>
+                        <div class="flex items-center gap-1.5">
+                            <i class="ph-fill ${iconData.icon} text-xl"></i>
+                            <span class="text-[11px] ${isHighUV ? 'text-amber-600 font-bold' : 'text-sauge-500'}">UV ${uvMax.toFixed(0)}</span>
+                        </div>
+                        <div class="text-xs ${isWindy ? 'text-terracotta-600 font-bold' : 'text-sauge-600'} w-16 text-right">
+                            <i class="ph ph-wind"></i> ${Math.round(gustMax)} km/h
+                        </div>
+                        <div class="w-20 text-right font-bold">
+                            <span class="${isCold ? 'text-blue-600' : 'text-sauge-500'}">${Math.round(tMin)}°</span>
+                            <span class="text-sauge-300 mx-0.5">/</span>
+                            <span class="text-sauge-900">${Math.round(tMax)}°</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // ==================== WIDGET D'ALERTES INTELLIGENTES (ACCUEIL) ====================
+        function renderSmartCareWidget() {
+            const widgetEl = document.getElementById('smart-care-widget');
+            if (!widgetEl) return;
+
+            const activeCards = [];
+            const coldThreshold = appState.thresholds.cold ?? 5;
+            const uvThreshold = appState.thresholds.uv ?? 6;
+
+            // 1. Condition Couverture (T° < seuil sur les prochaines 24h) & Masque Anti-UV (UV >= seuil)
+            if (weatherData && weatherData.hourly) {
+                const hourly = weatherData.hourly;
+                const nowISO = new Date().toISOString().slice(0, 13);
+                let startIdx = hourly.time.findIndex(t => t.startsWith(nowISO));
+                if (startIdx === -1) startIdx = 0;
+
+                const next24Temps = hourly.temperature_2m.slice(startIdx, startIdx + 24);
+                const minTemp24 = next24Temps.length ? Math.min(...next24Temps) : 99;
+
+                if (minTemp24 < coldThreshold) {
+                    activeCards.push(`
+                        <div class="p-3.5 rounded-2xl border border-blue-300 bg-blue-50 text-blue-950 shadow-2xs flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                                <i class="ph-bold ph-coat-hanger text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-extrabold text-sm leading-snug">Mettre une couverture (T° prévue &lt; ${coldThreshold}°C)</div>
+                                <div class="text-xs text-blue-800 mt-0.5">Minimum prévu : <strong>${minTemp24.toFixed(1)}°C</strong> dans les prochaines 24h</div>
+                            </div>
+                        </div>
+                    `);
+                }
+
+                const next24UVs = hourly.uv_index ? hourly.uv_index.slice(startIdx, startIdx + 24) : [0];
+                const dailyUV0 = (weatherData.daily && weatherData.daily.uv_index_max) ? weatherData.daily.uv_index_max[0] : 0;
+                const maxUV24 = Math.max(...next24UVs, dailyUV0);
+
+                if (maxUV24 >= uvThreshold) {
+                    activeCards.push(`
+                        <div class="p-3.5 rounded-2xl border border-amber-300 bg-amber-50 text-amber-950 shadow-2xs flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                                <i class="ph-bold ph-sun-horizon text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-extrabold text-sm leading-snug">Mettre le masque anti-UV (UV élevé : ${maxUV24.toFixed(1)})</div>
+                                <div class="text-xs text-amber-800 mt-0.5">Indice UV maximal ≥ ${uvThreshold} prévu sur les prochaines 24h</div>
+                            </div>
+                        </div>
+                    `);
+                }
+            }
+
+            // 2. Condition Rachat d'aliments (jauge <= 20% ou jours restants <= 5)
+            const today = getTodayStr();
+            const lowFeeds = [];
+            appState.feed.forEach(f => {
+                const endDate = addDays(f.lastPurchase, f.durationDays);
+                const daysLeft = daysBetween(today, endDate);
+                const pct = Math.max(0, Math.min(100, Math.round((daysLeft / f.durationDays) * 100)));
+                if (pct <= 20 || daysLeft <= 5) {
+                    lowFeeds.push(f.name);
+                }
+            });
+
+            if (lowFeeds.length > 0) {
+                activeCards.push(`
+                    <div onclick="switchTab('feed')" class="btn-tap p-3.5 rounded-2xl border border-terracotta-300 bg-terracotta-50 text-terracotta-950 shadow-2xs flex items-center gap-3 cursor-pointer">
+                        <div class="w-10 h-10 rounded-xl bg-terracotta-600 text-white flex items-center justify-center shrink-0">
+                            <i class="ph-bold ph-shopping-cart text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-extrabold text-sm leading-snug">Racheter des aliments : ${lowFeeds.join(', ')}</div>
+                            <div class="text-xs text-terracotta-800 mt-0.5">Stock bas (≤ 20% ou ≤ 5 jours restants) • Appuyer pour gérer</div>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-terracotta-500"></i>
+                    </div>
+                `);
+            }
+
+            // RÈGLE STRICTE : Si aucune alerte active, le widget est complètement vide et masqué
+            if (activeCards.length === 0) {
+                widgetEl.innerHTML = '';
+                widgetEl.classList.add('hidden');
+            } else {
+                widgetEl.innerHTML = activeCards.join('');
+                widgetEl.classList.remove('hidden');
+            }
+        }
+
+        function evaluateWeatherAlerts(triggerBrowserNotif = false) {
+            if (!weatherData) return;
+
+            const hourly = weatherData.hourly;
+            const nowISO = new Date().toISOString().slice(0, 13);
+            let startIdx = hourly.time.findIndex(t => t.startsWith(nowISO));
+            if (startIdx === -1) startIdx = 0;
+
+            // Analyse des prochaines 36h à 48h
+            const sliceEnd = Math.min(startIdx + 48, hourly.time.length);
+            let minTemp = 99, minTempTime = '';
+            let maxGust = 0, maxGustTime = '';
+            let maxRain = 0, maxProb = 0, rainTime = '';
+
+            for (let i = startIdx; i < sliceEnd; i++) {
+                const t = hourly.temperature_2m[i];
+                const g = hourly.wind_gusts_10m[i];
+                const r = hourly.precipitation[i];
+                const p = hourly.precipitation_probability[i];
+                const label = `${hourly.time[i].split('T')[0].slice(8,10)}/${hourly.time[i].split('T')[0].slice(5,7)} à ${hourly.time[i].split('T')[1].slice(0,5)}`;
+
+                if (t < minTemp) { minTemp = t; minTempTime = label; }
+                if (g > maxGust) { maxGust = g; maxGustTime = label; }
+                if (r > maxRain || p > maxProb) {
+                    if (r > maxRain) maxRain = r;
+                    if (p > maxProb) maxProb = p;
+                    rainTime = label;
+                }
+            }
+
+            const alerts = [];
+
+            // 1. Alerte Froid (< 5°C)
+            if (minTemp < appState.thresholds.cold) {
+                alerts.push({
+                    type: 'cold',
+                    bg: 'bg-blue-50 border-blue-300 text-blue-950',
+                    iconBg: 'bg-blue-600 text-white',
+                    icon: 'ph-thermometer-cold',
+                    title: `Alerte Froid : ${minTemp.toFixed(1)}°C prévus`,
+                    desc: `Le ${minTempTime}. Vérifier abreuvoir (gel) et couvertures (notamment pour le Trotteur de 20 ans).`
+                });
+            }
+
+            // 2. Alerte Vent Fort (> 45 km/h)
+            if (maxGust > appState.thresholds.wind) {
+                alerts.push({
+                    type: 'wind',
+                    bg: 'bg-terracotta-50 border-terracotta-300 text-terracotta-950',
+                    iconBg: 'bg-terracotta-600 text-white',
+                    icon: 'ph-wind',
+                    title: `Alerte Vent Fort : rafales à ${Math.round(maxGust)} km/h`,
+                    desc: `Pic prévu le ${maxGustTime}. Surveiller l'ancrage de l'abri tunnel et les branches.`
+                });
+            }
+
+            // 3. Alerte Pluie significative (> 2 mm ou > 60%)
+            if (maxRain > appState.thresholds.rain || maxProb > 60) {
+                alerts.push({
+                    type: 'rain',
+                    bg: 'bg-sky-50 border-sky-300 text-sky-950',
+                    iconBg: 'bg-sky-600 text-white',
+                    icon: 'ph-cloud-rain',
+                    title: `Alerte Pluie : jusqu'à ${maxRain.toFixed(1)} mm (${maxProb}%)`,
+                    desc: `Épisode humide autour du ${rainTime}. Prévoir imperméables si nécessaire.`
+                });
+            }
+
+            const container = document.getElementById('global-weather-alerts');
+            const navBadge = document.getElementById('nav-weather-badge');
+
+            if (alerts.length > 0) {
+                container.classList.remove('hidden');
+                navBadge.classList.remove('hidden');
+                container.innerHTML = alerts.map(a => `
+                    <div class="p-3.5 rounded-2xl border ${a.bg} shadow-2xs flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-xl ${a.iconBg} flex items-center justify-center shrink-0 mt-0.5">
+                            <i class="ph-bold ${a.icon} text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-extrabold text-sm leading-snug">${a.title}</div>
+                            <p class="text-xs opacity-90 mt-0.5 leading-relaxed">${a.desc}</p>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Notification navigateur si autorisée
+                if ('Notification' in window && Notification.permission === 'granted' && triggerBrowserNotif) {
+                    new Notification('ÉquiCare — Alerte Météo Chevaux', {
+                        body: alerts.map(a => a.title).join(' | '),
+                        icon: 'https://cdn-icons-png.flaticon.com/512/2194/2194816.png'
+                    });
+                }
+            } else {
+                container.classList.add('hidden');
+                navBadge.classList.add('hidden');
+                container.innerHTML = '';
+            }
+        }
+
+        function updateThresholds() {
+            appState.thresholds.cold = parseFloat(document.getElementById('threshold-cold').value) || 5;
+            appState.thresholds.uv = parseFloat(document.getElementById('threshold-uv').value) || 6;
+            appState.thresholds.wind = parseFloat(document.getElementById('threshold-wind').value) || 45;
+            appState.thresholds.rain = parseFloat(document.getElementById('threshold-rain').value) || 2;
+            saveState();
+            renderWeather();
+            evaluateWeatherAlerts(false);
+            renderSmartCareWidget();
+            showToast('Seuils d’alerte mis à jour', 'success');
+        }
+
+        // Recherche de ville via Open-Meteo Geocoding API
+        async function searchCity() {
+            const query = document.getElementById('city-search-input').value.trim();
+            if (!query) return;
+
+            const resultsDiv = document.getElementById('city-search-results');
+            resultsDiv.innerHTML = '<div class="text-xs text-sauge-500 py-2">Recherche en cours...</div>';
+
+            try {
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=fr&format=json`);
+                const data = await res.json();
+
+                if (!data.results || data.results.length === 0) {
+                    resultsDiv.innerHTML = '<div class="text-xs text-terracotta-600 py-2">Aucune commune trouvée.</div>';
+                    return;
+                }
+
+                resultsDiv.innerHTML = data.results.map(city => {
+                    const label = `${city.name} (${city.postcode || city.admin1 || city.country})`;
+                    return `
+                        <button onclick="selectCity('${label.replace(/'/g, "\\'")}', ${city.latitude}, ${city.longitude})" class="w-full text-left p-2.5 rounded-xl bg-sable-50 hover:bg-sauge-100 text-xs font-bold text-sauge-900 flex justify-between items-center">
+                            <span>${label}</span>
+                            <i class="ph-bold ph-check text-sauge-600"></i>
+                        </button>
+                    `;
+                }).join('');
+            } catch (e) {
+                resultsDiv.innerHTML = '<div class="text-xs text-red-600 py-2">Erreur lors de la recherche.</div>';
+            }
+        }
+
+        function selectCity(name, lat, lon) {
+            appState.location = { name, lat, lon };
+            saveState();
+            closeAllModals();
+            fetchWeather(true);
+        }
+
+        function resetDefaultCity() {
+            appState.location = { ...DEFAULT_LOCATION };
+            saveState();
+            closeAllModals();
+            fetchWeather(true);
+        }
+
+        // Notifications navigateur
+        function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                showToast('Les notifications ne sont pas supportées sur ce navigateur.', 'error');
+                return;
+            }
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    document.getElementById('notif-dot').classList.remove('hidden');
+                    showToast('Notifications météo activées !', 'success');
+                    evaluateWeatherAlerts(true);
+                } else {
+                    showToast('Autorisation de notification refusée.', 'error');
+                }
+            });
+        }
+
+        // ==================== RENDU TABLEAU DE BORD & CHEVAUX ====================
+        function renderDashboard() {
+            // Liste des chevaux
+            const horsesContainer = document.getElementById('dashboard-horses-list');
+            horsesContainer.innerHTML = appState.horses.map(h => `
+                <div onclick="openHorseModal('${h.id}')" class="btn-tap bg-white p-4 rounded-3xl border border-sable-200 shadow-2xs flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-12 h-12 rounded-2xl bg-sable-100 text-sauge-700 flex items-center justify-center shrink-0">
+                            <i class="ph-fill ph-horse text-2xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-extrabold text-sauge-900 text-sm">${h.name}</h3>
+                                <span class="px-2 py-0.5 rounded-full bg-sauge-100 text-sauge-800 text-[11px] font-bold">${h.age} ans</span>
+                            </div>
+                            <p class="text-xs text-sauge-600 font-medium mt-0.5">${h.breed}</p>
+                            ${h.notes ? `<p class="text-[11px] text-sauge-500 mt-1 line-clamp-1">${h.notes}</p>` : ''}
+                        </div>
+                    </div>
+                    <i class="ph-bold ph-pencil-simple text-sauge-400"></i>
+                </div>
+            `).join('');
+
+            // Éléments à prévoir (Santé + Aliments proches de la fin)
+            const upcomingContainer = document.getElementById('dashboard-upcoming-list');
+            const today = getTodayStr();
+            const items = [];
+
+            // Santé à venir sous 30 jours ou en retard
+            appState.health.forEach(item => {
+                const diff = daysBetween(today, item.nextDate);
+                if (diff <= 35) {
+                    const horseName = getHorseName(item.horseId);
+                    items.push({
+                        sortDays: diff,
+                        type: item.category === 'deworming' ? 'Vermifuge' : 'Vaccin',
+                        title: `${item.product} (${horseName})`,
+                        sub: diff < 0 ? `En retard de ${Math.abs(diff)} j (${formatDateFR(item.nextDate)})` : `Prévu le ${formatDateFR(item.nextDate)} (dans ${diff} j)`,
+                        urgent: diff <= 7,
+                        tab: 'health'
+                    });
+                }
+            });
+
+            // Stocks alimentaires restant <= 10 jours
+            appState.feed.forEach(f => {
+                const endDate = addDays(f.lastPurchase, f.durationDays);
+                const diff = daysBetween(today, endDate);
+                if (diff <= 10) {
+                    items.push({
+                        sortDays: diff,
+                        type: 'Stock Aliment',
+                        title: f.name,
+                        sub: diff <= 0 ? `Stock épuisé estimé (${formatDateFR(endDate)})` : `Fin estimée dans ${diff} j (${formatDateFR(endDate)})`,
+                        urgent: diff <= 3,
+                        tab: 'feed'
+                    });
+                }
+            });
+
+            items.sort((a, b) => a.sortDays - b.sortDays);
+
+            if (items.length === 0) {
+                upcomingContainer.innerHTML = `
+                    <div class="bg-white p-4 rounded-3xl border border-sable-200 text-center text-xs text-sauge-600">
+                        <i class="ph-fill ph-check-circle text-emerald-500 text-2xl block mb-1"></i>
+                        Tout est à jour pour les 30 prochains jours !
+                    </div>
+                `;
+            } else {
+                upcomingContainer.innerHTML = items.map(it => `
+                    <div onclick="switchTab('${it.tab}')" class="btn-tap bg-white p-3.5 rounded-2xl border ${it.urgent ? 'border-terracotta-300 bg-terracotta-50/30' : 'border-sable-200'} flex items-center justify-between cursor-pointer">
+                        <div>
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider ${it.urgent ? 'text-terracotta-600' : 'text-sauge-600'}">${it.type}</span>
+                            <div class="font-bold text-sm text-sauge-900">${it.title}</div>
+                            <div class="text-xs text-sauge-600 mt-0.5">${it.sub}</div>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-sauge-400"></i>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function getHorseName(horseId) {
+            if (horseId === 'all') return 'Les 2 chevaux';
+            const h = appState.horses.find(x => x.id === horseId);
+            return h ? h.name : 'Cheval';
+        }
+
+        // ==================== GESTION CHEVAUX (MODALE) ====================
+        function openHorseModal(id = null) {
+            const modal = document.getElementById('modal-horse');
+            const deleteBtn = document.getElementById('btn-delete-horse');
+            
+            if (id) {
+                const h = appState.horses.find(x => x.id === id);
+                if (!h) return;
+                document.getElementById('modal-horse-title').textContent = 'Modifier le profil';
+                document.getElementById('horse-id').value = h.id;
+                document.getElementById('horse-name').value = h.name;
+                document.getElementById('horse-breed').value = h.breed;
+                document.getElementById('horse-age').value = h.age;
+                document.getElementById('horse-notes').value = h.notes || '';
+                if (appState.horses.length > 1) deleteBtn.classList.remove('hidden');
+                else deleteBtn.classList.add('hidden');
+            } else {
+                document.getElementById('modal-horse-title').textContent = 'Ajouter un cheval';
+                document.getElementById('form-horse').reset();
+                document.getElementById('horse-id').value = '';
+                deleteBtn.classList.add('hidden');
+            }
+
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            modal.classList.remove('hidden');
+        }
+
+        function saveHorse(e) {
+            e.preventDefault();
+            const id = document.getElementById('horse-id').value;
+            const horseObj = {
+                id: id || 'h_' + Date.now(),
+                name: document.getElementById('horse-name').value.trim(),
+                breed: document.getElementById('horse-breed').value.trim(),
+                age: parseInt(document.getElementById('horse-age').value, 10),
+                notes: document.getElementById('horse-notes').value.trim()
+            };
+
+            if (id) {
+                const idx = appState.horses.findIndex(x => x.id === id);
+                if (idx !== -1) appState.horses[idx] = horseObj;
+            } else {
+                appState.horses.push(horseObj);
+            }
+
+            saveState();
+            closeAllModals();
+            renderAll();
+            showToast('Profil cheval enregistré', 'success');
+        }
+
+        function deleteHorse() {
+            const id = document.getElementById('horse-id').value;
+            appState.horses = appState.horses.filter(x => x.id !== id);
+            saveState();
+            closeAllModals();
+            renderAll();
+            showToast('Profil supprimé', 'info');
+        }
+
+        // ==================== GESTION SANTÉ (VERMIFUGES & VACCINS) ====================
+        function getHealthStatusBadge(nextDateStr) {
+            const diff = daysBetween(getTodayStr(), nextDateStr);
+            if (diff < 0) {
+                return { label: `En retard (${Math.abs(diff)}j)`, cls: 'bg-red-100 text-red-800 border-red-200', urgent: true };
+            }
+            if (diff <= 20) {
+                return { label: `Bientôt (${diff}j)`, cls: 'bg-amber-100 text-amber-900 border-amber-200', urgent: true };
+            }
+            return { label: `À jour (${diff}j)`, cls: 'bg-emerald-100 text-emerald-900 border-emerald-200', urgent: false };
+        }
+
+        function renderHealth() {
+            const dewormList = document.getElementById('deworming-list');
+            const vaccList = document.getElementById('vaccines-list');
+
+            const dewormItems = appState.health.filter(x => x.category === 'deworming').sort((a, b) => a.nextDate.localeCompare(b.nextDate));
+            const vaccItems = appState.health.filter(x => x.category === 'vaccine').sort((a, b) => a.nextDate.localeCompare(b.nextDate));
+
+            let hasUrgentHealth = false;
+
+            const renderCard = (item) => {
+                const badge = getHealthStatusBadge(item.nextDate);
+                if (badge.urgent) hasUrgentHealth = true;
+                const horseName = getHorseName(item.horseId);
+
+                return `
+                    <div class="bg-white p-4 rounded-3xl border border-sable-200 shadow-2xs space-y-2.5">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="inline-block px-2.5 py-0.5 rounded-full bg-sauge-100 text-sauge-800 text-[11px] font-bold mb-1">
+                                    ${horseName}
+                                </span>
+                                <h3 class="font-extrabold text-sauge-900 text-sm">${item.product}</h3>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${badge.cls} shrink-0">
+                                ${badge.label}
+                            </span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 bg-sable-50 p-2.5 rounded-2xl text-xs">
+                            <div>
+                                <span class="text-sauge-500 block text-[10px] uppercase font-semibold">Fait le</span>
+                                <span class="font-bold text-sauge-800">${formatDateFR(item.date)}</span>
+                            </div>
+                            <div>
+                                <span class="text-sauge-500 block text-[10px] uppercase font-semibold">Prochain rappel</span>
+                                <span class="font-bold text-terracotta-700">${formatDateFR(item.nextDate)}</span>
+                            </div>
+                        </div>
+
+                        ${item.notes ? `<p class="text-xs text-sauge-600 italic">"${item.notes}"</p>` : ''}
+
+                        <div class="flex gap-2 pt-1">
+                            <button onclick="renewHealthToday('${item.id}')" class="btn-tap flex-1 py-2 px-3 rounded-xl bg-sauge-50 hover:bg-sauge-100 text-sauge-800 font-bold text-xs flex items-center justify-center gap-1.5 border border-sauge-200">
+                                <i class="ph-bold ph-check-circle text-sauge-600"></i> Renouveler aujourd'hui
+                            </button>
+                            <button onclick="openHealthModal('${item.category}', '${item.id}')" class="btn-tap py-2 px-3 rounded-xl bg-sable-100 text-sauge-700 font-bold text-xs">
+                                <i class="ph-bold ph-pencil-simple"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            };
+
+            dewormList.innerHTML = dewormItems.length ? dewormItems.map(renderCard).join('') : '<p class="text-xs text-sauge-500 text-center py-6">Aucun vermifuge enregistré.</p>';
+            vaccList.innerHTML = vaccItems.length ? vaccItems.map(renderCard).join('') : '<p class="text-xs text-sauge-500 text-center py-6">Aucun vaccin enregistré.</p>';
+
+            const navHealthBadge = document.getElementById('nav-health-badge');
+            if (hasUrgentHealth) navHealthBadge.classList.remove('hidden');
+            else navHealthBadge.classList.add('hidden');
+        }
+
+        function openHealthModal(category, id = null) {
+            const modal = document.getElementById('modal-health');
+            const horseSelect = document.getElementById('health-horse');
+            const suggestions = document.getElementById('health-suggestions');
+            const deleteBtn = document.getElementById('btn-delete-health');
+
+            // Peupler la liste des chevaux
+            horseSelect.innerHTML = `<option value="all">Les deux chevaux (${appState.horses.map(h => h.name).join(' & ')})</option>` +
+                appState.horses.map(h => `<option value="${h.id}">${h.name} (${h.age} ans)</option>`).join('');
+
+            // Suggestions selon catégorie
+            if (category === 'deworming') {
+                document.getElementById('health-product-label').textContent = 'Molécule / Vermifuge *';
+                suggestions.innerHTML = `
+                    <option value="Ivermectine (Eqvalan / Eraquell)">
+                    <option value="Ivermectine + Praziquantel (Eqvalan Duo)">
+                    <option value="Moxidectine (Equest)">
+                    <option value="Moxidectine + Praziquantel (Equest Pramox)">
+                    <option value="Fenbendazole (Panacur)">
+                    <option value="Pyrantel (Strongid)">
+                `;
+            } else {
+                document.getElementById('health-product-label').textContent = 'Type de Vaccin *';
+                suggestions.innerHTML = `
+                    <option value="Grippe équine + Tétanos">
+                    <option value="Grippe équine">
+                    <option value="Tétanos">
+                    <option value="Rhinopneumonie (EHV-1 / EHV-4)">
+                    <option value="Fièvre du Nil Occidental (West Nile)">
+                `;
+            }
+
+            document.getElementById('health-category').value = category;
+
+            if (id) {
+                const item = appState.health.find(x => x.id === id);
+                if (!item) return;
+                document.getElementById('modal-health-title').textContent = category === 'deworming' ? 'Modifier le vermifuge' : 'Modifier le vaccin';
+                document.getElementById('health-id').value = item.id;
+                document.getElementById('health-horse').value = item.horseId;
+                document.getElementById('health-product').value = item.product;
+                document.getElementById('health-date').value = item.date;
+                document.getElementById('health-interval').value = item.interval || '180';
+                document.getElementById('health-next-date').value = item.nextDate;
+                document.getElementById('health-notes').value = item.notes || '';
+                deleteBtn.classList.remove('hidden');
+            } else {
+                document.getElementById('modal-health-title').textContent = category === 'deworming' ? 'Nouveau vermifuge' : 'Nouveau vaccin';
+                document.getElementById('form-health').reset();
+                document.getElementById('health-id').value = '';
+                document.getElementById('health-category').value = category;
+                const today = getTodayStr();
+                document.getElementById('health-date').value = today;
+                const defaultDays = category === 'deworming' ? '90' : '365';
+                document.getElementById('health-interval').value = defaultDays;
+                document.getElementById('health-next-date').value = addDays(today, defaultDays);
+                deleteBtn.classList.add('hidden');
+            }
+
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            modal.classList.remove('hidden');
+        }
+
+        function autoCalculateNextHealthDate() {
+            const baseDate = document.getElementById('health-date').value;
+            const interval = document.getElementById('health-interval').value;
+            if (baseDate && interval !== 'custom') {
+                document.getElementById('health-next-date').value = addDays(baseDate, interval);
+            }
+        }
+
+        function saveHealthItem(e) {
+            e.preventDefault();
+            const id = document.getElementById('health-id').value;
+            const obj = {
+                id: id || 'hl_' + Date.now(),
+                category: document.getElementById('health-category').value,
+                horseId: document.getElementById('health-horse').value,
+                product: document.getElementById('health-product').value.trim(),
+                date: document.getElementById('health-date').value,
+                interval: document.getElementById('health-interval').value,
+                nextDate: document.getElementById('health-next-date').value,
+                notes: document.getElementById('health-notes').value.trim()
+            };
+
+            if (id) {
+                const idx = appState.health.findIndex(x => x.id === id);
+                if (idx !== -1) appState.health[idx] = obj;
+            } else {
+                appState.health.push(obj);
+            }
+
+            saveState();
+            closeAllModals();
+            renderAll();
+            showToast('Soin sanitaire enregistré', 'success');
+        }
+
+        function renewHealthToday(id) {
+            const idx = appState.health.findIndex(x => x.id === id);
+            if (idx === -1) return;
+            const today = getTodayStr();
+            const interval = appState.health[idx].interval !== 'custom' ? parseInt(appState.health[idx].interval, 10) : 180;
+            appState.health[idx].date = today;
+            appState.health[idx].nextDate = addDays(today, interval);
+            saveState();
+            renderAll();
+            showToast('Date mise à jour à aujourd’hui !', 'success');
+        }
+
+        function deleteHealthItem() {
+            const id = document.getElementById('health-id').value;
+            appState.health = appState.health.filter(x => x.id !== id);
+            saveState();
+            closeAllModals();
+            renderAll();
+            showToast('Élément supprimé', 'info');
+        }
+
+        // ==================== GESTION STOCK ALIMENTATION ====================
+        function renderFeed() {
+            const container = document.getElementById('feed-list');
+            const today = getTodayStr();
+            let hasLowStock = false;
+
+            // Trier par urgence de rachat
+            const sortedFeed = [...appState.feed].sort((a, b) => {
+                const endA = addDays(a.lastPurchase, a.durationDays);
+                const endB = addDays(b.lastPurchase, b.durationDays);
+                return endA.localeCompare(endB);
+            });
+
+            container.innerHTML = sortedFeed.map(f => {
+                const endDate = addDays(f.lastPurchase, f.durationDays);
+                const daysLeft = daysBetween(today, endDate);
+                const pct = Math.max(0, Math.min(100, Math.round((daysLeft / f.durationDays) * 100)));
+
+                let barColor = 'bg-sauge-500';
+                let statusBadge = `<span class="text-xs font-bold text-sauge-700">~${daysLeft} j restants</span>`;
+
+                if (daysLeft <= 0) {
+                    barColor = 'bg-red-500';
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-[11px] font-bold">À racheter !</span>`;
+                    hasLowStock = true;
+                } else if (daysLeft <= 7) {
+                    barColor = 'bg-terracotta-500';
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full bg-terracotta-100 text-terracotta-800 text-[11px] font-bold">Fin dans ${daysLeft} j</span>`;
+                    hasLowStock = true;
+                }
+
+                return `
+                    <div class="bg-white p-4 rounded-3xl border border-sable-200 shadow-2xs space-y-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <div class="flex items-center gap-1.5 text-[11px] font-semibold text-sauge-500">
+                                    <span>${f.brand || 'Aliment'}</span>
+                                    <span>•</span>
+                                    <span class="text-sauge-700 font-bold">${f.packaging}</span>
+                                </div>
+                                <h3 class="font-extrabold text-sauge-900 text-sm mt-0.5">${f.name}</h3>
+                            </div>
+                            ${statusBadge}
+                        </div>
+
+                        <!-- Jauge visuelle de stock -->
+                        <div>
+                            <div class="w-full h-2.5 bg-sable-100 rounded-full overflow-hidden">
+                                <div class="h-full ${barColor} rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                            </div>
+                            <div class="flex justify-between text-[11px] text-sauge-600 mt-1.5">
+                                <span>Acheté le <strong>${formatDateFR(f.lastPurchase)}</strong></span>
+                                <span>Fin est. <strong>${formatDateFR(endDate)}</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 pt-0.5">
+                            <button onclick="markFeedRepurchasedToday('${f.id}')" class="btn-tap flex-1 py-2.5 px-3 rounded-2xl bg-terracotta-50 hover:bg-terracotta-100 text-terracotta-800 font-bold text-xs flex items-center justify-center gap-1.5 border border-terracotta-200">
+                                <i class="ph-bold ph-shopping-bag text-terracotta-600 text-sm"></i> Marquer racheté aujourd'hui
+                            </button>
+                            <button onclick="openFeedModal('${f.id}')" class="btn-tap py-2.5 px-3.5 rounded-2xl bg-sable-100 text-sauge-700 font-bold text-xs" title="Modifier / Historique">
+                                <i class="ph-bold ph-pencil-simple"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const navFeedBadge = document.getElementById('nav-feed-badge');
+            if (hasLowStock) navFeedBadge.classList.remove('hidden');
+            else navFeedBadge.classList.add('hidden');
+        }
+
+        function openFeedModal(id = null) {
+            const modal = document.getElementById('modal-feed');
+            const deleteBtn = document.getElementById('btn-delete-feed');
+            const historyBox = document.getElementById('feed-history-box');
+            const historyList = document.getElementById('feed-history-list');
+
+            if (id) {
+                const f = appState.feed.find(x => x.id === id);
+                if (!f) return;
+                document.getElementById('modal-feed-title').textContent = 'Modifier la référence';
+                document.getElementById('feed-id').value = f.id;
+                document.getElementById('feed-name').value = f.name;
+                document.getElementById('feed-brand').value = f.brand || '';
+                document.getElementById('feed-packaging').value = f.packaging;
+                document.getElementById('feed-last-purchase').value = f.lastPurchase;
+                document.getElementById('feed-duration').value = f.durationDays;
+                document.getElementById('feed-qty').value = f.qty || 1;
+                document.getElementById('feed-price').value = f.price || '';
+                deleteBtn.classList.remove('hidden');
+
+                if (f.history && f.history.length > 0) {
+                    historyBox.classList.remove('hidden');
+                    historyList.innerHTML = f.history.map(h => `
+                        <li class="flex justify-between">
+                            <span>• ${formatDateFR(h.date)} (${h.qty || 1} unité${(h.qty || 1) > 1 ? 's' : ''})</span>
+                            <span>${h.price ? h.price + ' €' : ''}</span>
+                        </li>
+                    `).join('');
+                } else {
+                    historyBox.classList.add('hidden');
+                }
+            } else {
+                document.getElementById('modal-feed-title').textContent = 'Nouvelle référence';
+                document.getElementById('form-feed').reset();
+                document.getElementById('feed-id').value = '';
+                document.getElementById('feed-last-purchase').value = getTodayStr();
+                document.getElementById('feed-duration').value = 30;
+                document.getElementById('feed-qty').value = 1;
+                deleteBtn.classList.add('hidden');
+                historyBox.classList.add('hidden');
+            }
+
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            modal.classList.remove('hidden');
+        }
+
+        function saveFeedItem(e) {
+            e.preventDefault();
+            const id = document.getElementById('feed-id').value;
+            const purchaseDate = document.getElementById('feed-last-purchase').value;
+            const qty = parseInt(document.getElementById('feed-qty').value, 10) || 1;
+            const priceVal = document.getElementById('feed-price').value;
+            const price = priceVal ? parseFloat(priceVal) : null;
+
+            if (id) {
+                const idx = appState.feed.findIndex(x => x.id === id);
+                if (idx !== -1) {
+                    const existing = appState.feed[idx];
+                    const updatedHistory = existing.history ? [...existing.history] : [];
+                    if (existing.lastPurchase !== purchaseDate) {
+                        updatedHistory.unshift({ date: purchaseDate, qty, price });
+                    }
+                    appState.feed[idx] = {
+                        ...existing,
+                        name: document.getElementById('feed-name').value.trim(),
+                        brand: document.getElementById('feed-brand').value.trim(),
+                        packaging: document.getElementById('feed-packaging').value.trim(),
+                        lastPurchase: purchaseDate,
+                        durationDays: parseInt(document.getElementById('feed-duration').value, 10) || 30,
+                        qty,
+                        price,
+                        history: updatedHistory
+                    };
+                }
+            } else {
+                appState.feed.push({
+                    id: 'f_' + Date.now(),
+                    name: document.getElementById('feed-name').value.trim(),
+                    brand: document.getElementById('feed-brand').value.trim(),
+                    packaging: document.getElementById('feed-packaging').value.trim(),
+                    lastPurchase: purchaseDate,
+                    durationDays: parseInt(document.getElementById('feed-duration').value, 10) || 30,
+                    qty,
+                    price,
+                    history: [{ date: purchaseDate, qty, price }]
+                });
+            }
+
+            saveState();
+            closeAllModals();
+            renderAll();
+            showToast('Référence alimentaire enregistrée', 'success');
+        }
+
+        function markFeedRepurchasedToday(id) {
+            const idx = appState.feed.findIndex(x => x.id === id);
+            if (idx === -1) return;
+            const today = getTodayStr();
+            const item = appState.feed[idx];
+            item.lastPurchase = today;
+            if (!item.history) item.history = [];
+            item.history.unshift({ date: today, qty: item.qty || 1, price: item.price || null });
+
+            saveState();
+            renderAll();
+            showToast(`Rachat enregistré aujourd'hui pour ${item.name}`, 'success');
+        }
+
+        function deleteFeedItem() {
+            const id = document.getElementById('feed-id').value;
+            appState.feed = appState.feed.filter(x => x.id !== id);
+            saveState();
+            closeAllModals();
+            renderAll();
+            showToast('Référence supprimée', 'info');
+        }
+
+        // ==================== EXPORT / IMPORT JSON ====================
+        function exportDataJSON() {
+            const dataStr = JSON.stringify(appState, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `equicare_sauvegarde_${getTodayStr()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Fichier de sauvegarde téléchargé', 'success');
+        }
+
+        function importDataJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.horses && imported.health && imported.feed) {
+                        appState = imported;
+                        saveState();
+                        closeAllModals();
+                        renderAll();
+                        fetchWeather(false);
+                        showToast('Données restaurées avec succès !', 'success');
+                    } else {
+                        showToast('Format de fichier JSON invalide.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Erreur de lecture du fichier JSON.', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ==================== MODALES & TOASTS ====================
+        function openCityModal() {
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('modal-city').classList.remove('hidden');
+        }
+
+        function openBackupModal() {
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('modal-backup').classList.remove('hidden');
+        }
+
+        function openHelpModal() {
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('modal-help').classList.remove('hidden');
+        }
+
+        function closeAllModals() {
+            document.getElementById('modal-backdrop').classList.add('hidden');
+            document.querySelectorAll('[id^="modal-"]').forEach(m => {
+                if (m.id !== 'modal-backdrop') m.classList.add('hidden');
+            });
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-sauge-800 text-white border-sauge-700',
+                error: 'bg-red-700 text-white border-red-600',
+                info: 'bg-sauge-900 text-white border-sauge-800'
+            };
+
+            toast.className = `px-4 py-3 rounded-2xl shadow-lg border text-xs font-bold flex items-center justify-between gap-2 animate-fade-in ${colors[type] || colors.info}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ==================== INITIALISATION ====================
+        function renderAll() {
+            // Synchroniser seuils météo dans les champs
+            document.getElementById('threshold-cold').value = appState.thresholds.cold;
+            document.getElementById('threshold-uv').value = appState.thresholds.uv ?? 6;
+            document.getElementById('threshold-wind').value = appState.thresholds.wind;
+            document.getElementById('threshold-rain').value = appState.thresholds.rain;
+
+            renderSmartCareWidget();
+            renderDashboard();
+            renderHealth();
+            renderFeed();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            renderAll();
+            fetchWeather(false);
+
+            if ('Notification' in window && Notification.permission === 'granted') {
+                document.getElementById('notif-dot').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
+```
