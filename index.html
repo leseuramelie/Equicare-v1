@@ -30,7 +30,10 @@
       --shadow: 0 4px 18px rgba(29, 36, 31, 0.06);
     }
 
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     body {
       margin: 0;
@@ -38,7 +41,7 @@
       background: var(--bg);
       color: var(--ink);
       line-height: 1.45;
-      padding-bottom: 86px;
+      padding-bottom: 92px;
     }
 
     header {
@@ -117,7 +120,7 @@
       gap: 14px;
     }
 
-    /* Widget d'alertes strict : vide et masqué si aucune alerte */
+    /* Strict alert widget: empty and completely hidden when no alert matches the active tab */
     #smart-alert-widget:empty {
       display: none;
     }
@@ -125,18 +128,30 @@
     .smart-widget {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .alert-card {
       border-radius: var(--radius);
-      padding: 13px 14px;
+      padding: 12px 14px;
       border: 1px solid transparent;
       box-shadow: var(--shadow);
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       gap: 10px;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+      text-align: left;
+      width: 100%;
+    }
+
+    .alert-card:hover {
+      filter: brightness(0.985);
+    }
+
+    .alert-card:active {
+      transform: scale(0.985);
     }
 
     .alert-blanket {
@@ -169,15 +184,117 @@
       color: #4c1d95;
     }
 
+    /* Individual practitioner alert button style */
+    .provider-alert-btn {
+      background: #faf5ff;
+      border: 1px solid #c4b5fd;
+      border-left: 4px solid #6d28d9;
+      color: #3b0764;
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: transform 0.14s ease, background-color 0.14s ease;
+    }
+
+    .provider-alert-btn.urgent {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      border-left-color: #b91c1c;
+      color: #7f1d1d;
+    }
+
+    .provider-alert-btn:active {
+      transform: scale(0.985);
+    }
+
+    .provider-alert-main {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .provider-alert-icon {
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+
+    .provider-alert-text {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .provider-alert-summary {
+      font-weight: 800;
+      font-size: 0.88rem;
+      line-height: 1.25;
+    }
+
+    .provider-alert-meta {
+      font-size: 0.76rem;
+      opacity: 0.88;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .alert-body {
+      flex: 1;
+      min-width: 0;
+    }
+
     .alert-title {
       font-weight: 800;
-      font-size: 0.95rem;
+      font-size: 0.94rem;
       margin-bottom: 2px;
     }
 
     .alert-desc {
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       opacity: 0.95;
+    }
+
+    .alert-link-pill {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 9px;
+      border-radius: 10px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      color: inherit;
+      white-space: nowrap;
+    }
+
+    @keyframes targetPulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(30, 58, 47, 0.45);
+        border-color: var(--primary);
+        background-color: var(--primary-light);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(30, 58, 47, 0);
+        border-color: var(--primary);
+      }
+      100% {
+        box-shadow: var(--shadow);
+      }
+    }
+
+    .highlight-target {
+      animation: targetPulse 1.8s ease-out;
     }
 
     .card {
@@ -194,6 +311,7 @@
       justify-content: space-between;
       gap: 8px;
       margin-bottom: 10px;
+      flex-wrap: wrap;
     }
 
     .card-title {
@@ -255,11 +373,12 @@
       display: flex;
       gap: 8px;
       overflow-x: auto;
-      padding-bottom: 4px;
+      padding: 4px 2px;
+      border-radius: 12px;
     }
 
     .hour-pill {
-      min-width: 74px;
+      min-width: 78px;
       background: var(--surface-soft);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -312,6 +431,47 @@
       padding: 6px 10px;
       font-size: 0.78rem;
       border-radius: 9px;
+    }
+
+    /* 4 sub-tabs inside Santé */
+    .health-subnav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 5px;
+      margin-bottom: 14px;
+    }
+
+    .health-subbtn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.76rem;
+      padding: 9px 4px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .health-subbtn span:last-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .health-subbtn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(30, 58, 47, 0.2);
     }
 
     .horse-tabs {
@@ -504,24 +664,24 @@
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      padding: 6px 2px calc(6px + env(safe-area-inset-bottom));
-      gap: 2px;
+      grid-template-columns: repeat(3, 1fr);
+      padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+      gap: 6px;
     }
 
     .nav-btn {
       border: none;
       background: transparent;
       color: var(--muted);
-      font-size: 0.66rem;
+      font-size: 0.76rem;
       font-weight: 700;
-      padding: 6px 2px;
-      border-radius: 10px;
+      padding: 7px 6px;
+      border-radius: 12px;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 3px;
       min-width: 0;
     }
 
@@ -538,7 +698,7 @@
     }
 
     .nav-icon {
-      font-size: 1.08rem;
+      font-size: 1.15rem;
     }
 
     .modal-backdrop {
@@ -587,12 +747,12 @@
   </header>
 
   <main>
-    <!-- Widget strict : affiche uniquement les alertes actives ; vide et masqué sinon -->
+    <!-- Strict alert widget: hidden/empty when no alert applies to the current tab -->
     <div id="smart-alert-widget" class="smart-widget" aria-live="polite"></div>
 
-    <!-- ONGLET 1 : ACCUEIL & MÉTÉO -->
+    <!-- TAB 1: ALERTES & MÉTÉO -->
     <section id="tab-home" class="tab-panel">
-      <div class="card">
+      <div class="card" id="weather-card">
         <div class="card-header">
           <h2 class="card-title">Météo & Conditions</h2>
           <span class="muted" id="weather-updated">Chargement...</span>
@@ -628,7 +788,7 @@
             <div class="metric-val" id="m-food">--</div>
           </div>
           <div class="metric-box">
-            <div class="metric-label">Soins à faire</div>
+            <div class="metric-label">Soins & RDV à prévoir</div>
             <div class="metric-val" id="m-care">--</div>
           </div>
           <div class="metric-box">
@@ -675,7 +835,7 @@
       </div>
     </section>
 
-    <!-- ONGLET 2 : ALIMENTS, SACS/BIDONS ACHETÉS & OUVERTS -->
+    <!-- TAB 2: ALIMENTS -->
     <section id="tab-foods" class="tab-panel hidden">
       <div class="card">
         <div class="card-header">
@@ -709,68 +869,79 @@
       </div>
     </section>
 
-    <!-- ONGLET 3 : SUIVI SANTÉ (INTERVENANTS) -->
+    <!-- TAB 3: SANTÉ (4 sub-sections: Intervenant, Vaccin, Vermifuge, Pharmacie) -->
     <section id="tab-health" class="tab-panel hidden">
       <div class="card">
         <div class="card-header">
           <div>
-            <h2 class="card-title">Suivi santé & Intervenants</h2>
-            <div class="muted">Vétérinaire, Maréchal, Ostéopathe, Dentiste : programmez les visites régulières et enregistrez chaque venue avec ses détails.</div>
-          </div>
-        </div>
-        <div class="horse-tabs" id="health-horse-tabs"></div>
-        <div id="health-practitioners-list"></div>
-      </div>
-    </section>
-
-    <!-- ONGLET 4 : VERMIFUGES -->
-    <section id="tab-deworm" class="tab-panel hidden">
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">Vermifuges</h2>
-        </div>
-        <div class="horse-tabs" id="deworm-horse-tabs"></div>
-        <div id="deworm-list"></div>
-      </div>
-    </section>
-
-    <!-- ONGLET 5 : VACCINS -->
-    <section id="tab-vaccines" class="tab-panel hidden">
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">Vaccins</h2>
-        </div>
-        <div class="horse-tabs" id="vaccines-horse-tabs"></div>
-        <div id="vaccines-list"></div>
-      </div>
-    </section>
-
-    <!-- ONGLET 6 : PHARMACIE -->
-    <section id="tab-pharmacy" class="tab-panel hidden">
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">Pharmacie & Dates de péremption</h2>
-            <div class="muted">Alerte automatique <span id="pharma-alert-days-label">30</span> jours (1 mois) avant la date de péremption.</div>
-          </div>
-          <button class="btn btn-primary btn-sm" id="btn-toggle-add-pharma">+ Nouveau produit</button>
-        </div>
-
-        <div id="add-pharma-form" class="item-card hidden">
-          <div class="item-name" style="margin-bottom:8px;">Ajouter un produit en pharmacie</div>
-          <div class="form-row">
-            <input type="text" id="new-pharma-name" placeholder="Produit (ex. Bétadine, Compresses, Pansement...)" style="flex:1;min-width:190px;" />
-            <input type="text" id="new-pharma-qty" placeholder="Quantité / format (ex. 1 flacon, 10)" style="width:155px;" />
-            <input type="date" id="new-pharma-expiry" />
-          </div>
-          <div class="form-row">
-            <input type="text" id="new-pharma-notes" placeholder="Notes / usage (optionnel)" style="flex:1;min-width:180px;" />
-            <button class="btn btn-primary btn-sm" id="btn-create-pharma">Ajouter</button>
-            <button class="btn btn-outline btn-sm" id="btn-cancel-pharma">Annuler</button>
+            <h2 class="card-title">Santé & Suivi vétérinaire</h2>
+            <div class="muted">Intervenants réguliers, vaccins, vermifuges et pharmacie.</div>
           </div>
         </div>
 
-        <div id="pharmacy-list"></div>
+        <div class="health-subnav" role="tablist" aria-label="Sous-parties Santé">
+          <button class="health-subbtn active" data-sub="sub-providers">
+            <span>🧑‍⚕️</span>
+            <span>Intervenant</span>
+          </button>
+          <button class="health-subbtn" data-sub="sub-vaccines">
+            <span>🩺</span>
+            <span>Vaccin</span>
+          </button>
+          <button class="health-subbtn" data-sub="sub-deworm">
+            <span>💊</span>
+            <span>Vermifuge</span>
+          </button>
+          <button class="health-subbtn" data-sub="sub-pharmacy">
+            <span>🩹</span>
+            <span>Pharmacie</span>
+          </button>
+        </div>
+
+        <!-- SUB-SECTION 1: INTERVENANT -->
+        <div id="sub-providers" class="health-subpanel">
+          <div class="muted" style="margin-bottom:10px;">Vétérinaire, Maréchal, Ostéopathe, Dentiste : programmez les visites régulières et enregistrez chaque venue.</div>
+          <div class="horse-tabs" id="health-horse-tabs"></div>
+          <div id="health-practitioners-list"></div>
+        </div>
+
+        <!-- SUB-SECTION 2: VACCIN -->
+        <div id="sub-vaccines" class="health-subpanel hidden">
+          <div class="muted" style="margin-bottom:10px;">Suivi vaccinal par cheval (alerte 30 jours avant l'échéance).</div>
+          <div class="horse-tabs" id="vaccines-horse-tabs"></div>
+          <div id="vaccines-list"></div>
+        </div>
+
+        <!-- SUB-SECTION 3: VERMIFUGE -->
+        <div id="sub-deworm" class="health-subpanel hidden">
+          <div class="muted" style="margin-bottom:10px;">Suivi des vermifuges par cheval (alerte 7 jours avant l'échéance).</div>
+          <div class="horse-tabs" id="deworm-horse-tabs"></div>
+          <div id="deworm-list"></div>
+        </div>
+
+        <!-- SUB-SECTION 4: PHARMACIE -->
+        <div id="sub-pharmacy" class="health-subpanel hidden">
+          <div class="card-header" style="margin-top:4px;">
+            <div class="muted">Alerte automatique <span id="pharma-alert-days-label">30</span> jours avant la date de péremption.</div>
+            <button class="btn btn-primary btn-sm" id="btn-toggle-add-pharma">+ Nouveau produit</button>
+          </div>
+
+          <div id="add-pharma-form" class="item-card hidden">
+            <div class="item-name" style="margin-bottom:8px;">Ajouter un produit en pharmacie</div>
+            <div class="form-row">
+              <input type="text" id="new-pharma-name" placeholder="Produit (ex. Bétadine, Compresses, Pansement...)" style="flex:1;min-width:190px;" />
+              <input type="text" id="new-pharma-qty" placeholder="Quantité / format (ex. 1 flacon, 10)" style="width:155px;" />
+              <input type="date" id="new-pharma-expiry" />
+            </div>
+            <div class="form-row">
+              <input type="text" id="new-pharma-notes" placeholder="Notes / usage (optionnel)" style="flex:1;min-width:180px;" />
+              <button class="btn btn-primary btn-sm" id="btn-create-pharma">Ajouter</button>
+              <button class="btn btn-outline btn-sm" id="btn-cancel-pharma">Annuler</button>
+            </div>
+          </div>
+
+          <div id="pharmacy-list"></div>
+        </div>
       </div>
     </section>
   </main>
@@ -778,31 +949,19 @@
   <nav class="bottom-nav">
     <button class="nav-btn active" data-tab="tab-home">
       <span class="nav-icon">🌤️</span>
-      <span>Alertes</span>
+      <span>Alertes & Météo</span>
     </button>
     <button class="nav-btn" data-tab="tab-foods">
       <span class="nav-icon">🌾</span>
       <span>Aliments</span>
     </button>
     <button class="nav-btn" data-tab="tab-health">
-      <span class="nav-icon">🐴</span>
-      <span>Santé</span>
-    </button>
-    <button class="nav-btn" data-tab="tab-deworm">
-      <span class="nav-icon">💊</span>
-      <span>Vermifuges</span>
-    </button>
-    <button class="nav-btn" data-tab="tab-vaccines">
       <span class="nav-icon">🩺</span>
-      <span>Vaccins</span>
-    </button>
-    <button class="nav-btn" data-tab="tab-pharmacy">
-      <span class="nav-icon">🩹</span>
-      <span>Pharmacie</span>
+      <span>Santé</span>
     </button>
   </nav>
 
-  <!-- Modale d'achat -->
+  <!-- Purchase Modal -->
   <div class="modal-backdrop" id="buy-modal">
     <div class="modal-box">
       <h3 style="margin-top:0;" id="buy-modal-title">Nouvel achat</h3>
@@ -825,7 +984,7 @@
     </div>
   </div>
 
-  <!-- Modale Ouverture d'un nouveau sac / bidon -->
+  <!-- Open Bag/Container Modal -->
   <div class="modal-backdrop" id="open-bag-modal">
     <div class="modal-box">
       <h3 style="margin-top:0;" id="open-bag-modal-title">Nouvelle ouverture</h3>
@@ -845,7 +1004,7 @@
     </div>
   </div>
 
-  <!-- Modale Ajout / Modification d'une venue d'intervenant -->
+  <!-- Practitioner Visit Modal -->
   <div class="modal-backdrop" id="visit-modal">
     <div class="modal-box">
       <h3 style="margin-top:0;" id="visit-modal-title">Ajouter une venue</h3>
@@ -870,21 +1029,19 @@
     </div>
   </div>
 
-  <!-- Modale Infos -->
+  <!-- Info Modal -->
   <div class="modal-backdrop" id="info-modal">
     <div class="modal-box">
       <h3 style="margin-top:0;">À propos d'ÉquiCare</h3>
       <p style="font-size:0.88rem;">
-        <strong>Widget d'alertes strict :</strong> reste masqué/vide si aucune alerte n'est active, et affiche uniquement les alertes déclenchées :
+        <strong>Widget d'alertes contextuel & cliquable :</strong> reste masqué/vide si aucune alerte correspondant à l'onglet en cours n'est active.
       </p>
       <ul style="font-size:0.85rem;padding-left:18px;">
-        <li><strong>Journée (10h–21h, seuil 5°C) :</strong> <em>couverture légère</em> entre 0°C et 5°C, <em>couverture moyenne</em> entre -5°C et 0°C, <em>grosse couverture</em> sous -5°C.</li>
+        <li><strong>Journée (10h–21h, seuil 5°C) :</strong> <em>couverture légère</em> entre 0°C et 5°C, <em>couverture moyenne</em> entre 0°C et -5°C, <em>grosse couverture</em> sous -5°C.</li>
         <li><strong>Nuit/matin (21h–10h) :</strong> alerte couverture si température prévue &lt; seuil (5°C par défaut).</li>
         <li><strong>Masque UV :</strong> indice UV maximal prévu ≥ seuil (6 par défaut).</li>
         <li><strong>Rachat aliments :</strong> stock restant estimé ≤ seuil de jours ou ≤ 20%.</li>
-        <li><strong>Vermifuges :</strong> alerte ≤ 7 jours avant l'échéance (ou en retard).</li>
-        <li><strong>Vaccins &amp; Pharmacie :</strong> alerte ≤ 30 jours (1 mois) avant l'échéance ou la date de péremption (ou dépassée).</li>
-        <li><strong>Visites régulières (Vétérinaire, Maréchal, Ostéopathe, Dentiste) :</strong> rappel ≤ 15 jours avant la prochaine visite programmée pour prendre rendez-vous.</li>
+        <li><strong>Intervenants :</strong> un bouton d'alerte dédié par intervenant concerné (≤ 15 jours avant visite ou en retard) pour accéder directement à sa fiche.</li>
       </ul>
       <div style="text-align:right;margin-top:12px;">
         <button class="btn btn-primary btn-sm" id="btn-close-info">Fermer</button>
@@ -893,7 +1050,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "equicare_state_v7";
+    const STORAGE_KEY = "equicare_state_v6";
     const LAT = 43.4536;
     const LON = 1.3661;
 
@@ -919,6 +1076,23 @@
       const a = new Date(todayISO(0) + "T12:00:00");
       const b = new Date(targetISO + "T12:00:00");
       return Math.round((b - a) / 86400000);
+    }
+
+    function shortHorseLabel(fullName) {
+      if (!fullName) return "";
+      const clean = fullName.replace(/\s*\([^)]*\)/g, "").trim();
+      if (/trotteur/i.test(clean)) return "Trotteur";
+      if (/arabe/i.test(clean)) return "Arabe";
+      return clean;
+    }
+
+    function shortPractitionerLabel(pracObj) {
+      const raw = (pracObj.label || "").trim();
+      if (/maréchal/i.test(raw)) return "Maréchal";
+      if (/ostéo/i.test(raw)) return "Ostéopathe";
+      if (/dent/i.test(raw)) return "Dentiste";
+      if (/vétérin/i.test(raw)) return "Vétérinaire";
+      return raw || "Intervenant";
     }
 
     function isOilFood(food) {
@@ -1200,12 +1374,7 @@
 
     function loadState() {
       try {
-        const raw =
-          localStorage.getItem(STORAGE_KEY) ||
-          localStorage.getItem("equicare_state_v6") ||
-          localStorage.getItem("equicare_state_v5") ||
-          localStorage.getItem("equicare_state_v4") ||
-          localStorage.getItem("equicare_state_v3");
+        const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return structuredClone(DEFAULT_STATE);
         const parsed = JSON.parse(raw);
         const horses = Array.isArray(parsed.horses) && parsed.horses.length ? parsed.horses : structuredClone(DEFAULT_STATE.horses);
@@ -1225,6 +1394,8 @@
 
     let state = loadState();
     let weatherData = null;
+    let activeTab = "tab-home";
+    let activeHealthSubTab = "sub-providers";
     let activeDewormHorse = state.horses[0].id;
     let activeVaccineHorse = state.horses[0].id;
     let activeHealthHorse = state.horses[0].id;
@@ -1234,6 +1405,19 @@
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function scrollToAndHighlight(elementId) {
+      if (!elementId) return;
+      requestAnimationFrame(() => {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.remove("highlight-target");
+        void el.offsetWidth;
+        el.classList.add("highlight-target");
+        setTimeout(() => el.classList.remove("highlight-target"), 1900);
+      });
     }
 
     function computeFoodMetrics(food) {
@@ -1455,7 +1639,7 @@
           const nextDate = addDaysISO(item.lastDate, item.intervalDays);
           const daysLeft = signedDaysFromToday(nextDate);
           if (daysLeft <= th) {
-            out.push({ horseName: h.name, label: item.label, nextDate, daysLeft });
+            out.push({ itemId: item.id, horseId: h.id, horseName: h.name, label: item.label, nextDate, daysLeft });
           }
         }
       }
@@ -1471,7 +1655,7 @@
           const nextDate = addDaysISO(item.lastDate, item.intervalDays);
           const daysLeft = signedDaysFromToday(nextDate);
           if (daysLeft <= th) {
-            out.push({ horseName: h.name, label: item.label, nextDate, daysLeft });
+            out.push({ itemId: item.id, horseId: h.id, horseName: h.name, label: item.label, nextDate, daysLeft });
           }
         }
       }
@@ -1496,6 +1680,7 @@
       return { lastVisit, nextDate, daysLeft, intervalWeeks };
     }
 
+    /* Returns one alert record per practitioner & horse with an active reminder (<= visitAlertDays or overdue) */
     function getUpcomingPractitionerReminders() {
       const th = Number(state.config.visitAlertDays ?? 15);
       const reminders = [];
@@ -1504,20 +1689,70 @@
         for (const [key, prac] of Object.entries(horseMap)) {
           const info = getPractitionerNextVisitInfo(prac);
           if (info.daysLeft <= th) {
+            const shortPrac = shortPractitionerLabel(prac);
+            const shortHorse = shortHorseLabel(h.name);
+            const timingBrief = info.daysLeft < 0
+              ? `en retard de ${Math.abs(info.daysLeft)} j`
+              : (info.daysLeft === 0 ? `aujourd'hui` : `RDV dans ${info.daysLeft} j`);
+
             reminders.push({
               horseId: h.id,
               horseName: h.name,
+              shortHorse,
               practitionerKey: key,
               practitionerLabel: prac.label,
+              shortPrac,
               icon: prac.icon || "🧑‍⚕️",
               nextDate: info.nextDate,
               daysLeft: info.daysLeft,
-              intervalWeeks: info.intervalWeeks
+              intervalWeeks: info.intervalWeeks,
+              briefMessage: `${shortPrac} — ${shortHorse} : ${timingBrief}`,
+              metaMessage: `Prendre RDV • Prévu le ${formatDateFR(info.nextDate)} (toutes les ${info.intervalWeeks} sem.)`
             });
           }
         }
       }
       return reminders.sort((a, b) => a.daysLeft - b.daysLeft);
+    }
+
+    /* Direct navigation handlers on alert click */
+    function goToWeatherAlert() {
+      if (activeTab !== "tab-home") {
+        switchTab("tab-home", true);
+      }
+      scrollToAndHighlight("hourly-strip");
+    }
+
+    function goToFoodAlert(foodId) {
+      if (activeTab !== "tab-foods") {
+        switchTab("tab-foods", true);
+      }
+      scrollToAndHighlight(foodId ? `food-card-${escapeAttr(foodId)}` : "foods-list");
+    }
+
+    function goToDewormAlert(horseId, itemId) {
+      if (horseId) {
+        activeDewormHorse = horseId;
+        renderCareList("dewormings", activeDewormHorse, "deworm-list", "deworm-horse-tabs");
+      }
+      openHealthSub("sub-deworm", null, itemId ? `care-card-${escapeAttr(itemId)}` : "deworm-list");
+    }
+
+    function goToVaccineAlert(horseId, itemId) {
+      if (horseId) {
+        activeVaccineHorse = horseId;
+        renderCareList("vaccines", activeVaccineHorse, "vaccines-list", "vaccines-horse-tabs");
+      }
+      openHealthSub("sub-vaccines", null, itemId ? `care-card-${escapeAttr(itemId)}` : "vaccines-list");
+    }
+
+    function goToPharmacyAlert(pharmaId) {
+      renderPharmacy();
+      openHealthSub("sub-pharmacy", null, pharmaId ? `pharma-card-${escapeAttr(pharmaId)}` : "pharmacy-list");
+    }
+
+    function goToPractitionerAlert(horseId, pracKey) {
+      openHealthSub("sub-providers", horseId, pracKey ? `sub-health-${escapeAttr(pracKey)}` : "health-practitioners-list");
     }
 
     function renderAlertsAndWeather() {
@@ -1532,127 +1767,146 @@
       const uvInfo = weatherData ? checkMaxUV(weatherData.daily) : { triggered: false, maxUv: 0 };
       const foodsToReorder = state.foods
         .map(f => ({ food: f, m: computeFoodMetrics(f) }))
-        .filter(x => x.m.needsReorder);
+        .filter(x => x.m.needsReorder)
+        .sort((a, b) => a.m.estimatedDaysLeft - b.m.estimatedDaysLeft);
       const dueDeworms = getDueDewormings();
       const dueVaccines = getDueVaccines();
       const expiringPharma = getExpiringPharmacy();
       const upcomingVisits = getUpcomingPractitionerReminders();
 
-      const alertCards = [];
+      const weatherCards = [];
+      const foodCards = [];
+      const healthCards = [];
 
       if (dayInfo.triggered) {
-        alertCards.push(`
-          <div class="alert-card alert-day-blanket">
-            <div>
+        weatherCards.push(`
+          <button type="button" class="alert-card alert-day-blanket" onclick="goToWeatherAlert()">
+            <div class="alert-body">
               <div class="alert-title">☀️ Journée (10h–21h) : ${dayInfo.blanketLabel}</div>
               <div class="alert-desc">Température prévue sous ${dayTh}°C en journée (min ${dayInfo.minTemp.toFixed(1)}°C : ${dayInfo.slots.slice(0, 4).join(", ")}).</div>
             </div>
-          </div>
+            <span class="alert-link-pill">Voir météo →</span>
+          </button>
         `);
       }
 
       if (coldInfo.triggered) {
-        alertCards.push(`
-          <div class="alert-card alert-blanket">
-            <div>
+        weatherCards.push(`
+          <button type="button" class="alert-card alert-blanket" onclick="goToWeatherAlert()">
+            <div class="alert-body">
               <div class="alert-title">🌙 Couverture conseillée (21h–10h)</div>
               <div class="alert-desc">Température prévue sous ${coldTh}°C entre 21h et 10h (min ${coldInfo.minTemp.toFixed(1)}°C : ${coldInfo.slots.slice(0, 4).join(", ")}).</div>
             </div>
-          </div>
+            <span class="alert-link-pill">Voir météo →</span>
+          </button>
         `);
       }
 
       if (uvInfo.triggered) {
-        alertCards.push(`
-          <div class="alert-card alert-uv">
-            <div>
+        weatherCards.push(`
+          <button type="button" class="alert-card alert-uv" onclick="goToWeatherAlert()">
+            <div class="alert-body">
               <div class="alert-title">🕶️ Masque anti-UV conseillé</div>
               <div class="alert-desc">Indice UV maximal prévu de ${uvInfo.maxUv.toFixed(1)} (seuil ≥ ${uvTh}).</div>
             </div>
-          </div>
+            <span class="alert-link-pill">Voir météo →</span>
+          </button>
         `);
       }
 
       if (foodsToReorder.length > 0) {
+        const firstFood = foodsToReorder[0].food;
         const names = foodsToReorder.map(x => `${x.food.name} (${x.m.estimatedDaysLeft}j)`).join(", ");
-        alertCards.push(`
-          <div class="alert-card alert-food">
-            <div>
+        foodCards.push(`
+          <button type="button" class="alert-card alert-food" onclick="goToFoodAlert('${escapeAttr(firstFood.id)}')">
+            <div class="alert-body">
               <div class="alert-title">🌾 Racheter des aliments</div>
               <div class="alert-desc">Stock bas à prévoir : ${escapeHtml(names)}.</div>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="switchTab('tab-foods')">Voir</button>
-          </div>
+            <span class="alert-link-pill">Gérer les stocks →</span>
+          </button>
         `);
       }
 
       if (dueDeworms.length > 0) {
+        const firstDeworm = dueDeworms[0];
         const details = dueDeworms.map(d => {
           const timing = d.daysLeft < 0 ? `en retard de ${Math.abs(d.daysLeft)} j` : `dans ${d.daysLeft} j (${formatDateFR(d.nextDate)})`;
           return `${d.horseName} — ${d.label} (${timing})`;
         }).join(" ; ");
-        alertCards.push(`
-          <div class="alert-card alert-care">
-            <div>
+        healthCards.push(`
+          <button type="button" class="alert-card alert-care" onclick="goToDewormAlert('${escapeAttr(firstDeworm.horseId)}', '${escapeAttr(firstDeworm.itemId)}')">
+            <div class="alert-body">
               <div class="alert-title">💊 Vermifuge à faire</div>
               <div class="alert-desc">${escapeHtml(details)}</div>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="switchTab('tab-deworm')">Voir</button>
-          </div>
+            <span class="alert-link-pill">Voir vermifuge →</span>
+          </button>
         `);
       }
 
       if (dueVaccines.length > 0) {
+        const firstVaccine = dueVaccines[0];
         const details = dueVaccines.map(v => {
           const timing = v.daysLeft < 0 ? `en retard de ${Math.abs(v.daysLeft)} j` : `dans ${v.daysLeft} j (${formatDateFR(v.nextDate)})`;
           return `${v.horseName} — ${v.label} (${timing})`;
         }).join(" ; ");
-        alertCards.push(`
-          <div class="alert-card alert-care">
-            <div>
+        healthCards.push(`
+          <button type="button" class="alert-card alert-care" onclick="goToVaccineAlert('${escapeAttr(firstVaccine.horseId)}', '${escapeAttr(firstVaccine.itemId)}')">
+            <div class="alert-body">
               <div class="alert-title">🩺 Vaccin à prévoir</div>
               <div class="alert-desc">${escapeHtml(details)}</div>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="switchTab('tab-vaccines')">Voir</button>
-          </div>
+            <span class="alert-link-pill">Voir vaccin →</span>
+          </button>
         `);
       }
 
       if (expiringPharma.length > 0) {
+        const firstPharma = expiringPharma[0];
         const details = expiringPharma.map(p => {
           const timing = p.daysLeft < 0 ? `périmé depuis ${Math.abs(p.daysLeft)} j` : `périme dans ${p.daysLeft} j (${formatDateFR(p.expiryDate)})`;
           return `${p.name} (${timing})`;
         }).join(" ; ");
-        alertCards.push(`
-          <div class="alert-card alert-food">
-            <div>
+        healthCards.push(`
+          <button type="button" class="alert-card alert-food" onclick="goToPharmacyAlert('${escapeAttr(firstPharma.id)}')">
+            <div class="alert-body">
               <div class="alert-title">🩹 Péremption pharmacie (≤ ${pharmaTh} j)</div>
               <div class="alert-desc">${escapeHtml(details)}</div>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="switchTab('tab-pharmacy')">Voir</button>
-          </div>
+            <span class="alert-link-pill">Voir pharmacie →</span>
+          </button>
         `);
       }
 
-      if (upcomingVisits.length > 0) {
-        const details = upcomingVisits.map(r => {
-          const timing = r.daysLeft < 0
-            ? `échéance dépassée de ${Math.abs(r.daysLeft)} j (${formatDateFR(r.nextDate)})`
-            : `visite prévue dans ${r.daysLeft} j (${formatDateFR(r.nextDate)}, toutes les ${r.intervalWeeks} sem.)`;
-          return `Prendre RDV avec ${r.practitionerLabel} pour ${r.horseName} — ${timing}`;
-        }).join(" ; ");
-        alertCards.push(`
-          <div class="alert-card alert-care">
-            <div>
-              <div class="alert-title">📅 Prendre rendez-vous intervenant</div>
-              <div class="alert-desc">${escapeHtml(details)}</div>
+      /* Individual clickable alert button for each practitioner with an active reminder */
+      for (const r of upcomingVisits) {
+        const urgentClass = r.daysLeft < 0 ? "urgent" : "";
+        healthCards.push(`
+          <button type="button" class="provider-alert-btn ${urgentClass}" onclick="goToPractitionerAlert('${escapeAttr(r.horseId)}', '${escapeAttr(r.practitionerKey)}')">
+            <div class="provider-alert-main">
+              <span class="provider-alert-icon">${r.icon}</span>
+              <div class="provider-alert-text">
+                <div class="provider-alert-summary">${escapeHtml(r.briefMessage)}</div>
+                <div class="provider-alert-meta">${escapeHtml(r.metaMessage)}</div>
+              </div>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="switchTab('tab-health')">Voir</button>
-          </div>
+            <span class="alert-link-pill">Voir fiche →</span>
+          </button>
         `);
       }
 
-      widget.innerHTML = alertCards.join("");
+      // Context filtering by active tab
+      let visibleAlertCards = [];
+      if (activeTab === "tab-home") {
+        visibleAlertCards = [...weatherCards, ...foodCards, ...healthCards];
+      } else if (activeTab === "tab-foods") {
+        visibleAlertCards = [...foodCards];
+      } else if (activeTab === "tab-health") {
+        visibleAlertCards = [...healthCards];
+      }
+
+      widget.innerHTML = visibleAlertCards.join("");
 
       document.getElementById("lbl-day-th").textContent = dayTh;
       document.getElementById("lbl-cold-th").textContent = coldTh;
@@ -1663,8 +1917,8 @@
       document.getElementById("m-blanket").textContent = coldInfo.triggered ? "Oui (<" + coldTh + "°C)" : "Non";
       document.getElementById("m-uv").textContent = uvInfo.triggered ? "Oui (UV " + uvInfo.maxUv.toFixed(1) + ")" : "Non";
       document.getElementById("m-food").textContent = foodsToReorder.length > 0 ? foodsToReorder.length + " réf." : "OK";
-      const careCount = dueDeworms.length + dueVaccines.length;
-      document.getElementById("m-care").textContent = careCount > 0 ? careCount + " soin(s)" : "OK";
+      const careCount = dueDeworms.length + dueVaccines.length + upcomingVisits.length;
+      document.getElementById("m-care").textContent = careCount > 0 ? careCount + " alerte(s)" : "OK";
       document.getElementById("m-pharma").textContent = expiringPharma.length > 0 ? expiringPharma.length + " prod." : "OK";
 
       if (weatherData && weatherData.current) {
@@ -1748,7 +2002,7 @@
         const rateStep = m.oil ? "10" : "0.05";
 
         return `
-          <div class="item-card">
+          <div class="item-card" id="food-card-${escapeAttr(food.id)}">
             <div class="item-top">
               <div>
                 <div class="item-name">${escapeHtml(food.name)}</div>
@@ -1779,16 +2033,16 @@
             <div class="bag-banner">
               <span>${m.oil ? "Bidon" : "Sac"} ouvert actuel : <strong>${m.currentOpenRemainingQty.toFixed(2)} ${m.unitLabel}</strong> estimés restants</span>
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button class="btn btn-secondary btn-sm" onclick="openBagModal('${food.id}')">${m.oil ? "🛢️ Nouveau bidon ouvert" : "🎒 Nouveau sac ouvert"}</button>
-                <button class="btn btn-primary btn-sm" onclick="openBuyModal('${food.id}')">+ Acheter (${m.containersWord})</button>
+                <button class="btn btn-secondary btn-sm" onclick="openBagModal('${escapeAttr(food.id)}')">${m.oil ? "🛢️ Nouveau bidon ouvert" : "🎒 Nouveau sac ouvert"}</button>
+                <button class="btn btn-primary btn-sm" onclick="openBuyModal('${escapeAttr(food.id)}')">+ Acheter (${m.containersWord})</button>
               </div>
             </div>
 
             <div class="form-row">
               <label class="muted" style="font-size:0.78rem;">${rateInputLabel}
-                <input type="number" step="${rateStep}" min="1" value="${m.avgInputDisplay}" style="width:82px;padding:4px 6px;" onchange="updateFoodDailyEstimate('${food.id}', this.value)" />
+                <input type="number" step="${rateStep}" min="1" value="${m.avgInputDisplay}" style="width:82px;padding:4px 6px;" onchange="updateFoodDailyEstimate('${escapeAttr(food.id)}', this.value)" />
               </label>
-              <button class="btn btn-outline btn-sm" onclick="deleteFood('${food.id}')">Supprimer</button>
+              <button class="btn btn-outline btn-sm" onclick="deleteFood('${escapeAttr(food.id)}')">Supprimer</button>
             </div>
 
             <div class="purchase-log">
@@ -1919,7 +2173,7 @@
     function renderCareList(categoryKey, horseId, containerId, tabsId) {
       const tabsEl = document.getElementById(tabsId);
       tabsEl.innerHTML = state.horses.map(h => `
-        <button class="horse-chip ${h.id === horseId ? "active" : ""}" onclick="selectCareHorse('${categoryKey}', '${h.id}')">
+        <button class="horse-chip ${h.id === horseId ? "active" : ""}" onclick="selectCareHorse('${categoryKey}', '${escapeAttr(h.id)}')">
           ${escapeHtml(h.name)}
         </button>
       `).join("");
@@ -1937,7 +2191,7 @@
         const badgeText = daysLeft < 0 ? `En retard (${Math.abs(daysLeft)} j)` : `Dans ${daysLeft} j`;
 
         return `
-          <div class="item-card">
+          <div class="item-card" id="care-card-${escapeAttr(item.id)}">
             <div class="item-top">
               <div>
                 <div class="item-name">${escapeHtml(item.label)}</div>
@@ -1947,9 +2201,9 @@
             </div>
             <div class="form-row">
               <label class="muted" style="font-size:0.78rem;">Date effectuée :
-                <input type="date" value="${item.lastDate}" onchange="updateCareDate('${categoryKey}', '${horseId}', '${item.id}', this.value)" />
+                <input type="date" value="${item.lastDate}" onchange="updateCareDate('${categoryKey}', '${escapeAttr(horseId)}', '${escapeAttr(item.id)}', this.value)" />
               </label>
-              <button class="btn btn-secondary btn-sm" onclick="updateCareDate('${categoryKey}', '${horseId}', '${item.id}', '${todayISO(0)}')">Fait aujourd'hui</button>
+              <button class="btn btn-secondary btn-sm" onclick="updateCareDate('${categoryKey}', '${escapeAttr(horseId)}', '${escapeAttr(item.id)}', '${todayISO(0)}')">Fait aujourd'hui</button>
             </div>
           </div>
         `;
@@ -1979,12 +2233,11 @@
       renderAlertsAndWeather();
     }
 
-    /* Suivi santé : sous-parties par intervenant, programmation régulière & historique détaillé */
     function renderHealthVisits() {
       const tabsEl = document.getElementById("health-horse-tabs");
       if (!tabsEl) return;
       tabsEl.innerHTML = state.horses.map(h => `
-        <button class="horse-chip ${h.id === activeHealthHorse ? "active" : ""}" onclick="selectHealthHorse('${h.id}')">
+        <button class="horse-chip ${h.id === activeHealthHorse ? "active" : ""}" onclick="selectHealthHorse('${escapeAttr(h.id)}')">
           ${escapeHtml(h.name)}
         </button>
       `).join("");
@@ -2013,8 +2266,8 @@
                     ${v.provider ? `<span class="muted"> • ${escapeHtml(v.provider)}</span>` : ""}
                   </div>
                   <div style="display:flex;gap:6px;">
-                    <button class="btn btn-outline btn-sm" onclick="openVisitModal('${activeHealthHorse}', '${key}', '${v.id}')">Modifier</button>
-                    <button class="btn btn-outline btn-sm" onclick="deleteHealthVisit('${activeHealthHorse}', '${key}', '${v.id}')">Supprimer</button>
+                    <button class="btn btn-outline btn-sm" onclick="openVisitModal('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', '${escapeAttr(v.id)}')">Modifier</button>
+                    <button class="btn btn-outline btn-sm" onclick="deleteHealthVisit('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', '${escapeAttr(v.id)}')">Supprimer</button>
                   </div>
                 </div>
                 <div>${escapeHtml(v.details || "Aucun détail renseigné.")}</div>
@@ -2023,7 +2276,7 @@
           : `<div class="muted" style="margin-top:6px;">Aucune venue enregistrée pour le moment.</div>`;
 
         return `
-          <div class="sub-section" id="sub-health-${key}">
+          <div class="sub-section" id="sub-health-${escapeAttr(key)}">
             <div class="sub-section-header">
               <div>
                 <div class="sub-section-title">${prac.icon || "🧑‍⚕️"} ${escapeHtml(prac.label)}</div>
@@ -2037,10 +2290,10 @@
 
             <div class="form-row" style="margin-top:6px;">
               <label class="muted" style="font-size:0.8rem;">Fréquence régulière : toutes les
-                <input type="number" min="1" max="104" step="1" value="${info.intervalWeeks}" style="width:66px;padding:4px 6px;" onchange="updatePractitionerInterval('${activeHealthHorse}', '${key}', this.value)" />
+                <input type="number" min="1" max="104" step="1" value="${info.intervalWeeks}" style="width:66px;padding:4px 6px;" onchange="updatePractitionerInterval('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', this.value)" />
                 semaines
               </label>
-              <button class="btn btn-primary btn-sm" onclick="openVisitModal('${activeHealthHorse}', '${key}', null)">+ Ajouter une venue</button>
+              <button class="btn btn-primary btn-sm" onclick="openVisitModal('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', null)">+ Ajouter une venue</button>
             </div>
 
             ${visitsHtml}
@@ -2134,7 +2387,6 @@
       renderAlertsAndWeather();
     }
 
-    /* Pharmacie & dates de péremption */
     function renderPharmacy() {
       const container = document.getElementById("pharmacy-list");
       const th = Number(state.config.pharmaAlertDays ?? 30);
@@ -2158,7 +2410,7 @@
         }
 
         return `
-          <div class="item-card">
+          <div class="item-card" id="pharma-card-${escapeAttr(item.id)}">
             <div class="item-top">
               <div>
                 <div class="item-name">${escapeHtml(item.name)}</div>
@@ -2169,9 +2421,9 @@
             </div>
             <div class="form-row">
               <label class="muted" style="font-size:0.78rem;">Date péremption :
-                <input type="date" value="${item.expiryDate}" onchange="updatePharmaExpiry('${item.id}', this.value)" />
+                <input type="date" value="${item.expiryDate}" onchange="updatePharmaExpiry('${escapeAttr(item.id)}', this.value)" />
               </label>
-              <button class="btn btn-outline btn-sm" onclick="deletePharmaItem('${item.id}')">Supprimer</button>
+              <button class="btn btn-outline btn-sm" onclick="deletePharmaItem('${escapeAttr(item.id)}')">Supprimer</button>
             </div>
           </div>
         `;
@@ -2230,17 +2482,49 @@
       renderAlertsAndWeather();
     });
 
-    function switchTab(tabId) {
+    function switchHealthSubTab(subId) {
+      activeHealthSubTab = subId;
+      document.querySelectorAll(".health-subpanel").forEach(p => {
+        p.classList.toggle("hidden", p.id !== subId);
+      });
+      document.querySelectorAll(".health-subbtn").forEach(b => {
+        b.classList.toggle("active", b.dataset.sub === subId);
+      });
+    }
+
+    function openHealthSub(subId, horseId, targetElementId) {
+      if (horseId && subId === "sub-providers") {
+        activeHealthHorse = horseId;
+        renderHealthVisits();
+      }
+      if (activeTab !== "tab-health") {
+        switchTab("tab-health", true);
+      }
+      switchHealthSubTab(subId);
+      if (targetElementId) {
+        scrollToAndHighlight(targetElementId);
+      }
+    }
+
+    function switchTab(tabId, skipScrollTop = false) {
+      activeTab = tabId;
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
       document.getElementById(tabId).classList.remove("hidden");
       document.querySelectorAll(".nav-btn").forEach(b => {
         b.classList.toggle("active", b.dataset.tab === tabId);
       });
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      renderAlertsAndWeather();
+      if (!skipScrollTop) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     }
 
     document.querySelectorAll(".nav-btn").forEach(btn => {
       btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+
+    document.querySelectorAll(".health-subbtn").forEach(btn => {
+      btn.addEventListener("click", () => switchHealthSubTab(btn.dataset.sub));
     });
 
     document.getElementById("btn-toggle-add-food").addEventListener("click", () => {
@@ -2338,6 +2622,10 @@
       return String(str || "").replace(/[&<>"']/g, s => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
       }[s]));
+    }
+
+    function escapeAttr(str) {
+      return String(str || "").replace(/[^a-zA-Z0-9_-]/g, "_");
     }
 
     if ("serviceWorker" in navigator) {
