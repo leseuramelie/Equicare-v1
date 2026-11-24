@@ -1,4 +1,162 @@
-<!-- ... existing code ... -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e3a2f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>ÉquiCare — Gestion Chevaux</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --surface: #ffffff;
+      --surface-soft: #faf8f4;
+      --ink: #1d241f;
+      --muted: #5d6860;
+      --primary: #1e3a2f;
+      --primary-light: #e6efe9;
+      --accent: #b45309;
+      --accent-light: #fef3c7;
+      --danger: #b91c1c;
+      --danger-light: #fee2e2;
+      --info: #1d4ed8;
+      --info-light: #dbeafe;
+      --ok: #15803d;
+      --ok-light: #dcfce7;
+      --border: #e2ddd3;
+      --radius: 16px;
+      --shadow: 0 4px 18px rgba(29, 36, 31, 0.06);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+      padding-bottom: 86px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(244, 241, 234, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.08rem;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 14px 14px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Widget d'alertes strict : vide et masqué si aucune alerte */
+    #smart-alert-widget:empty {
+      display: none;
+    }
+
+    .smart-widget {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .alert-card {
+      border-radius: var(--radius);
+      padding: 13px 14px;
+      border: 1px solid transparent;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .alert-blanket {
+      background: var(--info-light);
+      border-color: #93c5fd;
+      color: #1e3a8a;
+    }
+
+    .alert-day-blanket {
+      background: #e0f2fe;
+      border-color: #7dd3fc;
+      color: #0c4a6e;
+    }
+
+    .alert-uv {
+      background: var(--accent-light);
+      border-color: #fcd34d;
+      color: #78350f;
+    }
+
     .alert-food {
       background: var(--danger-light);
       border-color: #fca5a5;
@@ -12,7 +170,331 @@
     }
 
     .alert-title {
-<!-- ... existing code ... -->
+      font-weight: 800;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+
+    .alert-desc {
+      font-size: 0.84rem;
+      opacity: 0.95;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 15px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-weight: 800;
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .weather-hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(135deg, var(--primary) 0%, #2c5242 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+
+    .temp-big {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.05;
+    }
+
+    .weather-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .metric-box {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 10px;
+      text-align: center;
+    }
+
+    .metric-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .metric-val {
+      font-weight: 800;
+      font-size: 0.95rem;
+      margin-top: 2px;
+    }
+
+    .hourly-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .hour-pill {
+      min-width: 74px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px;
+      text-align: center;
+      flex-shrink: 0;
+      font-size: 0.78rem;
+    }
+
+    .hour-pill.night-cold {
+      border-color: #60a5fa;
+      background: #eff6ff;
+    }
+
+    .hour-pill.day-cold {
+      border-color: #38bdf8;
+      background: #f0f9ff;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 11px;
+      padding: 9px 13px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--ink);
+    }
+
+    .btn-sm {
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      border-radius: 9px;
+    }
+
+    .horse-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .horse-chip {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      font-weight: 700;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+
+    .horse-chip.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .item-card {
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      border-radius: 14px;
+      padding: 13px;
+      margin-bottom: 10px;
+    }
+
+    .item-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .item-name {
+      font-weight: 800;
+      font-size: 0.98rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.73rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge-ok { background: var(--ok-light); color: var(--ok); }
+    .badge-warn { background: var(--accent-light); color: var(--accent); }
+    .badge-danger { background: var(--danger-light); color: var(--danger); }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .stat-mini {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .stat-mini .k {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .stat-mini .v {
+      font-weight: 800;
+      font-size: 0.92rem;
+      margin-top: 2px;
+    }
+
+    .bag-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      margin-bottom: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .purchase-log {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .purchase-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 5px;
+    }
+
+    .p-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px 8px;
+      color: var(--ink);
+      font-size: 0.75rem;
+    }
+
+    .sub-section {
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      border-radius: 14px;
+      padding: 13px;
+      margin-bottom: 12px;
+    }
+
+    .sub-section-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .sub-section-title {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--primary);
+    }
+
+    .visit-entry {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 11px;
+      margin-top: 8px;
+      font-size: 0.83rem;
+    }
+
+    .visit-entry-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 3px;
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    input, select, textarea {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.86rem;
+      font-family: inherit;
+    }
+
+    input[type="date"] {
+      padding: 7px 9px;
+    }
+
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -59,67 +541,75 @@
       font-size: 1.08rem;
     }
 
-    .sub-section {
-      border: 1px solid var(--border);
-      background: var(--surface-soft);
-      border-radius: 14px;
-      padding: 13px;
-      margin-bottom: 12px;
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
     }
 
-    .sub-section-header {
+    .modal-backdrop.open {
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 8px;
     }
 
-    .sub-section-title {
-      font-weight: 800;
-      font-size: 1rem;
-      color: var(--primary);
-    }
-
-    .visit-entry {
+    .modal-box {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 9px 11px;
-      margin-top: 8px;
-      font-size: 0.83rem;
+      border-radius: var(--radius);
+      max-width: 520px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 16px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
     }
 
-    .visit-entry-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 3px;
-    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-logo">🐴</div>
+      <div>
+        <div class="brand-title">ÉquiCare</div>
+        <div class="brand-sub" id="header-sub">Labarthe-sur-Lèze (31860)</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="btn-refresh-weather" title="Actualiser la météo">↻</button>
+      <button class="icon-btn" id="btn-export-json" title="Exporter mes données">⬇</button>
+      <button class="icon-btn" id="btn-info" title="Aide & installation">i</button>
+    </div>
+  </header>
 
-    .nav-btn {
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 6px 2px;
-      border-radius: 10px;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-    }
-<!-- ... existing code ... -->
   <main>
     <!-- Widget strict : affiche uniquement les alertes actives ; vide et masqué sinon -->
     <div id="smart-alert-widget" class="smart-widget" aria-live="polite"></div>
 
     <!-- ONGLET 1 : ACCUEIL & MÉTÉO -->
-<!-- ... existing code ... -->
+    <section id="tab-home" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Météo & Conditions</h2>
+          <span class="muted" id="weather-updated">Chargement...</span>
+        </div>
+
+        <div class="weather-hero">
+          <div>
+            <div class="temp-big" id="w-temp">--°C</div>
+            <div id="w-desc" style="font-size:0.9rem;opacity:0.92;">Récupération des prévisions...</div>
+          </div>
+          <div style="text-align:right;font-size:0.82rem;opacity:0.92;">
+            <div>Journée 10h–21h min : <strong id="w-day-min">--°C</strong></div>
+            <div>Nuit/matin 21h–10h min : <strong id="w-night-min">--°C</strong></div>
+            <div>UV max : <strong id="w-uv-max">--</strong></div>
+          </div>
+        </div>
+
         <div class="weather-metrics">
           <div class="metric-box">
             <div class="metric-label">Journée (10h–21h, &lt; <span id="lbl-day-th">5</span>°C)</div>
@@ -186,18 +676,40 @@
     </section>
 
     <!-- ONGLET 2 : ALIMENTS, SACS/BIDONS ACHETÉS & OUVERTS -->
-    <!-- ONGLET 3 : VERMIFUGES -->
-    <section id="tab-deworm" class="tab-panel hidden">
+    <section id="tab-foods" class="tab-panel hidden">
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">Vermifuges</h2>
+          <div>
+            <h2 class="card-title">Sacs / bidons achetés, ouverts & jours de stock</h2>
+            <div class="muted">Aliments solides en kg (conso en kg/j) • Huile de lin en litres (conso affichée en mL/j, défaut 150 mL/j).</div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-toggle-add-food">+ Nouvel aliment</button>
         </div>
-        <div class="horse-tabs" id="deworm-horse-tabs"></div>
-        <div id="deworm-list"></div>
+
+        <div id="add-food-form" class="item-card hidden">
+          <div class="item-name" style="margin-bottom:8px;">Ajouter une référence d'aliment</div>
+          <div class="form-row">
+            <input type="text" id="new-food-name" placeholder="Nom (ex. Foin de prairie ou Huile de lin)" style="flex:1;min-width:180px;" />
+            <select id="new-food-unit" style="width:110px;">
+              <option value="kg">kg (solide)</option>
+              <option value="L">Litres (L)</option>
+            </select>
+            <input type="number" id="new-food-bags" placeholder="Nb" min="1" step="1" style="width:74px;" />
+            <input type="number" id="new-food-bag-qty" placeholder="Qté / unité" step="0.5" style="width:108px;" />
+            <input type="date" id="new-food-date" />
+          </div>
+          <div class="form-row">
+            <input type="number" id="new-food-daily-rate" placeholder="Conso / j (kg ou mL)" step="1" style="width:185px;" />
+            <button class="btn btn-primary btn-sm" id="btn-create-food">Ajouter</button>
+            <button class="btn btn-outline btn-sm" id="btn-cancel-food">Annuler</button>
+          </div>
+        </div>
+
+        <div id="foods-list"></div>
       </div>
     </section>
 
-    <!-- ONGLET 3B : SUIVI SANTÉ (INTERVENANTS) -->
+    <!-- ONGLET 3 : SUIVI SANTÉ (INTERVENANTS) -->
     <section id="tab-health" class="tab-panel hidden">
       <div class="card">
         <div class="card-header">
@@ -211,7 +723,18 @@
       </div>
     </section>
 
-    <!-- ONGLET 4 : VACCINS -->
+    <!-- ONGLET 4 : VERMIFUGES -->
+    <section id="tab-deworm" class="tab-panel hidden">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Vermifuges</h2>
+        </div>
+        <div class="horse-tabs" id="deworm-horse-tabs"></div>
+        <div id="deworm-list"></div>
+      </div>
+    </section>
+
+    <!-- ONGLET 5 : VACCINS -->
     <section id="tab-vaccines" class="tab-panel hidden">
       <div class="card">
         <div class="card-header">
@@ -222,7 +745,7 @@
       </div>
     </section>
 
-    <!-- ONGLET 5 : PHARMACIE -->
+    <!-- ONGLET 6 : PHARMACIE -->
     <section id="tab-pharmacy" class="tab-panel hidden">
       <div class="card">
         <div class="card-header">
@@ -280,6 +803,48 @@
   </nav>
 
   <!-- Modale d'achat -->
+  <div class="modal-backdrop" id="buy-modal">
+    <div class="modal-box">
+      <h3 style="margin-top:0;" id="buy-modal-title">Nouvel achat</h3>
+      <p class="muted" id="buy-modal-sub"></p>
+      <div class="form-row">
+        <label class="muted">Date d'achat :
+          <input type="date" id="buy-date-input" />
+        </label>
+        <label class="muted"><span id="buy-count-label">Nombre de sacs</span> :
+          <input type="number" id="buy-bags-input" min="1" step="1" style="width:82px;" />
+        </label>
+        <label class="muted"><span id="buy-qty-label">Poids / sac (kg)</span> :
+          <input type="number" id="buy-qty-input" min="0.5" step="0.5" style="width:92px;" />
+        </label>
+      </div>
+      <div class="form-row" style="justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-outline btn-sm" id="btn-close-buy-modal">Annuler</button>
+        <button class="btn btn-primary btn-sm" id="btn-confirm-buy">Enregistrer l'achat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Ouverture d'un nouveau sac / bidon -->
+  <div class="modal-backdrop" id="open-bag-modal">
+    <div class="modal-box">
+      <h3 style="margin-top:0;" id="open-bag-modal-title">Nouvelle ouverture</h3>
+      <p class="muted" id="open-bag-modal-sub"></p>
+      <div class="form-row">
+        <label class="muted">Date d'ouverture :
+          <input type="date" id="open-bag-date-input" />
+        </label>
+        <label class="muted"><span id="open-qty-label">Contenance (kg)</span> :
+          <input type="number" id="open-bag-qty-input" min="0.5" step="0.5" style="width:95px;" />
+        </label>
+      </div>
+      <div class="form-row" style="justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-outline btn-sm" id="btn-close-open-bag-modal">Annuler</button>
+        <button class="btn btn-primary btn-sm" id="btn-confirm-open-bag">Valider l'ouverture</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modale Ajout / Modification d'une venue d'intervenant -->
   <div class="modal-backdrop" id="visit-modal">
     <div class="modal-box">
@@ -376,7 +941,91 @@
         { id: "arabe", name: "Pur-Sang Arabe (15 ans)" }
       ],
       foods: [
-<!-- ... existing code ... -->
+        {
+          id: "exquis",
+          name: "Exquis Confort Digest",
+          unit: "kg",
+          bagKg: 20,
+          estimatedDailyKg: 1.5,
+          purchases: [
+            { date: todayISO(-36), bags: 2, kgPerBag: 20 },
+            { date: todayISO(-14), bags: 2, kgPerBag: 20 }
+          ],
+          openedBags: [
+            { date: todayISO(-14), kgPerBag: 20 },
+            { date: todayISO(-4), kgPerBag: 20 }
+          ]
+        },
+        {
+          id: "pulpe",
+          name: "Pulpe de betterave",
+          unit: "kg",
+          bagKg: 20,
+          estimatedDailyKg: 1.2,
+          purchases: [
+            { date: todayISO(-30), bags: 2, kgPerBag: 20 },
+            { date: todayISO(-10), bags: 2, kgPerBag: 20 }
+          ],
+          openedBags: [
+            { date: todayISO(-10), kgPerBag: 20 },
+            { date: todayISO(-2), kgPerBag: 20 }
+          ]
+        },
+        {
+          id: "huile-lin",
+          name: "Huile de lin pure",
+          unit: "L",
+          bagKg: 5,
+          estimatedDailyKg: 0.15,
+          purchases: [
+            { date: todayISO(-55), bags: 1, kgPerBag: 5 },
+            { date: todayISO(-20), bags: 1, kgPerBag: 5 }
+          ],
+          openedBags: [
+            { date: todayISO(-20), kgPerBag: 5 }
+          ]
+        },
+        {
+          id: "hartog",
+          name: "Hartog Luzerne",
+          unit: "kg",
+          bagKg: 20,
+          estimatedDailyKg: 1.8,
+          purchases: [
+            { date: todayISO(-24), bags: 3, kgPerBag: 20 },
+            { date: todayISO(-8), bags: 2, kgPerBag: 20 }
+          ],
+          openedBags: [
+            { date: todayISO(-8), kgPerBag: 20 },
+            { date: todayISO(-2), kgPerBag: 20 }
+          ]
+        },
+        {
+          id: "foin",
+          name: "Foin de prairie",
+          unit: "kg",
+          bagKg: 25,
+          estimatedDailyKg: 8.0,
+          purchases: [
+            { date: todayISO(-10), bags: 4, kgPerBag: 25 }
+          ],
+          openedBags: [
+            { date: todayISO(-10), kgPerBag: 25 },
+            { date: todayISO(-6), kgPerBag: 25 },
+            { date: todayISO(-2), kgPerBag: 25 }
+          ]
+        }
+      ],
+      dewormings: {
+        trotteur: [
+          { id: "dw-t1", label: "Vermifuge printemps (Ivermectine/Praziquantel)", lastDate: todayISO(-75), intervalDays: 90 },
+          { id: "dw-t2", label: "Vermifuge automne/hiver (Moxidectine)", lastDate: todayISO(-20), intervalDays: 120 }
+        ],
+        arabe: [
+          { id: "dw-a1", label: "Vermifuge printemps (Ivermectine/Praziquantel)", lastDate: todayISO(-75), intervalDays: 90 },
+          { id: "dw-a2", label: "Vermifuge automne/hiver (Moxidectine)", lastDate: todayISO(-20), intervalDays: 120 }
+        ]
+      },
       vaccines: {
         trotteur: [
           { id: "vc-t1", label: "Grippe équine & Tétanos", lastDate: todayISO(-210), intervalDays: 365 },
@@ -508,7 +1157,47 @@
     }
 
     function sanitizeFoods(foods) {
-<!-- ... existing code ... -->
+      const forbidden = /mila\s*moka|mille-à-mouka|métabolik|metabolik|fibra\s*light/i;
+      return (foods || [])
+        .filter(f => f && !forbidden.test(f.name || ""))
+        .map(f => {
+          const oil = /huile\s*de\s*lin/i.test(f.name || "") || f.unit === "L";
+          const unit = oil ? "L" : "kg";
+          const defaultQty = oil ? Number(f.bagKg || 5) : Number(f.bagKg || 20);
+          const defaultDailyL = oil
+            ? (Number(f.estimatedDailyKg) > 0 && Number(f.estimatedDailyKg) <= 5 ? Number(f.estimatedDailyKg) : 0.15)
+            : Number(f.estimatedDailyKg || 1);
+
+          const purchases = Array.isArray(f.purchases) && f.purchases.length
+            ? [...f.purchases]
+                .map(p => ({
+                  date: p.date,
+                  bags: Math.max(1, parseInt(p.bags || 1, 10)),
+                  kgPerBag: Number(p.kgPerBag || p.kg || defaultQty)
+                }))
+                .sort((a, b) => a.date.localeCompare(b.date))
+            : [{ date: todayISO(-10), bags: 1, kgPerBag: defaultQty }];
+
+          const openedBags = Array.isArray(f.openedBags)
+            ? [...f.openedBags]
+                .map(o => ({
+                  date: o.date,
+                  kgPerBag: Number(o.kgPerBag || defaultQty)
+                }))
+                .sort((a, b) => a.date.localeCompare(b.date))
+            : [{ date: purchases[purchases.length - 1].date, kgPerBag: defaultQty }];
+
+          return {
+            ...f,
+            unit,
+            bagKg: defaultQty,
+            estimatedDailyKg: defaultDailyL,
+            purchases,
+            openedBags
+          };
+        });
+    }
+
     function loadState() {
       try {
         const raw =
@@ -546,8 +1235,196 @@
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
+
+    function computeFoodMetrics(food) {
+      const oil = isOilFood(food);
+      const unitLabel = oil ? "L" : "kg";
+      const containerWord = oil ? "bidon" : "sac";
+      const containersWord = oil ? "bidons" : "sacs";
+
+      const purchases = [...(food.purchases || [])].sort((a, b) => a.date.localeCompare(b.date));
+      const openedBags = [...(food.openedBags || [])].sort((a, b) => a.date.localeCompare(b.date));
+      const defaultQty = Number(food.bagKg || (oil ? 5 : 20));
+
+      const totalPurchasedBags = purchases.reduce((acc, p) => acc + Number(p.bags || 1), 0);
+      const totalPurchasedQty = purchases.reduce((acc, p) => acc + Number(p.bags || 1) * Number(p.kgPerBag || defaultQty), 0);
+      const openedCount = openedBags.length;
+      const closedBagsRemaining = Math.max(0, totalPurchasedBags - openedCount);
+
+      const lastPurchase = purchases[purchases.length - 1];
+      const lastPurchaseDate = lastPurchase ? lastPurchase.date : todayISO(-10);
+      const lastOpen = openedBags[openedBags.length - 1];
+      const lastOpenDate = lastOpen ? lastOpen.date : lastPurchaseDate;
+      const openBagQty = lastOpen ? Number(lastOpen.kgPerBag || defaultQty) : defaultQty;
+
+      let avgRateInBaseUnit = Number(food.estimatedDailyKg || (oil ? 0.15 : 1));
+      let avgDaysPerContainer = null;
+      let intervalsCount = 0;
+
+      if (openedBags.length >= 2) {
+        let totalDays = 0;
+        let totalQty = 0;
+        for (let i = 0; i < openedBags.length - 1; i++) {
+          totalDays += daysBetween(openedBags[i].date, openedBags[i + 1].date);
+          totalQty += Number(openedBags[i].kgPerBag || defaultQty);
+          intervalsCount++;
+        }
+        if (totalDays > 0 && totalQty > 0) {
+          avgRateInBaseUnit = totalQty / totalDays;
+          avgDaysPerContainer = totalDays / intervalsCount;
+        }
+      } else if (purchases.length >= 2) {
+        let totalDays = 0;
+        let totalQty = 0;
+        for (let i = 0; i < purchases.length - 1; i++) {
+          totalDays += daysBetween(purchases[i].date, purchases[i + 1].date);
+          totalQty += Number(purchases[i].bags || 1) * Number(purchases[i].kgPerBag || defaultQty);
+          intervalsCount++;
+        }
+        if (totalDays > 0 && totalQty > 0) {
+          avgRateInBaseUnit = totalQty / totalDays;
+          avgDaysPerContainer = avgRateInBaseUnit > 0 ? defaultQty / avgRateInBaseUnit : null;
+        }
+      }
+
+      if (!avgDaysPerContainer && avgRateInBaseUnit > 0) {
+        avgDaysPerContainer = defaultQty / avgRateInBaseUnit;
+      }
+
+      const daysSinceOpen = Math.max(0, daysBetween(lastOpenDate, todayISO(0)) - 1);
+      const usedInCurrentQty = openedCount > 0
+        ? Math.min(openBagQty, daysSinceOpen * avgRateInBaseUnit)
+        : 0;
+      const currentOpenRemainingQty = openedCount > 0
+        ? Math.max(0, openBagQty - usedInCurrentQty)
+        : 0;
+
+      const closedStockQty = closedBagsRemaining * defaultQty;
+      const totalRemainingQty = currentOpenRemainingQty + closedStockQty;
+      const remainingPct = totalPurchasedQty > 0
+        ? Math.min(100, Math.round((totalRemainingQty / totalPurchasedQty) * 100))
+        : 0;
+      const estimatedDaysLeft = avgRateInBaseUnit > 0
+        ? Math.max(0, Math.round(totalRemainingQty / avgRateInBaseUnit))
+        : 0;
+
+      const avgDisplay = oil
+        ? `${Math.round(avgRateInBaseUnit * 1000)} mL / j`
+        : `${avgRateInBaseUnit.toFixed(2)} kg / j`;
+
+      const avgInputDisplay = oil
+        ? Math.round(avgRateInBaseUnit * 1000)
+        : Number(avgRateInBaseUnit.toFixed(2));
+
+      const needsReorder =
+        estimatedDaysLeft <= Number(state.config.stockAlertDays || 5) || remainingPct <= 20;
+
+      return {
+        oil,
+        unitLabel,
+        containerWord,
+        containersWord,
+        purchases,
+        openedBags,
+        totalPurchasedBags,
+        totalPurchasedQty,
+        openedCount,
+        closedBagsRemaining,
+        lastPurchaseDate,
+        lastOpenDate,
+        currentOpenRemainingQty,
+        avgRateInBaseUnit,
+        avgDisplay,
+        avgInputDisplay,
+        avgDaysPerContainer,
+        intervalsCount,
+        totalRemainingQty,
+        remainingPct,
+        estimatedDaysLeft,
+        needsReorder
+      };
     }
-<!-- ... existing code ... -->
+
+    function checkDaytimeBlanket(hourly) {
+      if (!hourly || !hourly.time || !hourly.temperature_2m) {
+        return { triggered: false, blanketLabel: null, minTemp: null, slots: [] };
+      }
+      const dayTh = Number(state.config.dayThreshold ?? 5);
+      const now = new Date();
+      const windowEnd = new Date(now.getTime() + 36 * 3600 * 1000);
+
+      let minTemp = null;
+      const slots = [];
+
+      for (let i = 0; i < hourly.time.length; i++) {
+        const dt = new Date(hourly.time[i]);
+        if (dt < now || dt > windowEnd) continue;
+        const h = dt.getHours();
+        const isDayWindow = h >= 10 && h < 21;
+        if (!isDayWindow) continue;
+
+        const t = Number(hourly.temperature_2m[i]);
+        if (minTemp === null || t < minTemp) minTemp = t;
+
+        if (t < dayTh) {
+          slots.push(`${String(h).padStart(2, "0")}h (${t.toFixed(1)}°C)`);
+        }
+      }
+
+      if (minTemp === null || minTemp >= dayTh) {
+        return { triggered: false, blanketLabel: null, minTemp, slots };
+      }
+
+      let blanketLabel = "Couverture légère";
+      if (minTemp < -5) {
+        blanketLabel = "Grosse couverture";
+      } else if (minTemp < 0) {
+        blanketLabel = "Couverture moyenne";
+      } else {
+        blanketLabel = "Couverture légère";
+      }
+
+      return {
+        triggered: true,
+        blanketLabel,
+        minTemp,
+        slots
+      };
+    }
+
+    function checkNightMorningCold(hourly) {
+      if (!hourly || !hourly.time || !hourly.temperature_2m) {
+        return { triggered: false, minTemp: null, slots: [] };
+      }
+      const coldTh = Number(state.config.coldThreshold ?? 5);
+      const now = new Date();
+      const windowEnd = new Date(now.getTime() + 36 * 3600 * 1000);
+
+      let minTemp = null;
+      const slots = [];
+
+      for (let i = 0; i < hourly.time.length; i++) {
+        const dt = new Date(hourly.time[i]);
+        if (dt < now || dt > windowEnd) continue;
+        const h = dt.getHours();
+        const isTargetWindow = h >= 21 || h < 10;
+        if (!isTargetWindow) continue;
+
+        const t = Number(hourly.temperature_2m[i]);
+        if (minTemp === null || t < minTemp) minTemp = t;
+
+        if (t < coldTh) {
+          slots.push(`${String(h).padStart(2, "0")}h (${t.toFixed(1)}°C)`);
+        }
+      }
+
+      return {
+        triggered: slots.length > 0,
+        minTemp,
+        slots
+      };
+    }
+
     function checkMaxUV(daily) {
       if (!daily || !daily.uv_index_max || !daily.uv_index_max.length) {
         return { triggered: false, maxUv: 0 };
@@ -561,6 +1438,12 @@
         triggered: maxUv >= uvTh,
         maxUv
       };
+    }
+
+    function addDaysISO(iso, days) {
+      const d = new Date(iso + "T12:00:00");
+      d.setDate(d.getDate() + Number(days || 90));
+      return d.toISOString().slice(0, 10);
     }
 
     function getDueDewormings() {
@@ -696,7 +1579,7 @@
           <div class="alert-card alert-food">
             <div>
               <div class="alert-title">🌾 Racheter des aliments</div>
-              <div class="alert-desc">Stock bas à prévoir : ${names}.</div>
+              <div class="alert-desc">Stock bas à prévoir : ${escapeHtml(names)}.</div>
             </div>
             <button class="btn btn-outline btn-sm" onclick="switchTab('tab-foods')">Voir</button>
           </div>
@@ -785,7 +1668,310 @@
       document.getElementById("m-pharma").textContent = expiringPharma.length > 0 ? expiringPharma.length + " prod." : "OK";
 
       if (weatherData && weatherData.current) {
-<!-- ... existing code ... -->
+        const cur = weatherData.current;
+        document.getElementById("w-temp").textContent = `${Math.round(cur.temperature_2m)}°C`;
+        document.getElementById("w-desc").textContent = weatherCodeLabel(cur.weather_code);
+        document.getElementById("w-day-min").textContent =
+          dayInfo.minTemp !== null ? `${dayInfo.minTemp.toFixed(1)}°C` : "--°C";
+        document.getElementById("w-night-min").textContent =
+          coldInfo.minTemp !== null ? `${coldInfo.minTemp.toFixed(1)}°C` : "--°C";
+        document.getElementById("w-uv-max").textContent = uvInfo.maxUv.toFixed(1);
+      }
+
+      const strip = document.getElementById("hourly-strip");
+      if (weatherData && weatherData.hourly && weatherData.hourly.time) {
+        const now = new Date();
+        const items = [];
+        for (let i = 0; i < weatherData.hourly.time.length && items.length < 18; i++) {
+          const dt = new Date(weatherData.hourly.time[i]);
+          if (dt.getTime() < now.getTime() - 3600000) continue;
+          const h = dt.getHours();
+          const t = Number(weatherData.hourly.temperature_2m[i]);
+          const uv = Number(weatherData.hourly.uv_index[i] || 0);
+          const isDayWindow = h >= 10 && h < 21;
+          const isColdDay = isDayWindow && t < dayTh;
+          const isColdNight = !isDayWindow && t < coldTh;
+          const cls = isColdDay ? "day-cold" : (isColdNight ? "night-cold" : "");
+          items.push(`
+            <div class="hour-pill ${cls}">
+              <div style="font-weight:700;">${String(h).padStart(2, "0")}h</div>
+              <div style="font-size:0.95rem;font-weight:800;margin:2px 0;">${t.toFixed(0)}°C</div>
+              <div class="muted">${isDayWindow ? "10h–21h" : "21h–10h"} • UV ${uv.toFixed(0)}</div>
+            </div>
+          `);
+        }
+        strip.innerHTML = items.join("");
+      }
+    }
+
+    function weatherCodeLabel(code) {
+      const map = {
+        0: "Ciel dégagé",
+        1: "Plutôt clair",
+        2: "Partiellement nuageux",
+        3: "Couvert",
+        45: "Brouillard",
+        48: "Brouillard givrant",
+        51: "Bruine légère",
+        53: "Bruine modérée",
+        61: "Pluie faible",
+        63: "Pluie modérée",
+        65: "Pluie forte",
+        71: "Neige faible",
+        80: "Averses",
+        95: "Orage"
+      };
+      return map[code] || "Conditions variables";
+    }
+
+    async function fetchWeather() {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code,wind_gusts_10m,precipitation&hourly=temperature_2m,uv_index,precipitation,wind_gusts_10m&daily=uv_index_max,temperature_2m_min,temperature_2m_max&timezone=Europe%2FParis&forecast_days=3`;
+      try {
+        const res = await fetch(url);
+        weatherData = await res.json();
+        const nowStr = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+        document.getElementById("weather-updated").textContent = `Màj ${nowStr}`;
+      } catch {
+        document.getElementById("weather-updated").textContent = "Hors ligne / Erreur réseau";
+      }
+      renderAlertsAndWeather();
+    }
+
+    function renderFoods() {
+      const container = document.getElementById("foods-list");
+      container.innerHTML = state.foods.map(food => {
+        const m = computeFoodMetrics(food);
+        const badgeClass = m.needsReorder ? "badge-danger" : (m.estimatedDaysLeft <= 8 ? "badge-warn" : "badge-ok");
+        const badgeText = m.needsReorder ? `À racheter (${m.estimatedDaysLeft} j)` : `${m.estimatedDaysLeft} j devant vous`;
+        const avgDaysText = m.avgDaysPerContainer ? `${m.avgDaysPerContainer.toFixed(1)} j / ${m.containerWord}` : "—";
+        const rateInputLabel = m.oil ? "Conso réf. (mL/j) :" : "Conso réf. (kg/j) :";
+        const rateStep = m.oil ? "10" : "0.05";
+
+        return `
+          <div class="item-card">
+            <div class="item-top">
+              <div>
+                <div class="item-name">${escapeHtml(food.name)}</div>
+                <div class="muted">Dernier achat : <strong>${formatDateFR(m.lastPurchaseDate)}</strong> • Dernier ${m.containerWord} ouvert : <strong>${formatDateFR(m.lastOpenDate)}</strong></div>
+              </div>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-mini">
+                <div class="k">Jours de stock devant vous</div>
+                <div class="v">${m.estimatedDaysLeft} jours (${m.totalRemainingQty.toFixed(2)} ${m.unitLabel})</div>
+              </div>
+              <div class="stat-mini">
+                <div class="k">${m.oil ? "Bidons fermés / Ouverts" : "Sacs fermés / Ouverts"}</div>
+                <div class="v">${m.closedBagsRemaining} fermé(s) • ${m.openedCount} ouvert(s)</div>
+              </div>
+              <div class="stat-mini">
+                <div class="k">Moyenne de consommation</div>
+                <div class="v">${m.avgDisplay} (${avgDaysText})</div>
+              </div>
+              <div class="stat-mini">
+                <div class="k">Total acheté cumulé</div>
+                <div class="v">${m.totalPurchasedBags} ${m.containerWord}(s) (${m.totalPurchasedQty.toFixed(1)} ${m.unitLabel})</div>
+              </div>
+            </div>
+
+            <div class="bag-banner">
+              <span>${m.oil ? "Bidon" : "Sac"} ouvert actuel : <strong>${m.currentOpenRemainingQty.toFixed(2)} ${m.unitLabel}</strong> estimés restants</span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm" onclick="openBagModal('${food.id}')">${m.oil ? "🛢️ Nouveau bidon ouvert" : "🎒 Nouveau sac ouvert"}</button>
+                <button class="btn btn-primary btn-sm" onclick="openBuyModal('${food.id}')">+ Acheter (${m.containersWord})</button>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="muted" style="font-size:0.78rem;">${rateInputLabel}
+                <input type="number" step="${rateStep}" min="1" value="${m.avgInputDisplay}" style="width:82px;padding:4px 6px;" onchange="updateFoodDailyEstimate('${food.id}', this.value)" />
+              </label>
+              <button class="btn btn-outline btn-sm" onclick="deleteFood('${food.id}')">Supprimer</button>
+            </div>
+
+            <div class="purchase-log">
+              <div>Achats enregistrés :</div>
+              <div class="purchase-pills">
+                ${m.purchases.map(p => `<span class="p-pill">${formatDateFR(p.date)} • ${p.bags} ${m.containerWord}(s) × ${p.kgPerBag} ${m.unitLabel}</span>`).join("")}
+              </div>
+              <div style="margin-top:6px;">${m.oil ? "Bidons ouverts enregistrés :" : "Sacs ouverts enregistrés :"}</div>
+              <div class="purchase-pills">
+                ${m.openedBags.map((o, idx) => `<span class="p-pill">${m.oil ? "Bidon" : "Sac"} #${idx + 1} ouvert le ${formatDateFR(o.date)} (${o.kgPerBag} ${m.unitLabel})</span>`).join("")}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updateFoodDailyEstimate(foodId, val) {
+      const n = parseFloat(val);
+      if (!n || n <= 0) return;
+      const food = state.foods.find(f => f.id === foodId);
+      if (!food) return;
+      food.estimatedDailyKg = isOilFood(food) ? n / 1000 : n;
+      saveState();
+      renderFoods();
+      renderAlertsAndWeather();
+    }
+
+    function deleteFood(foodId) {
+      state.foods = state.foods.filter(f => f.id !== foodId);
+      saveState();
+      renderFoods();
+      renderAlertsAndWeather();
+    }
+
+    function openBuyModal(foodId) {
+      const food = state.foods.find(f => f.id === foodId);
+      if (!food) return;
+      const oil = isOilFood(food);
+      buyingFoodId = foodId;
+      document.getElementById("buy-modal-title").textContent = `Nouvel achat — ${food.name}`;
+      document.getElementById("buy-modal-sub").textContent = oil
+        ? "Indiquez la date d'achat, le nombre de bidons et la contenance en litres (L)."
+        : "Indiquez la date d'achat, le nombre de sacs achetés et le poids d'un sac en kg.";
+      document.getElementById("buy-count-label").textContent = oil ? "Nombre de bidons" : "Nombre de sacs";
+      document.getElementById("buy-qty-label").textContent = oil ? "Litres / bidon (L)" : "Poids / sac (kg)";
+      document.getElementById("buy-date-input").value = todayISO(0);
+      document.getElementById("buy-bags-input").value = 1;
+      document.getElementById("buy-qty-input").value = food.bagKg || (oil ? 5 : 20);
+      document.getElementById("buy-modal").classList.add("open");
+    }
+
+    function closeBuyModal() {
+      buyingFoodId = null;
+      document.getElementById("buy-modal").classList.remove("open");
+    }
+
+    document.getElementById("btn-close-buy-modal").addEventListener("click", closeBuyModal);
+
+    document.getElementById("btn-confirm-buy").addEventListener("click", () => {
+      if (!buyingFoodId) return;
+      const dateVal = document.getElementById("buy-date-input").value;
+      const bagsVal = Math.max(1, parseInt(document.getElementById("buy-bags-input").value, 10) || 1);
+      const qtyVal = parseFloat(document.getElementById("buy-qty-input").value);
+      if (!dateVal || !qtyVal || qtyVal <= 0) return;
+
+      const food = state.foods.find(f => f.id === buyingFoodId);
+      if (!food) return;
+
+      food.purchases = food.purchases || [];
+      const existingIdx = food.purchases.findIndex(p => p.date === dateVal && Number(p.kgPerBag) === qtyVal);
+      if (existingIdx >= 0) {
+        food.purchases[existingIdx].bags = Number(food.purchases[existingIdx].bags || 1) + bagsVal;
+      } else {
+        food.purchases.push({ date: dateVal, bags: bagsVal, kgPerBag: qtyVal });
+      }
+      food.purchases.sort((a, b) => a.date.localeCompare(b.date));
+      food.bagKg = qtyVal;
+
+      saveState();
+      closeBuyModal();
+      renderFoods();
+      renderAlertsAndWeather();
+    });
+
+    function openBagModal(foodId) {
+      const food = state.foods.find(f => f.id === foodId);
+      if (!food) return;
+      const oil = isOilFood(food);
+      openingFoodId = foodId;
+      document.getElementById("open-bag-modal-title").textContent = oil
+        ? `Nouveau bidon ouvert — ${food.name}`
+        : `Nouveau sac ouvert — ${food.name}`;
+      document.getElementById("open-bag-modal-sub").textContent =
+        "Enregistrez la date d'ouverture pour mettre à jour le stock et la moyenne de consommation.";
+      document.getElementById("open-qty-label").textContent = oil ? "Contenance (L)" : "Poids du sac (kg)";
+      document.getElementById("open-bag-date-input").value = todayISO(0);
+      document.getElementById("open-bag-qty-input").value = food.bagKg || (oil ? 5 : 20);
+      document.getElementById("open-bag-modal").classList.add("open");
+    }
+
+    function closeOpenBagModal() {
+      openingFoodId = null;
+      document.getElementById("open-bag-modal").classList.remove("open");
+    }
+
+    document.getElementById("btn-close-open-bag-modal").addEventListener("click", closeOpenBagModal);
+
+    document.getElementById("btn-confirm-open-bag").addEventListener("click", () => {
+      if (!openingFoodId) return;
+      const dateVal = document.getElementById("open-bag-date-input").value;
+      const qtyVal = parseFloat(document.getElementById("open-bag-qty-input").value);
+      if (!dateVal || !qtyVal || qtyVal <= 0) return;
+
+      const food = state.foods.find(f => f.id === openingFoodId);
+      if (!food) return;
+
+      food.openedBags = food.openedBags || [];
+      food.openedBags.push({ date: dateVal, kgPerBag: qtyVal });
+      food.openedBags.sort((a, b) => a.date.localeCompare(b.date));
+
+      saveState();
+      closeOpenBagModal();
+      renderFoods();
+      renderAlertsAndWeather();
+    });
+
+    function renderCareList(categoryKey, horseId, containerId, tabsId) {
+      const tabsEl = document.getElementById(tabsId);
+      tabsEl.innerHTML = state.horses.map(h => `
+        <button class="horse-chip ${h.id === horseId ? "active" : ""}" onclick="selectCareHorse('${categoryKey}', '${h.id}')">
+          ${escapeHtml(h.name)}
+        </button>
+      `).join("");
+
+      const list = state[categoryKey][horseId] || [];
+      const container = document.getElementById(containerId);
+      const alertThreshold = categoryKey === "dewormings"
+        ? Number(state.config.dewormAlertDays ?? 7)
+        : Number(state.config.vaccineAlertDays ?? 30);
+
+      container.innerHTML = list.map(item => {
+        const nextDate = addDaysISO(item.lastDate, item.intervalDays);
+        const daysLeft = signedDaysFromToday(nextDate);
+        const badgeClass = daysLeft < 0 ? "badge-danger" : (daysLeft <= alertThreshold ? "badge-warn" : "badge-ok");
+        const badgeText = daysLeft < 0 ? `En retard (${Math.abs(daysLeft)} j)` : `Dans ${daysLeft} j`;
+
+        return `
+          <div class="item-card">
+            <div class="item-top">
+              <div>
+                <div class="item-name">${escapeHtml(item.label)}</div>
+                <div class="muted">Dernier : <strong>${formatDateFR(item.lastDate)}</strong> • Prochain : <strong>${formatDateFR(nextDate)}</strong> (tous les ${item.intervalDays} j)</div>
+              </div>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+            <div class="form-row">
+              <label class="muted" style="font-size:0.78rem;">Date effectuée :
+                <input type="date" value="${item.lastDate}" onchange="updateCareDate('${categoryKey}', '${horseId}', '${item.id}', this.value)" />
+              </label>
+              <button class="btn btn-secondary btn-sm" onclick="updateCareDate('${categoryKey}', '${horseId}', '${item.id}', '${todayISO(0)}')">Fait aujourd'hui</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function selectCareHorse(categoryKey, horseId) {
+      if (categoryKey === "dewormings") activeDewormHorse = horseId;
+      if (categoryKey === "vaccines") activeVaccineHorse = horseId;
+      renderAllCare();
+    }
+
+    function updateCareDate(categoryKey, horseId, itemId, newDate) {
+      if (!newDate) return;
+      const list = state[categoryKey][horseId] || [];
+      const entry = list.find(x => x.id === itemId);
+      if (!entry) return;
+      entry.lastDate = newDate;
+      saveState();
+      renderAllCare();
+    }
+
     function renderAllCare() {
       renderCareList("dewormings", activeDewormHorse, "deworm-list", "deworm-horse-tabs");
       renderCareList("vaccines", activeVaccineHorse, "vaccines-list", "vaccines-horse-tabs");
@@ -1045,8 +2231,62 @@
     });
 
     function switchTab(tabId) {
-<!-- ... existing code ... -->
-    /* Seuils */
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+      document.getElementById(tabId).classList.remove("hidden");
+      document.querySelectorAll(".nav-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.tab === tabId);
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+
+    document.getElementById("btn-toggle-add-food").addEventListener("click", () => {
+      document.getElementById("new-food-date").value = todayISO(0);
+      document.getElementById("new-food-bags").value = 1;
+      document.getElementById("add-food-form").classList.toggle("hidden");
+    });
+
+    document.getElementById("btn-cancel-food").addEventListener("click", () => {
+      document.getElementById("add-food-form").classList.add("hidden");
+    });
+
+    document.getElementById("btn-create-food").addEventListener("click", () => {
+      const name = document.getElementById("new-food-name").value.trim();
+      const unit = document.getElementById("new-food-unit").value === "L" ? "L" : "kg";
+      const bags = Math.max(1, parseInt(document.getElementById("new-food-bags").value, 10) || 1);
+      const qtyPerUnit = parseFloat(document.getElementById("new-food-bag-qty").value) || (unit === "L" ? 5 : 20);
+      const dateVal = document.getElementById("new-food-date").value || todayISO(0);
+      const rawRate = parseFloat(document.getElementById("new-food-daily-rate").value);
+      const dailyInBase = rawRate > 0
+        ? (unit === "L" ? rawRate / 1000 : rawRate)
+        : (unit === "L" ? 0.15 : 1.5);
+
+      if (!name) return;
+
+      state.foods.unshift({
+        id: "food-" + Date.now(),
+        name,
+        unit,
+        bagKg: qtyPerUnit,
+        estimatedDailyKg: dailyInBase,
+        purchases: [{ date: dateVal, bags, kgPerBag: qtyPerUnit }],
+        openedBags: [{ date: dateVal, kgPerBag: qtyPerUnit }]
+      });
+
+      document.getElementById("new-food-name").value = "";
+      document.getElementById("new-food-bags").value = "";
+      document.getElementById("new-food-bag-qty").value = "";
+      document.getElementById("new-food-daily-rate").value = "";
+      document.getElementById("add-food-form").classList.add("hidden");
+
+      saveState();
+      renderFoods();
+      renderAlertsAndWeather();
+    });
+
     function syncConfigInputs() {
       document.getElementById("cfg-day-th").value = state.config.dayThreshold ?? 5;
       document.getElementById("cfg-cold-th").value = state.config.coldThreshold ?? 5;
@@ -1075,7 +2315,35 @@
     });
 
     document.getElementById("btn-refresh-weather").addEventListener("click", fetchWeather);
-<!-- ... existing code ... -->
+
+    document.getElementById("btn-export-json").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `equicare-sauvegarde-${todayISO(0)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("btn-info").addEventListener("click", () => {
+      document.getElementById("info-modal").classList.add("open");
+    });
+
+    document.getElementById("btn-close-info").addEventListener("click", () => {
+      document.getElementById("info-modal").classList.remove("open");
+    });
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, s => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[s]));
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+
     syncConfigInputs();
     renderFoods();
     renderAllCare();
