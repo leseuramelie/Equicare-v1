@@ -1275,8 +1275,7 @@
 
     const SUPABASE_ANON_KEY = "sb_publishable_rHuM-3QcEcB5dzN96fXBfQ_SCba9syk";
 
-
-    const SUPABASE_TABLE = "equicare_user_data";
+ "equicare_user_data";
     const SUPABASE_STORAGE_BUCKET = "equicare-documents";
     const EQUICARE_AI_ENDPOINT = ""; // URL du Worker Cloudflare IA, à renseigner ultérieurement
     const STORAGE_KEY = "equicare_state_v6";
@@ -2447,16 +2446,21 @@
       alerts.innerHTML=parts.join("");
     }
 
-    // Garde-fou : une donnée manquante ne doit jamais bloquer la navigation.
+    // Garde-fou : éviter les rendus simultanés/réentrants et isoler les erreurs.
+    let equicareAlertsRendering = false;
     function renderAlertsAndWeather() {
+      if (equicareAlertsRendering) return;
+      equicareAlertsRendering = true;
       try {
         renderAlertsAndWeatherCore();
       } catch (error) {
         console.error("Erreur pendant l’actualisation des alertes ÉquiCare", error);
         const list = document.getElementById("all-alerts-list");
         if (list) {
-          list.innerHTML = '<div class="muted" style="padding:12px 0">Certaines alertes n’ont pas pu être actualisées. Les autres onglets restent accessibles ; vérifie les informations renseignées puis réessaie.</div>';
+          list.innerHTML = '<div class="muted" style="padding:12px 0">Certaines alertes n’ont pas pu être actualisées. Tu peux continuer à utiliser les autres onglets. Vérifie les informations renseignées puis réessaie.</div>';
         }
+      } finally {
+        equicareAlertsRendering = false;
       }
     }
 
@@ -2522,7 +2526,8 @@
       } catch {
         document.getElementById("weather-updated").textContent = "Hors ligne / Erreur réseau";
       }
-      renderAlertsAndWeather();
+      // Le rendu complet des alertes reste à la demande, dans l'onglet Alertes.
+      if (activeTab === "tab-alerts") renderAlertsAndWeather();
     }
 
     function renderFoods() {
@@ -3674,7 +3679,9 @@
       document.querySelectorAll(".nav-btn").forEach(b => {
         b.classList.toggle("active", b.dataset.tab === tabId);
       });
-      renderAlertsAndWeather();
+      // Le calcul des alertes est différé : il ne doit jamais bloquer le démarrage.
+      // Il ne s'exécute que lorsque l'utilisateur ouvre explicitement cet onglet.
+      if (tabId === "tab-alerts") renderAlertsAndWeather();
       if (tabId === "tab-info") renderInformation();
       if (tabId === "tab-activities") renderActivities();
       if (tabId === "tab-budget") renderBudget();
@@ -3831,9 +3838,7 @@
       return String(str || "").replace(/[^a-zA-Z0-9_-]/g, "_");
     }
 
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js").catch(() => {});
-    }
+    // Aucun service worker n’est déployé dans ce dépôt : ne pas tenter de l’enregistrer.
 
     ensureHorseInfo();
     syncConfigInputs();
@@ -3841,7 +3846,6 @@
     renderAllCare();
     renderPharmacy();
     renderBudget();
-    renderAlertsAndWeather();
     fetchWeather();
     initCloudSync();
   
@@ -4101,7 +4105,7 @@
     renderAllCare();
     renderPharmacy();
     renderBudget();
-    renderAlertsAndWeather();
+    // Les alertes seront calculées uniquement à l'ouverture de l'onglet Alertes.
 
     // Informations générales sur les produits de pharmacie via un service IA sécurisé.
     // Le Worker doit accepter {task, productName, quantity, notes, species, safetyInstructions}
