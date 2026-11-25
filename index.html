@@ -770,6 +770,16 @@
 
     .weather-summary {background:#e6f3e8;border:1px solid #b8d9bf;color:#173d25;border-radius:12px;padding:12px;margin:10px 0;font-size:.88rem;}
     .weather-summary strong {color:#12351f;}
+    .status-dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:9px;margin:12px 0;}
+    .status-card{width:100%;text-align:left;display:flex;flex-direction:column;gap:5px;padding:12px;border-radius:12px;border:1px solid;cursor:pointer;color:inherit;box-shadow:var(--shadow);transition:transform .12s ease,filter .12s ease;}
+    .status-card:hover{filter:brightness(.98)}.status-card:active{transform:scale(.99)}
+    .status-card.ok{background:#ecfdf3;border-color:#86d4a2;color:#14532d;}
+    .status-card.warn{background:#fff7df;border-color:#e9c46a;color:#854d0e;}
+    .status-card.danger{background:#fff0ef;border-color:#f0a09a;color:#991b1b;}
+    .status-card.neutral{background:#f3f4f6;border-color:#d1d5db;color:#374151;}
+    .status-card-title{font-weight:850;font-size:.9rem;display:flex;align-items:center;gap:7px;}
+    .status-card-detail{font-size:.8rem;line-height:1.35;}
+    .status-card-link{font-size:.73rem;font-weight:800;margin-top:2px;opacity:.85;}
     .weather-alert {margin-top:7px;padding:8px 10px;border-radius:9px;background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;}
     .weather-alert.ok {background:#f0fdf4;border-color:#bbf7d0;color:#166534;}
     .contact-card .identity-layout {display:flex;align-items:flex-start;gap:14px;}
@@ -831,18 +841,6 @@
             <div class="metric-label">Masque UV (seuil ≥ <span id="lbl-uv-th">6</span>)</div>
             <div class="metric-val" id="m-uv">--</div>
           </div>
-          <div class="metric-box">
-            <div class="metric-label">Aliments à racheter</div>
-            <div class="metric-val" id="m-food">--</div>
-          </div>
-          <div class="metric-box">
-            <div class="metric-label">Soins & RDV à prévoir</div>
-            <div class="metric-val" id="m-care">--</div>
-          </div>
-          <div class="metric-box">
-            <div class="metric-label">Pharmacie (≤ <span id="lbl-pharma-days">30</span> j)</div>
-            <div class="metric-val" id="m-pharma">--</div>
-          </div>
         </div>
 
         <div class="weather-summary" id="weather-summary"><strong>Résumé météo</strong><div id="weather-summary-main">Prévisions en cours de chargement…</div><div id="weather-summary-alerts"></div></div><div class="weather-metrics" style="margin-top:8px;"><div class="metric-box"><div class="metric-label">Vent / rafales</div><div class="metric-val" id="w-wind">--</div></div><div class="metric-box"><div class="metric-label">Pluie actuelle</div><div class="metric-val" id="w-rain">--</div></div></div>
@@ -850,38 +848,6 @@
         <div class="hourly-strip" id="hourly-strip"></div>
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">Réglages des seuils d'alerte</h2>
-        </div>
-        <div class="form-row">
-          <label class="muted">Seuil journée 10h–21h :
-            <input type="number" id="cfg-day-th" step="0.5" style="width:74px;" /> °C
-          </label>
-          <label class="muted">Seuil nuit/matin 21h–10h :
-            <input type="number" id="cfg-cold-th" step="0.5" style="width:74px;" /> °C
-          </label>
-          <label class="muted">Seuil UV masque :
-            <input type="number" id="cfg-uv-th" min="1" max="12" step="1" style="width:68px;" />
-          </label>
-          <label class="muted">Alerte stock ≤
-            <input type="number" id="cfg-stock-days" min="1" max="60" step="1" style="width:68px;" /> j
-          </label>
-          <label class="muted">Vermifuge ≤
-            <input type="number" id="cfg-deworm-days" min="1" max="60" step="1" style="width:68px;" /> j
-          </label>
-          <label class="muted">Vaccin ≤
-            <input type="number" id="cfg-vaccine-days" min="1" max="120" step="1" style="width:68px;" /> j
-          </label>
-          <label class="muted">Péremption pharma ≤
-            <input type="number" id="cfg-pharma-days" min="1" max="120" step="1" style="width:68px;" /> j
-          </label>
-          <label class="muted">RDV intervenant ≤
-            <input type="number" id="cfg-visit-days" min="1" max="90" step="1" style="width:68px;" /> j
-          </label>
-          <button class="btn btn-primary btn-sm" id="btn-save-cfg">Enregistrer</button>
-        </div>
-      </div>
     </section>
 
     <!-- TAB 2: ALIMENTS -->
@@ -889,7 +855,7 @@
       <div class="card">
         <div class="card-header">
           <div>
-            <h2 class="card-title">Sacs / bidons achetés, ouverts & jours de stock</h2>
+            <h2 class="card-title">Achats, ouvertures & jours de stock</h2>
             <div class="muted">Aliments solides en kg (foin acheté en rounds de 180 kg ; conversion en kg affichée) (conso en kg/j) • Huile de lin en litres (conso affichée en mL/j, défaut 150 mL/j).</div>
           </div>
           <button class="btn btn-primary btn-sm" id="btn-toggle-add-food">+ Nouvel aliment</button>
@@ -1029,6 +995,7 @@
           <button class="info-subbtn active" data-info-sub="info-horses">🐴 Chevaux</button>
           <button class="info-subbtn" data-info-sub="info-contacts">📞 Intervenants</button>
           <button class="info-subbtn" data-info-sub="info-structure">🏡 Structure</button>
+          <button class="info-subbtn" data-info-sub="info-alert-settings">⚙️ Seuils d'alerte</button>
         </div>
         <div id="info-horses" class="info-panel">
           <div class="form-row" style="justify-content:space-between;align-items:center"><div class="horse-tabs" id="info-horse-tabs"></div><button type="button" class="btn btn-primary btn-sm" onclick="openAddHorseForm()">+ Ajouter un cheval</button></div>
@@ -1041,6 +1008,39 @@
         </div>
         <div id="info-structure" class="info-panel hidden">
           <div id="structure-content"></div>
+        </div>
+        <div id="info-alert-settings" class="info-panel hidden">
+          <div class="sub-section">
+            <h3 class="sub-section-title">Réglages des seuils d'alerte</h3>
+            <p class="muted">Personnalise ici les seuils utilisés pour les alertes météo, les stocks, la pharmacie, les soins et les rendez-vous. Ces réglages ne sont plus affichés dans l'onglet Alertes &amp; Météo.</p>
+            <div class="form-row">
+              <label class="muted">Seuil journée 10h–21h :
+                <input type="number" id="cfg-day-th" step="0.5" style="width:74px;" /> °C
+              </label>
+              <label class="muted">Seuil nuit/matin 21h–10h :
+                <input type="number" id="cfg-cold-th" step="0.5" style="width:74px;" /> °C
+              </label>
+              <label class="muted">Seuil UV masque :
+                <input type="number" id="cfg-uv-th" min="1" max="12" step="1" style="width:68px;" />
+              </label>
+              <label class="muted">Alerte stock ≤
+                <input type="number" id="cfg-stock-days" min="1" max="60" step="1" style="width:68px;" /> j
+              </label>
+              <label class="muted">Vermifuge ≤
+                <input type="number" id="cfg-deworm-days" min="1" max="60" step="1" style="width:68px;" /> j
+              </label>
+              <label class="muted">Vaccin ≤
+                <input type="number" id="cfg-vaccine-days" min="1" max="120" step="1" style="width:68px;" /> j
+              </label>
+              <label class="muted">Péremption pharma ≤
+                <input type="number" id="cfg-pharma-days" min="1" max="120" step="1" style="width:68px;" /> j
+              </label>
+              <label class="muted">RDV intervenant ≤
+                <input type="number" id="cfg-visit-days" min="1" max="90" step="1" style="width:68px;" /> j
+              </label>
+              <button class="btn btn-primary btn-sm" id="btn-save-cfg">Enregistrer</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1194,6 +1194,7 @@
         </label>
         <label class="muted"><span id="open-qty-label">Contenance (kg)</span> :
           <input type="number" id="open-bag-qty-input" min="0.5" step="0.5" style="width:95px;" />
+          <span id="open-round-conversion" class="muted"></span>
         </label>
       </div>
       <div class="form-row" style="justify-content:flex-end;margin-top:14px;">
@@ -1531,6 +1532,7 @@
             label: custom.label || base.label,
             icon: custom.icon || base.icon,
             intervalWeeks: Math.max(1, parseInt(custom.intervalWeeks ?? base.intervalWeeks ?? 10, 10)),
+            appointmentDate: custom.appointmentDate || base.appointmentDate || "",
             visits
           };
         }
@@ -1831,113 +1833,81 @@
       });
     }
 
+    function getFoodDailyRationTotal(foodId) {
+      return (state.horses || []).reduce((sum, horse) => {
+        const profile = state.horseProfiles?.[horse.id] || {};
+        const lines = Array.isArray(profile.ration) ? profile.ration : [];
+        return sum + lines.filter(line => line.foodId === foodId).reduce((subtotal, line) => subtotal + Math.max(0, Number(line.qty) || 0), 0);
+      }, 0);
+    }
+
     function computeFoodMetrics(food) {
       const oil = isOilFood(food);
       const hay = food.unit === "round" || food.id === "foin";
       const unitLabel = oil ? "L" : "kg";
       const containerWord = oil ? "bidon" : (hay ? "round" : "sac");
       const containersWord = oil ? "bidons" : (hay ? "rounds" : "sacs");
-
       const purchases = [...(food.purchases || [])].sort((a, b) => a.date.localeCompare(b.date));
       const openedBags = [...(food.openedBags || [])].sort((a, b) => a.date.localeCompare(b.date));
       const defaultQty = Number(food.bagKg || (oil ? 5 : 20));
-
       const totalPurchasedBags = purchases.reduce((acc, p) => acc + Number(p.bags || 1), 0);
       const totalPurchasedQty = purchases.reduce((acc, p) => acc + Number(p.bags || 1) * Number(p.kgPerBag || defaultQty), 0);
-      const openedCount = openedBags.length;
-      const closedBagsRemaining = Math.max(0, totalPurchasedBags - openedCount);
-
+      // Une seule unité est affichée comme ouverte. Les ouvertures précédentes
+      // restent consignées dans l'historique et correspondent aux contenants consommés.
+      const openedUnitsTotal = hay ? openedBags.reduce((sum, o) => sum + Number(o.rounds || 1), 0) : openedBags.length;
+      const hasStock = totalPurchasedBags > 0;
+      const openedCount = hasStock ? 1 : 0;
+      const consumedCount = Math.min(totalPurchasedBags, Math.max(0, openedUnitsTotal - (hasStock ? 1 : 0)));
+      const closedBagsRemaining = Math.max(0, totalPurchasedBags - consumedCount - openedCount);
       const lastPurchase = purchases[purchases.length - 1];
       const lastPurchaseDate = lastPurchase ? lastPurchase.date : todayISO(-10);
       const lastOpen = openedBags[openedBags.length - 1];
       const lastOpenDate = lastOpen ? lastOpen.date : lastPurchaseDate;
       const openBagQty = lastOpen ? Number(lastOpen.kgPerBag || defaultQty) : defaultQty;
 
-      let avgRateInBaseUnit = Number(food.estimatedDailyKg || (oil ? 0.15 : 1));
-      let avgDaysPerContainer = null;
+      // Consommation effective : quantité achetée à chaque date, consommée
+      // jusqu'à l'achat suivant. La moyenne est pondérée par le nombre de jours.
+      let purchaseHistoryRate = null;
       let intervalsCount = 0;
-
-      if (openedBags.length >= 2) {
-        let totalDays = 0;
-        let totalQty = 0;
-        for (let i = 0; i < openedBags.length - 1; i++) {
-          totalDays += daysBetween(openedBags[i].date, openedBags[i + 1].date);
-          totalQty += Number(openedBags[i].kgPerBag || defaultQty);
-          intervalsCount++;
-        }
-        if (totalDays > 0 && totalQty > 0) {
-          avgRateInBaseUnit = totalQty / totalDays;
-          avgDaysPerContainer = totalDays / intervalsCount;
-        }
-      } else if (purchases.length >= 2) {
-        let totalDays = 0;
-        let totalQty = 0;
+      if (purchases.length >= 2) {
+        let elapsedDays = 0;
+        let consumedQty = 0;
         for (let i = 0; i < purchases.length - 1; i++) {
-          totalDays += daysBetween(purchases[i].date, purchases[i + 1].date);
-          totalQty += Number(purchases[i].bags || 1) * Number(purchases[i].kgPerBag || defaultQty);
-          intervalsCount++;
+          const days = daysBetween(purchases[i].date, purchases[i + 1].date);
+          if (days > 0) {
+            elapsedDays += days;
+            consumedQty += Number(purchases[i].bags || 1) * Number(purchases[i].kgPerBag || defaultQty);
+            intervalsCount++;
+          }
         }
-        if (totalDays > 0 && totalQty > 0) {
-          avgRateInBaseUnit = totalQty / totalDays;
-          avgDaysPerContainer = avgRateInBaseUnit > 0 ? defaultQty / avgRateInBaseUnit : null;
-        }
+        if (elapsedDays > 0 && consumedQty > 0) purchaseHistoryRate = consumedQty / elapsedDays;
       }
 
-      if (!avgDaysPerContainer && avgRateInBaseUnit > 0) {
-        avgDaysPerContainer = defaultQty / avgRateInBaseUnit;
-      }
-
+      // Somme des rations quotidiennes de tous les chevaux, en kg/j ou L/j.
+      const referenceRateInBaseUnit = getFoodDailyRationTotal(food.id);
+      const hasEffectiveHistory = purchaseHistoryRate !== null;
+      const avgRateInBaseUnit = hasEffectiveHistory ? purchaseHistoryRate : referenceRateInBaseUnit;
+      const avgDaysPerContainer = avgRateInBaseUnit > 0 ? defaultQty / avgRateInBaseUnit : null;
       const daysSinceOpen = Math.max(0, daysBetween(lastOpenDate, todayISO(0)) - 1);
-      const usedInCurrentQty = openedCount > 0
-        ? Math.min(openBagQty, daysSinceOpen * avgRateInBaseUnit)
-        : 0;
-      const currentOpenRemainingQty = openedCount > 0
-        ? Math.max(0, openBagQty - usedInCurrentQty)
-        : 0;
-
+      const usedInCurrentQty = openedCount > 0 ? Math.min(openBagQty, daysSinceOpen * avgRateInBaseUnit) : 0;
+      const currentOpenRemainingQty = openedCount > 0 ? Math.max(0, openBagQty - usedInCurrentQty) : 0;
       const closedStockQty = closedBagsRemaining * defaultQty;
       const totalRemainingQty = currentOpenRemainingQty + closedStockQty;
-      const remainingPct = totalPurchasedQty > 0
-        ? Math.min(100, Math.round((totalRemainingQty / totalPurchasedQty) * 100))
-        : 0;
-      const estimatedDaysLeft = avgRateInBaseUnit > 0
-        ? Math.max(0, Math.round(totalRemainingQty / avgRateInBaseUnit))
-        : 0;
-
-      const avgDisplay = oil
-        ? `${Math.round(avgRateInBaseUnit * 1000)} mL / j`
-        : `${avgRateInBaseUnit.toFixed(2)} kg / j`;
-
-      const avgInputDisplay = oil
-        ? Math.round(avgRateInBaseUnit * 1000)
-        : Number(avgRateInBaseUnit.toFixed(2));
-
-      const needsReorder =
-        estimatedDaysLeft <= Number(state.config.stockAlertDays || 5) || remainingPct <= 20;
-
+      const remainingPct = totalPurchasedQty > 0 ? Math.min(100, Math.round((totalRemainingQty / totalPurchasedQty) * 100)) : 0;
+      const estimatedDaysLeft = avgRateInBaseUnit > 0 ? Math.max(0, Math.round(totalRemainingQty / avgRateInBaseUnit)) : 0;
+      const avgDisplay = hasEffectiveHistory
+        ? (oil ? `${Math.round(purchaseHistoryRate * 1000)} mL / j` : `${purchaseHistoryRate.toFixed(2)} kg / j`)
+        : "Historique insuffisant (2 achats minimum)";
+      const referenceDisplay = oil ? `${Math.round(referenceRateInBaseUnit * 1000)} mL / j` : `${referenceRateInBaseUnit.toFixed(2)} kg / j`;
+      const needsReorder = estimatedDaysLeft <= Number(state.config.stockAlertDays || 5) || remainingPct <= 20;
       return {
-        oil,
-        unitLabel,
-        containerWord,
-        containersWord,
-        purchases,
-        openedBags,
-        totalPurchasedBags,
-        totalPurchasedQty,
-        openedCount,
-        closedBagsRemaining,
-        lastPurchaseDate,
-        lastOpenDate,
-        currentOpenRemainingQty,
-        avgRateInBaseUnit,
-        avgDisplay,
-        avgInputDisplay,
-        avgDaysPerContainer,
-        intervalsCount,
-        totalRemainingQty,
-        remainingPct,
-        estimatedDaysLeft,
-        needsReorder
+        oil, unitLabel, containerWord, containersWord, purchases, openedBags,
+        totalPurchasedBags, totalPurchasedQty, openedCount, openedUnitsTotal,
+        consumedCount, closedBagsRemaining, lastPurchaseDate, lastOpenDate,
+        currentOpenRemainingQty, avgRateInBaseUnit, purchaseHistoryRate,
+        hasEffectiveHistory, referenceRateInBaseUnit, referenceDisplay,
+        avgDisplay, avgDaysPerContainer, intervalsCount, totalRemainingQty,
+        remainingPct, estimatedDaysLeft, needsReorder
       };
     }
 
@@ -2100,7 +2070,9 @@
         const horseMap = (state.healthVisits && state.healthVisits[h.id]) || {};
         for (const [key, prac] of Object.entries(horseMap)) {
           const info = getPractitionerNextVisitInfo(prac);
-          if (info.daysLeft <= th) {
+          const bookedDate = prac.appointmentDate || "";
+          const appointmentAlreadyBooked = bookedDate && signedDaysFromToday(bookedDate) >= 0;
+          if (info.daysLeft <= th && !appointmentAlreadyBooked) {
             const shortPrac = shortPractitionerLabel(prac);
             const shortHorse = shortHorseLabel(h.name);
             const timingBrief = info.daysLeft < 0
@@ -2318,20 +2290,16 @@
         visibleAlertCards = [...healthCards];
       }
 
-      widget.innerHTML = visibleAlertCards.join("");
+      if (widget) widget.innerHTML = "";
 
       document.getElementById("lbl-day-th").textContent = dayTh;
       document.getElementById("lbl-cold-th").textContent = coldTh;
       document.getElementById("lbl-uv-th").textContent = uvTh;
-      document.getElementById("lbl-pharma-days").textContent = pharmaTh;
-      document.getElementById("pharma-alert-days-label").textContent = pharmaTh;
+      const pharmaLabel = document.getElementById("pharma-alert-days-label");
+      if (pharmaLabel) pharmaLabel.textContent = pharmaTh;
       document.getElementById("m-day-blanket").textContent = dayInfo.triggered ? dayInfo.blanketLabel : "Non";
       document.getElementById("m-blanket").textContent = coldInfo.triggered ? "Oui (<" + coldTh + "°C)" : "Non";
       document.getElementById("m-uv").textContent = uvInfo.triggered ? "Oui (UV " + uvInfo.maxUv.toFixed(1) + ")" : "Non";
-      document.getElementById("m-food").textContent = foodsToReorder.length > 0 ? foodsToReorder.length + " réf." : "OK";
-      const careCount = dueDeworms.length + dueVaccines.length + upcomingVisits.length;
-      document.getElementById("m-care").textContent = careCount > 0 ? careCount + " alerte(s)" : "OK";
-      document.getElementById("m-pharma").textContent = expiringPharma.length > 0 ? expiringPharma.length + " prod." : "OK";
 
       if (weatherData && weatherData.current) {
         const cur = weatherData.current;
@@ -2395,7 +2363,7 @@
 
     function renderWeatherWeek(){
       const main=document.getElementById("weather-summary-main"), alerts=document.getElementById("weather-summary-alerts");
-      if(!main||!alerts||!weatherData?.daily){if(main)main.textContent="Prévisions indisponibles pour le moment.";return;}
+      if(!main||!alerts||!weatherData?.daily){if(main)main.textContent="Prévisions indisponibles pour le moment.";if(alerts)alerts.innerHTML=renderStatusDashboard();return;}
       const d=weatherData.daily, fmt=(v)=>Number(v||0).toFixed(1).replace(".",",");
       const dayMinText=document.getElementById("w-day-min")?.textContent||"--°C";
       const nightMinText=document.getElementById("w-night-min")?.textContent||"--°C";
@@ -2412,12 +2380,64 @@
         if(level==="Vent fort"||level==="Tempête")windDays.push(`${day} : ${level.toLowerCase()} (max ${Math.round(vmax)} km/h, rafales ${Math.round(gmax)} km/h)`);
         if(rain>=20)rainDays.push(`${day} : ${fmt(rain)} mm attendus`);
       }
-      const parts=[];
+      const parts=[renderStatusDashboard()];
       if(windDays.length)parts.push(`<div class="weather-alert">⚠️ <strong>Vent fort / tempête dans les 7 jours :</strong> ${windDays.map(escapeHtml).join(" ; ")}</div>`);
       else parts.push('<div class="weather-alert ok">✓ Aucun vent fort ni épisode de tempête détecté sur les 7 prochains jours.</div>');
       if(rainDays.length)parts.push(`<div class="weather-alert">🌧️ <strong>Pluies fortes dans les 7 jours (≥ 20 mm/jour) :</strong> ${rainDays.map(escapeHtml).join(" ; ")}</div>`);
       else parts.push('<div class="weather-alert ok">✓ Aucune pluie forte (≥ 20 mm/jour) détectée sur les 7 prochains jours.</div>');
       alerts.innerHTML=parts.join("");
+    }
+
+    function renderStatusDashboard(){
+      const card=(level,icon,title,detail,action,label="Consulter")=>`<button type="button" class="status-card ${level}" onclick="${action}"><span class="status-card-title">${icon} ${title}</span><span class="status-card-detail">${detail}</span><span class="status-card-link">${label} →</span></button>`;
+      const cards=[];
+
+      // Weather equipment: red for heavy cover or UV mask, amber for a light/medium cover.
+      if(weatherData?.hourly && weatherData?.daily){
+        const day=checkDaytimeBlanket(weatherData.hourly), night=checkNightMorningCold(weatherData.hourly), uv=checkMaxUV(weatherData.daily);
+        const blanketLabels=[day.triggered?day.blanketLabel:null,night.triggered?(night.minTemp < -5?"Grosse couverture":(night.minTemp < 0?"Couverture moyenne":"Couverture légère")):null].filter(Boolean);
+        const severe=blanketLabels.some(x=>x==="Grosse couverture")||uv.triggered;
+        const mild=blanketLabels.length>0;
+        const level=severe?"danger":(mild?"warn":"ok");
+        const detail=[...blanketLabels,uv.triggered?`Masque anti-UV conseillé (UV ${uv.maxUv.toFixed(1)})`:null].filter(Boolean).join(" • ")||"Pas de couverture ni de masque anti-UV à prévoir selon les seuils actuels.";
+        cards.push(card(level,"🌦️","Météo & équipement",escapeHtml(detail),"goToWeatherAlert()","Voir les prévisions"));
+      }else cards.push(card("neutral","🌦️","Météo & équipement","Prévisions momentanément indisponibles.","goToWeatherAlert()","Voir la météo"));
+
+      const foods=(state.foods||[]).map(f=>({food:f,metrics:computeFoodMetrics(f)})).filter(x=>x.metrics.needsReorder).sort((a,b)=>a.metrics.estimatedDaysLeft-b.metrics.estimatedDaysLeft);
+      if(foods.length){
+        const first=foods[0], urgent=foods.some(x=>x.metrics.estimatedDaysLeft<=0);
+        const detail=foods.map(x=>`${escapeHtml(x.food.name)} (${x.metrics.estimatedDaysLeft} j)`).join(" • ");
+        cards.push(card(urgent?"danger":"warn","🌾","Stocks alimentaires",detail,`goToFoodAlert('${escapeAttr(first.food.id)}')`,`Voir ${foods.length} aliment(s)`));
+      }else cards.push(card("ok","🌾","Stocks alimentaires","Aucun aliment à racheter pour le moment.","switchTab('tab-foods', true)","Voir les aliments"));
+
+      const expired=getExpiringPharmacy();
+      if(expired.length){
+        const firstExpired=expired.find(x=>x.daysLeft<0), first=firstExpired||expired[0];
+        const urgent=!!firstExpired;
+        const detail=expired.map(x=>`${escapeHtml(x.name)} (${x.daysLeft<0?`périmé depuis ${Math.abs(x.daysLeft)} j`:`expire dans ${x.daysLeft} j`})`).join(" • ");
+        cards.push(card(urgent?"danger":"warn","🩹","Pharmacie",detail,`goToPharmacyAlert('${escapeAttr(first.id)}')`,`Voir ${expired.length} produit(s)`));
+      }else if((state.pharmacy||[]).length){
+        cards.push(card("ok","🩹","Pharmacie","Tous les produits enregistrés sont dans leurs dates de validité.","openHealthSub('sub-pharmacy', null, 'pharmacy-list')","Ouvrir la pharmacie"));
+      }else cards.push(card("neutral","🩹","Pharmacie","Aucun produit enregistré pour le moment.","openHealthSub('sub-pharmacy', null, 'pharmacy-list')","Ouvrir la pharmacie"));
+
+      const deworms=getDueDewormings(), vaccines=getDueVaccines();
+      const overdueCare=[...deworms,...vaccines].filter(x=>x.daysLeft<0);
+      const upcomingCare=[...deworms,...vaccines].filter(x=>x.daysLeft>=0);
+      if(overdueCare.length||upcomingCare.length){
+        const first=([...overdueCare,...upcomingCare])[0];
+        const detail=[...overdueCare.map(x=>`${escapeHtml(x.horseName)} : ${escapeHtml(x.label)} en retard`),...upcomingCare.map(x=>`${escapeHtml(x.horseName)} : ${escapeHtml(x.label)} dans ${x.daysLeft} j`)].join(" • ");
+        const action=deworms.some(x=>x.itemId===first.itemId&&x.horseId===first.horseId)?`goToDewormAlert('${escapeAttr(first.horseId)}','${escapeAttr(first.itemId)}')`:`goToVaccineAlert('${escapeAttr(first.horseId)}','${escapeAttr(first.itemId)}')`;
+        cards.push(card(overdueCare.length?"danger":"warn","💊","Vaccins & vermifuges",detail,action,"Voir le suivi santé"));
+      }else cards.push(card("ok","💊","Vaccins & vermifuges","Aucune échéance dépassée ou proche selon les seuils configurés.","openHealthSub('sub-vaccines', null, 'vaccines-list')","Voir le suivi santé"));
+
+      const visits=getUpcomingPractitionerReminders();
+      if(visits.length){
+        const first=visits[0], overdue=visits.some(x=>x.daysLeft<0);
+        const detail=visits.map(x=>`${escapeHtml(x.shortPrac)} – ${escapeHtml(x.shortHorse)} : ${x.daysLeft<0?`en retard de ${Math.abs(x.daysLeft)} j`:`à réserver dans ${x.daysLeft} j`}`).join(" • ");
+        cards.push(card(overdue?"danger":"warn","🧑‍⚕️","Rendez-vous intervenants",detail,`goToPractitionerAlert('${escapeAttr(first.horseId)}','${escapeAttr(first.practitionerKey)}')`,"Gérer les rendez-vous"));
+      }else cards.push(card("ok","🧑‍⚕️","Rendez-vous intervenants","Aucun rendez-vous à réserver dans les 15 prochains jours. Les rendez-vous déjà renseignés comme réservés sont pris en compte.","openHealthSub('sub-providers', null, 'health-practitioners-list')","Voir les intervenants"));
+
+      return `<div class="status-dashboard">${cards.join("")}</div>`;
     }
 
     async function fetchWeather() {
@@ -2446,8 +2466,9 @@
         return `
           <div class="item-card" id="food-card-${escapeAttr(food.id)}">
             <div class="item-top">
-              <div style="display:flex;gap:10px;align-items:center">${food.productPhoto?`<img src="${food.productPhoto}" alt="Fiche produit ${escapeHtml(food.name)}" style="width:76px;height:88px;object-fit:contain;border-radius:8px;background:#fff">`:``}<div>
+              <div style="display:flex;gap:10px;align-items:center">${food.productPhoto?((food.productPhotoType||'').includes('pdf')||String(food.productPhoto).startsWith('data:application/pdf')?`<a href="${food.productPhoto}" target="_blank" rel="noopener" title="Ouvrir le PDF" style="width:76px;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;background:var(--surface,#f8fafc);border:1px solid var(--border,#ddd);text-decoration:none;color:inherit"><span style="font-size:30px">📕</span><small>PDF</small></a>`:`<img src="${food.productPhoto}" alt="Fiche produit ${escapeHtml(food.name)}" style="width:76px;height:88px;object-fit:contain;border-radius:8px;background:#fff">`):``}<div>
                 <div class="item-name">${escapeHtml(food.name)}</div>
+                ${food.productPhoto?`<div class="muted" style="font-size:.75rem">${escapeHtml(food.productPhotoName||'Document joint')}</div>`:''}
                 <div class="muted">Dernier achat : <strong>${formatDateFR(m.lastPurchaseDate)}</strong> • Dernier ${m.containerWord} ouvert : <strong>${formatDateFR(m.lastOpenDate)}</strong></div>
               </div></div>
               <span class="badge ${badgeClass}">${badgeText}</span>
@@ -2460,11 +2481,12 @@
               </div>
               <div class="stat-mini">
                 <div class="k">${m.oil ? "Bidons fermés / Ouverts" : (food.unit === "round" || food.id === "foin" ? "Rounds fermés / Ouverts" : "Sacs fermés / Ouverts")}</div>
-                <div class="v">${m.closedBagsRemaining} fermé(s) • ${m.openedCount} ouvert(s)</div>
+                <div class="v">${m.closedBagsRemaining} ${m.containerWord}(s) plein(s) • ${m.openedCount} ${m.containerWord}(s) ouvert(s)</div>
               </div>
               <div class="stat-mini">
-                <div class="k">Moyenne de consommation</div>
-                <div class="v">${m.avgDisplay} (${avgDaysText})</div>
+                <div class="k">Moyenne réelle de consommation</div>
+                <div class="v">${m.avgDisplay}${m.hasEffectiveHistory ? ` (${avgDaysText})` : ""}</div>
+                <div class="muted" style="font-size:.75rem;margin-top:4px">Calculée à partir de l’historique des achats successifs.</div>
               </div>
               <div class="stat-mini">
                 <div class="k">Total acheté cumulé</div>
@@ -2473,19 +2495,20 @@
             </div>
 
             <div class="bag-banner">
-              <span>${m.oil ? "Bidon" : (food.unit === "round" || food.id === "foin" ? "Round" : "Sac")} ouvert actuel : <strong>${m.currentOpenRemainingQty.toFixed(2)} ${m.unitLabel}</strong> estimés restants</span>
+              <span>${m.oil ? "Bidon" : (food.unit === "round" || food.id === "foin" ? "Rounds ouverts actuellement" : "Sac ouvert actuel")} : <strong>${m.currentOpenRemainingQty.toFixed(2)} ${m.unitLabel}</strong> estimés restants</span>
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button class="btn btn-secondary btn-sm" onclick="openBagModal('${escapeAttr(food.id)}')">${m.oil ? "🛢️ Nouveau bidon ouvert" : "🎒 Nouveau sac ouvert"}</button>
+                <button class="btn btn-secondary btn-sm" onclick="openBagModal('${escapeAttr(food.id)}')">${m.oil ? "🛢️ Nouveau bidon ouvert" : (food.unit === "round" || food.id === "foin" ? "🌾 Nouveaux rounds ouverts" : "🎒 Nouveau sac ouvert")}</button>
                 <button class="btn btn-primary btn-sm" onclick="openBuyModal('${escapeAttr(food.id)}')">+ Acheter (${m.containersWord})</button>
               </div>
             </div>
 
-            <div class="form-row">
-              <label class="muted" style="font-size:0.78rem;">${rateInputLabel}
-                <input type="number" step="${rateStep}" min="1" value="${m.avgInputDisplay}" style="width:82px;padding:4px 6px;" onchange="updateFoodDailyEstimate('${escapeAttr(food.id)}', this.value)" />
-              </label>
-              <label class="btn btn-outline btn-sm">📄 Photo fiche produit<input type="file" accept="image/*" hidden onchange="saveFoodProductPhoto('${escapeAttr(food.id)}',this.files[0])"></label><button class="btn btn-secondary btn-sm" onclick="extractFoodProduct('${escapeAttr(food.id)}')">Extraire les informations</button><button class="btn btn-outline btn-sm" onclick="deleteFood('${escapeAttr(food.id)}')">Supprimer</button>
+            <div class="form-row" style="align-items:center;justify-content:space-between">
+              <button type="button" class="btn btn-outline btn-sm" onclick="openFoodRation('${escapeAttr(food.id)}')" title="Ouvrir les rations pour modifier les quantités par cheval">
+                Consommation de référence : <strong style="margin-left:5px">${m.referenceDisplay}</strong> · Modifier dans les rations ↗
+              </button>
+              <label class="btn btn-outline btn-sm">📎 Importer photo / PDF<input type="file" accept="image/*,.pdf,application/pdf" hidden onchange="saveFoodProductPhoto('${escapeAttr(food.id)}',this.files[0]);this.value=''" /></label>${food.productPhoto?`<button class="btn btn-outline btn-sm" onclick="removeFoodProductPhoto('${escapeAttr(food.id)}')">Retirer le document</button>`:''}<button class="btn btn-secondary btn-sm" onclick="extractFoodProduct('${escapeAttr(food.id)}')">Extraire les informations</button><button class="btn btn-outline btn-sm" onclick="deleteFood('${escapeAttr(food.id)}')">Supprimer</button>
             </div>
+            <div class="muted" style="font-size:.75rem;margin-top:4px">Total automatique des quantités quotidiennes renseignées dans les rations de tous les chevaux. Cette valeur n’est pas modifiable ici.</div>
 
             <details class="item-card" style="margin-top:10px;background:var(--surface, #f8fafc)">
               <summary style="cursor:pointer;font-weight:700">Informations nutritionnelles du produit</summary>
@@ -2497,16 +2520,21 @@
               </div>
               <button class="btn btn-primary btn-sm" type="button" onclick="saveFoodNutrition('${escapeAttr(food.id)}')">Enregistrer les valeurs nutritionnelles</button>
             </details>
-            <div class="purchase-log">
-              <div>Achats enregistrés :</div>
-              <div class="purchase-pills">
-                ${m.purchases.map((p, idx) => `<span class="p-pill">${formatDateFR(p.date)} • ${p.bags} ${m.containerWord}(s)${food.unit === "round" || food.id === "foin" ? ` (${Number(p.bags)*180} kg)` : ` × ${p.kgPerBag} ${m.unitLabel}`} • ${Number(p.totalPrice||0).toFixed(2)} € <button class="btn btn-outline btn-sm" onclick="editFoodPurchase('${escapeAttr(food.id)}',${idx})">✎</button><button class="btn btn-outline btn-sm" onclick="deleteFoodPurchase('${escapeAttr(food.id)}',${idx})">×</button></span>`).join("")}
+            <details class="purchase-log" style="margin-top:10px;background:var(--surface,#f8fafc);border:1px solid var(--border);border-radius:12px;padding:10px 12px">
+              <summary style="cursor:pointer;font-weight:700;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <span>Historique</span><span aria-hidden="true" style="display:inline-grid;place-items:center;width:25px;height:25px;border:1px solid var(--border);border-radius:50%;font-size:1.1rem;line-height:1">＋</span>
+              </summary>
+              <div style="margin-top:10px">
+                <div style="font-weight:600">Achats enregistrés :</div>
+                <div class="purchase-pills">
+                  ${m.purchases.map((p, idx) => `<span class="p-pill">${formatDateFR(p.date)} • ${p.bags} ${m.containerWord}(s)${food.unit === "round" || food.id === "foin" ? ` (${Number(p.bags)*180} kg)` : ` × ${p.kgPerBag} ${m.unitLabel}`} • ${Number(p.totalPrice||0).toFixed(2)} € <button class="btn btn-outline btn-sm" onclick="editFoodPurchase('${escapeAttr(food.id)}',${idx})">✎</button><button class="btn btn-outline btn-sm" onclick="deleteFoodPurchase('${escapeAttr(food.id)}',${idx})">×</button></span>`).join("") || '<span class="muted">Aucun achat enregistré.</span>'}
+                </div>
+                <div style="margin-top:10px;font-weight:600">${m.oil ? `Ouvertures enregistrées (${m.consumedCount} bidon(s) consommé(s)) :` : (food.unit === "round" || food.id === "foin" ? `Ouvertures enregistrées (${m.consumedCount} round(s) consommé(s)) :` : `Ouvertures enregistrées (${m.consumedCount} sac(s) consommé(s)) :`)}</div>
+                <div class="purchase-pills">
+                  ${m.openedBags.map((o, idx) => `<span class="p-pill">${m.oil ? "Bidon" : (food.unit === "round" || food.id === "foin" ? `${Number(o.rounds || 1)} round(s)` : "Sac")} ${food.unit === "round" || food.id === "foin" ? "ouverts" : "#" + (idx + 1) + " ouvert"} le ${formatDateFR(o.date)} (${o.kgPerBag} ${m.unitLabel}) <button class="btn btn-outline btn-sm" onclick="editFoodOpening('${escapeAttr(food.id)}',${idx})">✎</button><button class="btn btn-outline btn-sm" onclick="deleteFoodOpening('${escapeAttr(food.id)}',${idx})">×</button></span>`).join("") || '<span class="muted">Aucune ouverture enregistrée.</span>'}
+                </div>
               </div>
-              <div style="margin-top:6px;">${m.oil ? "Bidons ouverts enregistrés :" : (food.unit === "round" || food.id === "foin" ? "Rounds ouverts enregistrés :" : "Sacs ouverts enregistrés :")}</div>
-              <div class="purchase-pills">
-                ${m.openedBags.map((o, idx) => `<span class="p-pill">${m.oil ? "Bidon" : (food.unit === "round" || food.id === "foin" ? "Round" : "Sac")} #${idx + 1} ouvert le ${formatDateFR(o.date)} (${o.kgPerBag} ${m.unitLabel}) <button class="btn btn-outline btn-sm" onclick="editFoodOpening('${escapeAttr(food.id)}',${idx})">✎</button><button class="btn btn-outline btn-sm" onclick="deleteFoodOpening('${escapeAttr(food.id)}',${idx})">×</button></span>`).join("")}
-              </div>
-            </div>
+            </details>
           </div>
         `;
       }).join("");
@@ -2527,8 +2555,18 @@
       f.purchases.sort((a,b)=>a.date.localeCompare(b.date)); saveState(); renderFoods(); renderBudget();
     }
     function deleteFoodPurchase(foodId,idx){const f=state.foods.find(x=>x.id===foodId);if(!f||!confirm("Supprimer cet achat de l'historique ?"))return;f.purchases.splice(idx,1);saveState();renderFoods();renderBudget();}
-    function editFoodOpening(foodId,idx){const f=state.foods.find(x=>x.id===foodId),o=f?.openedBags?.[idx];if(!o)return;const d=prompt("Date d'ouverture (AAAA-MM-JJ)",o.date);if(d===null)return;const q=prompt("Contenance",o.kgPerBag);if(q===null)return;o.date=d;o.kgPerBag=Math.max(.01,Number(q)||o.kgPerBag);saveState();renderFoods();}
+    function editFoodOpening(foodId,idx){const f=state.foods.find(x=>x.id===foodId),o=f?.openedBags?.[idx];if(!o)return;const d=prompt("Date d'ouverture (AAAA-MM-JJ)",o.date);if(d===null)return;const isHay=f.unit==="round"||f.id==="foin";const q=prompt(isHay?"Nombre de rounds ouverts (180 kg par round)":"Contenance",isHay?(o.rounds||Math.max(1,Math.round(Number(o.kgPerBag||180)/180))):o.kgPerBag);if(q===null)return;o.date=d;if(isHay){o.rounds=Math.max(1,Math.floor(Number(q)||1));o.kgPerBag=o.rounds*180;}else{o.kgPerBag=Math.max(.01,Number(q)||o.kgPerBag);}saveState();renderFoods();}
     function deleteFoodOpening(foodId,idx){const f=state.foods.find(x=>x.id===foodId);if(!f||!confirm("Supprimer cette ouverture ?"))return;f.openedBags.splice(idx,1);saveState();renderFoods();}
+
+    function openFoodRation(foodId) {
+      const firstHorseWithFood = (state.horses || []).find(h => (state.horseProfiles?.[h.id]?.ration || []).some(line => line.foodId === foodId));
+      if (firstHorseWithFood) activeInfoHorse = firstHorseWithFood.id;
+      activeInfoSub = "info-horses";
+      switchTab("tab-info", true);
+      switchInfoSub("info-horses");
+      renderHorseProfile();
+      scrollToAndHighlight("horse-ration-section");
+    }
 
     function updateFoodDailyEstimate(foodId, val) {
       const n = parseFloat(val);
@@ -2548,6 +2586,18 @@
       renderAlertsAndWeather();
     }
 
+    function latestFoodPurchase(food) {
+      return [...(food?.purchases || [])].sort((a,b)=>(b.date||"").localeCompare(a.date||""))[0] || null;
+    }
+    function rememberFoodEntryDefaults(values) {
+      state.foodEntryDefaults = { ...(state.foodEntryDefaults || {}), ...values };
+    }
+    function allocationPercent(allocation, horse, fallback) {
+      if (!horse) return 0;
+      const value = allocation?.[horse.id];
+      return value === undefined || value === null ? fallback : Number(value);
+    }
+
     function openBuyModal(foodId) {
       const food = state.foods.find(f => f.id === foodId);
       if (!food) return;
@@ -2559,14 +2609,22 @@
         : (food.unit === "round" || food.id === "foin" ? "Saisis le nombre de rounds : 1 round = 180 kg. Le poids total sera calculé automatiquement." : "Indiquez la date d'achat, le nombre de sacs achetés et le poids d'un sac en kg.");
       document.getElementById("buy-count-label").textContent = oil ? "Nombre de bidons" : (food.unit === "round" || food.id === "foin" ? "Nombre de rounds" : "Nombre de sacs");
       document.getElementById("buy-qty-label").textContent = oil ? "Litres / bidon (L)" : (food.unit === "round" || food.id === "foin" ? "Nombre de rounds (180 kg chacun)" : "Poids / sac (kg)");
+      const lastPurchase = latestFoodPurchase(food);
+      const defaults = state.foodEntryDefaults || {};
       document.getElementById("buy-date-input").value = todayISO(0);
-      document.getElementById("buy-bags-input").value = 1;
+      document.getElementById("buy-bags-input").value = lastPurchase?.bags ?? defaults.bags ?? 1;
       const roundConv=document.getElementById("buy-round-conversion"); if(roundConv){roundConv.textContent=(food.unit === "round" || food.id === "foin")?"(180 kg)":"";}
-      document.getElementById("buy-qty-input").value = (food.unit === "round" || food.id === "foin") ? 180 : (food.bagKg || (oil ? 5 : 20));
+      document.getElementById("buy-qty-input").value = (food.unit === "round" || food.id === "foin") ? 180 : (lastPurchase?.kgPerBag ?? food.bagKg ?? defaults.kgPerBag ?? (oil ? 5 : 20));
       if(food.unit === "round" || food.id === "foin"){document.getElementById("buy-qty-input").readOnly=true;document.getElementById("buy-qty-label").textContent="Poids fixe par round (kg)";}else{document.getElementById("buy-qty-input").readOnly=false;}
       if(roundConv && (food.unit === "round" || food.id === "foin")){document.getElementById("buy-bags-input").oninput=()=>{roundConv.textContent=`(${Number(document.getElementById("buy-bags-input").value||0)*180} kg)`;};document.getElementById("buy-bags-input").oninput();}
-      document.getElementById("buy-price-input").value = "";
-      document.getElementById("buy-share-1").value = 50; document.getElementById("buy-share-2").value = 50;
+      document.getElementById("buy-price-input").value = lastPurchase?.totalPrice ?? defaults.totalPrice ?? "";
+      const h1=state.horses[0], h2=state.horses[1];
+      const allocation=lastPurchase?.allocation || defaults.allocation || {};
+      const fallback1=state.horses.length>1?50:100;
+      const share1=allocationPercent(allocation,h1,fallback1);
+      const share2=allocationPercent(allocation,h2,100-share1);
+      document.getElementById("buy-share-1").value = share1;
+      document.getElementById("buy-share-2").value = share2;
       document.getElementById("buy-modal").classList.add("open");
     }
 
@@ -2597,6 +2655,7 @@
       food.purchases.push({ id:"buy-"+Date.now(), date:dateVal, bags:bagsVal, kgPerBag:qtyVal, totalPrice:price, allocation });
       food.purchases.sort((a, b) => a.date.localeCompare(b.date));
       food.bagKg = qtyVal;
+      rememberFoodEntryDefaults({ bags:bagsVal, kgPerBag:qtyVal, totalPrice:price, allocation:{...allocation}, unit:food.unit });
 
       saveState();
       closeBuyModal();
@@ -2608,16 +2667,26 @@
       const food = state.foods.find(f => f.id === foodId);
       if (!food) return;
       const oil = isOilFood(food);
+      const hay = food.unit === "round" || food.id === "foin";
       openingFoodId = foodId;
       document.getElementById("open-bag-modal-title").textContent = oil
         ? `Nouveau bidon ouvert — ${food.name}`
-        : `Nouveau sac ouvert — ${food.name}`;
-      document.getElementById("open-bag-modal-sub").textContent =
-        "Enregistrez la date d'ouverture pour mettre à jour le stock et la moyenne de consommation.";
-      document.getElementById("open-qty-label").textContent = oil ? "Contenance (L)" : (food.unit === "round" || food.id === "foin" ? "Poids du round (180 kg)" : "Poids du sac (kg)");
+        : hay ? `Ouverture de rounds — ${food.name}` : `Nouveau sac ouvert — ${food.name}`;
+      document.getElementById("open-bag-modal-sub").textContent = hay
+        ? "Indique le nombre de rounds ouverts. La conversion est calculée automatiquement sur la base de 180 kg par round."
+        : "Enregistrez la date d'ouverture pour mettre à jour le stock et la moyenne de consommation.";
+      document.getElementById("open-qty-label").textContent = oil ? "Contenance (L)" : hay ? "Nombre de rounds ouverts" : "Poids du sac (kg)";
       document.getElementById("open-bag-date-input").value = todayISO(0);
-      document.getElementById("open-bag-qty-input").value = (food.unit === "round" || food.id === "foin") ? 180 : (food.bagKg || (oil ? 5 : 20));
-      document.getElementById("open-bag-qty-input").readOnly = food.unit === "round" || food.id === "foin";
+      const qtyInput = document.getElementById("open-bag-qty-input");
+      qtyInput.value = hay ? 1 : (food.bagKg || (oil ? 5 : 20));
+      qtyInput.min = hay ? 1 : 0.5;
+      qtyInput.step = 1;
+      qtyInput.readOnly = false;
+      const conversion = document.getElementById("open-round-conversion");
+      if (conversion) {
+        conversion.textContent = hay ? "= 180 kg" : "";
+        qtyInput.oninput = hay ? () => { conversion.textContent = `= ${(Math.max(0, Number(qtyInput.value) || 0) * 180).toLocaleString("fr-FR")} kg`; } : null;
+      }
       document.getElementById("open-bag-modal").classList.add("open");
     }
 
@@ -2637,8 +2706,10 @@
       const food = state.foods.find(f => f.id === openingFoodId);
       if (!food) return;
 
+      const isHay = food.unit === "round" || food.id === "foin";
+      const rounds = isHay ? Math.max(1, Math.floor(qtyVal)) : null;
       food.openedBags = food.openedBags || [];
-      food.openedBags.push({ date: dateVal, kgPerBag: qtyVal });
+      food.openedBags.push(isHay ? { date: dateVal, rounds, kgPerBag: rounds * 180 } : { date: dateVal, kgPerBag: qtyVal });
       food.openedBags.sort((a, b) => a.date.localeCompare(b.date));
 
       saveState();
@@ -2728,11 +2799,15 @@
         const prac = horseMap[key];
         if (!prac) return "";
         const info = getPractitionerNextVisitInfo(prac);
-        const isReminder = info.daysLeft <= alertTh;
-        const badgeClass = info.daysLeft < 0 ? "badge-danger" : (isReminder ? "badge-warn" : "badge-ok");
-        const badgeText = info.daysLeft < 0
-          ? `RDV à prendre (${Math.abs(info.daysLeft)} j de retard)`
-          : (isReminder ? `Prendre RDV (${info.daysLeft} j)` : `Prochaine dans ${info.daysLeft} j`);
+        const bookedDate = prac.appointmentDate || "";
+        const appointmentBooked = bookedDate && signedDaysFromToday(bookedDate) >= 0;
+        const isReminder = info.daysLeft <= alertTh && !appointmentBooked;
+        const badgeClass = appointmentBooked ? "badge-ok" : (info.daysLeft < 0 ? "badge-danger" : (isReminder ? "badge-warn" : "badge-ok"));
+        const badgeText = appointmentBooked
+          ? `RDV réservé le ${formatDateFR(bookedDate)}`
+          : (info.daysLeft < 0
+            ? `RDV à prendre (${Math.abs(info.daysLeft)} j de retard)`
+            : (isReminder ? `Prendre RDV (${info.daysLeft} j)` : `Prochaine dans ${info.daysLeft} j`));
 
         const visitsHtml = (prac.visits || []).length
           ? [...prac.visits].sort((a, b) => b.date.localeCompare(a.date)).map(v => `
@@ -2772,6 +2847,9 @@
                 <input type="number" min="1" max="104" step="1" value="${info.intervalWeeks}" style="width:66px;padding:4px 6px;" onchange="updatePractitionerInterval('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', this.value)" />
                 semaines
               </label>
+              <label class="muted" style="font-size:0.8rem;">Prochain RDV déjà réservé :
+                <input type="date" value="${escapeAttr(prac.appointmentDate || "")}" onchange="updatePractitionerAppointment('${escapeAttr(activeHealthHorse)}','${escapeAttr(key)}',this.value)" style="width:150px;padding:4px 6px;" />
+              </label>
               <button class="btn btn-primary btn-sm" onclick="openVisitModal('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', null)">+ Ajouter une venue</button>
             </div>
 
@@ -2784,6 +2862,15 @@
     function selectHealthHorse(horseId) {
       activeHealthHorse = horseId;
       renderHealthVisits();
+    }
+
+    function updatePractitionerAppointment(horseId, pracKey, dateVal) {
+      const prac = state.healthVisits?.[horseId]?.[pracKey];
+      if (!prac) return;
+      prac.appointmentDate = dateVal || "";
+      saveState();
+      renderHealthVisits();
+      renderAlertsAndWeather();
     }
 
     function updatePractitionerInterval(horseId, pracKey, weeksVal) {
@@ -3138,7 +3225,7 @@
           </div>
           <div class="muted">Référentiel indicatif : l’IFCE distingue notamment le travail léger (environ 1–3 h/semaine) et l’activité modérée à intense (environ 5 à 6–7 h/semaine). Les besoins dépendent aussi du format, de la race, de l’âge et du stade physiologique. La note d’état corporel aide à vérifier l’adéquation réelle de la ration.</div>
         </div>
-        <div class="item-card" style="margin-top:12px">
+        <div class="item-card" id="horse-ration-section" style="margin-top:12px">
           <div class="item-name">Ration quotidienne</div>
           <div class="muted">Ajoute les aliments distribués à ce cheval et indique la quantité moyenne par jour. La liste reprend automatiquement les aliments de l’onglet Aliments.</div>
           <div id="horse-ration-editor"></div>
@@ -3178,7 +3265,7 @@
     function calculateHorseRation(horseId){const d=state.horseProfiles[horseId]||{};let total=0,complete=true,details=[],used=0;for(const line of (d.ration||[])){const f=state.foods.find(x=>x.id===line.foodId);if(!f||!(Number(line.qty)>0))continue;const n=f.nutrition||{};const ufc=Number(n.ufcPerKgMS);const ms=Number(n.msPercent);let kgAsFed=Number(line.qty);if(isOilFood(f)){const density=Number(n.densityKgL);if(!density||!ufc||!ms){complete=false;details.push({name:f.name,missing:true});continue;}kgAsFed*=density;}if(!ufc||!ms){complete=false;details.push({name:f.name,missing:true});continue;}const contribution=kgAsFed*(ms/100)*ufc;total+=contribution;used++;details.push({name:f.name,ufc:contribution,qty:line.qty,ms,ufcKg:ufc});}if(!used)complete=false;return {total,complete,details};}
     function renderHorseRationSummary(){const host=document.getElementById("horse-ration-summary");if(!host)return;const result=calculateHorseRation(activeInfoHorse);const d=state.horseProfiles[activeInfoHorse]||{};const target=Number(d.targetUfcPerDay)||0;const missing=result.details.filter(x=>x.missing).map(x=>x.name);let status='';if(target>0&&result.complete){const pct=(result.total-target)/target*100;const cls=Math.abs(pct)<=5?'badge-ok':Math.abs(pct)<=10?'badge-warn':'badge-danger';status=`<span class="badge ${cls}">${Math.abs(pct)<=5?'Dans la plage cible IFCE (±5 %)':Math.abs(pct)<=10?'Tolérance élargie IFCE (±10 %)':'Hors tolérance IFCE'}</span>`;}else{status='<span class="badge badge-warn">Objectif UFC à renseigner</span>';}host.innerHTML=`<div class="stats-grid"><div class="stat-mini"><div class="k">Apport énergétique calculé</div><div class="v">${result.total.toFixed(2)} UFC/j</div></div><div class="stat-mini"><div class="k">Objectif journalier</div><div class="v">${target?target.toFixed(2)+' UFC/j':'Non renseigné'}</div></div></div><div style="margin-top:8px">${status}</div>${missing.length?`<div class="muted" style="margin-top:6px">Valeurs nutritionnelles manquantes pour : ${escapeHtml(missing.join(', '))}. Complète la fiche produit dans l’onglet Aliments.</div>`:''}<label class="info-field" style="margin-top:8px">Besoin énergétique cible selon le profil IFCE (UFC/j)<input id="ration-target-ufc" type="number" min="0" step="0.1" value="${target||''}" placeholder="À reporter depuis le calcul IFCE" onchange="updateHorseUfcTarget(this.value)"></label><div class="muted">Le besoin dépend du poids, du format, de l’activité et de l’état physiologique. L’application calcule les apports à partir des aliments, mais ne fixe pas automatiquement le besoin sans ces paramètres complets.</div>`;}
     function updateHorseUfcTarget(v){const d=state.horseProfiles[activeInfoHorse]||(state.horseProfiles[activeInfoHorse]={});d.targetUfcPerDay=Number(v)||null;renderHorseRationSummary();}
-    function saveHorseRation(){const d=state.horseProfiles[activeInfoHorse];if(!d)return;d.ration=(d.ration||[]).filter(x=>x.foodId&&Number(x.qty)>=0);saveState();renderHorseRationEditor();alert("Ration enregistrée pour ce cheval.");}
+    function saveHorseRation(){const d=state.horseProfiles[activeInfoHorse];if(!d)return;d.ration=(d.ration||[]).filter(x=>x.foodId&&Number(x.qty)>=0);saveState();renderHorseRationEditor();renderFoods();alert("Ration enregistrée pour ce cheval. Les consommations de référence des aliments ont été recalculées.");}
     function saveFoodNutrition(foodId){const f=state.foods.find(x=>x.id===foodId);if(!f)return;const ms=Number(document.getElementById(`food-ms-${foodId}`)?.value);const ufcRaw=document.getElementById(`food-ufc-${foodId}`)?.value;const densityRaw=document.getElementById(`food-density-${foodId}`)?.value;f.nutrition={...(f.nutrition||{}),msPercent:ms>0&&ms<=100?ms:null,ufcPerKgMS:ufcRaw===''?null:Number(ufcRaw),densityKgL:densityRaw===''?null:Number(densityRaw)};saveState();renderFoods();renderHorseProfile();alert("Informations nutritionnelles enregistrées.");}
 
     function saveHorseProfile() {
@@ -3537,10 +3624,18 @@
     });
 
     document.getElementById("btn-toggle-add-food").addEventListener("click", () => {
+      const defaults=state.foodEntryDefaults||{};
+      const h1=state.horses[0], h2=state.horses[1], allocation=defaults.allocation||{};
+      const fallback1=state.horses.length>1?50:100;
+      const share1=allocationPercent(allocation,h1,fallback1);
       document.getElementById("new-food-date").value = todayISO(0);
-      document.getElementById("new-food-bags").value = 1;
-      document.getElementById("new-food-price").value = "";
-      document.getElementById("new-food-share-1").value = 50; document.getElementById("new-food-share-2").value = 50;
+      document.getElementById("new-food-unit").value = defaults.unit || "kg";
+      document.getElementById("new-food-bags").value = defaults.bags ?? 1;
+      document.getElementById("new-food-bag-qty").value = defaults.kgPerBag ?? 20;
+      document.getElementById("new-food-price").value = defaults.totalPrice ?? "";
+      document.getElementById("new-food-daily-rate").value = defaults.dailyRate ?? "";
+      document.getElementById("new-food-share-1").value = share1;
+      document.getElementById("new-food-share-2").value = allocationPercent(allocation,h2,100-share1);
       document.getElementById("add-food-form").classList.toggle("hidden");
     });
 
@@ -3567,6 +3662,7 @@
 
       if (!name) return;
 
+      rememberFoodEntryDefaults({ unit, bags, kgPerBag:qtyPerUnit, totalPrice:purchasePrice, allocation:{...allocation}, dailyRate:rawRate>0?rawRate:null });
       state.foods.unshift({
         id: "food-" + Date.now(),
         name,
@@ -3893,8 +3989,24 @@
     document.getElementById('budget-horse')?.addEventListener('change',renderBudget);
 
     // Compléments : fiches produits et liste de courses enregistrées dans la synchronisation d'état.
-    async function saveFoodProductPhoto(foodId,file){if(!file)return;const f=state.foods.find(x=>x.id===foodId);if(!f)return;f.productPhoto=await resizeImageFile(file,1100,.78);saveState();renderFoods();}
-    function extractFoodProduct(foodId){const f=state.foods.find(x=>x.id===foodId);if(!f)return;alert("La fiche produit est bien enregistrable depuis la galerie. L'extraction automatique de la composition nécessite encore de connecter le service IA sécurisé côté serveur ; aucune composition ne sera inventée ou déduite sans cette connexion.");}
+    async function saveFoodProductPhoto(foodId,file){
+      if(!file)return;
+      const f=state.foods.find(x=>x.id===foodId);if(!f)return;
+      const isPdf=file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf');
+      if(!isPdf&&!file.type.startsWith('image/')){alert('Choisis une image ou un fichier PDF.');return;}
+      if(isPdf&&file.size>4*1024*1024){alert('Ce PDF dépasse 4 Mo. Choisis une version plus légère pour éviter de saturer le stockage de l’application et la synchronisation.');return;}
+      try{
+        if(isPdf){
+          const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Lecture impossible'));reader.readAsDataURL(file);});
+          f.productPhoto=data;f.productPhotoType='application/pdf';f.productPhotoName=file.name;
+        }else{
+          f.productPhoto=await resizeImageFile(file,1100,.78);f.productPhotoType='image/jpeg';f.productPhotoName=file.name;
+        }
+        saveState();renderFoods();alert('Document ajouté à la fiche produit.');
+      }catch(e){alert('Impossible de lire ce fichier. Essaie avec un autre document.');}
+    }
+    function removeFoodProductPhoto(foodId){const f=state.foods.find(x=>x.id===foodId);if(!f)return;f.productPhoto=null;f.productPhotoType=null;f.productPhotoName=null;saveState();renderFoods();}
+    function extractFoodProduct(foodId){const f=state.foods.find(x=>x.id===foodId);if(!f)return;alert("Le document est bien enregistré dans la fiche produit. L'extraction automatique de la composition nécessite encore de connecter le service IA sécurisé côté serveur ; aucune composition ne sera inventée ou déduite sans cette connexion.");}
     state.shoppingList ||= [];
     function renderShoppingList(){const host=document.getElementById('shopping-list');if(!host)return;const stores=['Coopérative Kramer','Équitation','Agradi','Decathlon'];host.innerHTML=stores.map(store=>{const items=state.shoppingList.filter(x=>x.store===store);return `<div class="sub-section"><h3>${store}</h3>${items.map(x=>`<div class="weight-row"><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" ${x.done?'checked':''} onchange="toggleShoppingItem('${x.id}',this.checked)"><span style="${x.done?'text-decoration:line-through;opacity:.6':''}">${escapeHtml(x.name)} ${x.qty?'— '+escapeHtml(x.qty):''}</span></label><button class="btn btn-outline btn-sm" onclick="deleteShoppingItem('${x.id}')">×</button></div>`).join('')||'<div class="muted">Aucun article.</div>'}</div>`;}).join('');}
     function toggleShoppingItem(id,done){const x=state.shoppingList.find(x=>x.id===id);if(x){x.done=done;saveState();renderShoppingList();}}
