@@ -888,9 +888,11 @@
             <input type="text" id="new-food-name" placeholder="Nom (ex. Foin de prairie ou Huile de lin)" style="flex:1;min-width:180px;" />
             <select id="new-food-unit" style="width:110px;">
               <option value="kg">kg (solide)</option>
+              <option value="round">Round de foin (180 kg)</option>
               <option value="L">Litres (L)</option>
             </select>
             <input type="number" id="new-food-bags" placeholder="Nb" min="1" step="1" style="width:74px;" />
+            <span id="foin-kg-conversion" class="muted"></span>
             <input type="number" id="new-food-bag-qty" placeholder="Qté / unité" step="0.5" style="width:108px;" />
             <input type="date" id="new-food-date" />
             <input type="number" id="new-food-price" placeholder="Prix total (€)" min="0" step="0.01" style="width:130px;" />
@@ -1005,8 +1007,7 @@
           <div id="horse-profile-content"></div>
         </div>
         <div id="info-contacts" class="info-panel hidden">
-          <div class="horse-tabs" id="contact-horse-tabs"></div>
-          <div class="muted">Enregistre les coordonnées de tes intervenants pour chaque cheval. Le bouton Rendez-vous prépare un message que tu peux relire avant de l'envoyer.</div>
+          <div class="muted">Liste commune des intervenants pour les deux chevaux. Les boutons ouvrent ton application SMS ou Gmail avec le message prérempli.</div>
           <div id="contacts-content"></div>
         </div>
         <div id="info-weight" class="info-panel hidden">
@@ -1020,7 +1021,7 @@
     <section id="tab-budget" class="tab-panel hidden">
       <div class="card">
         <div class="card-header"><div><h2 class="card-title">Budget des chevaux</h2><div class="muted">Dépenses enregistrées par année et par cheval.</div></div></div>
-        <div class="form-row"><label class="muted">Année : <select id="budget-year"></select></label><label class="muted">Cheval : <select id="budget-horse"><option value="all">Tous les chevaux</option></select></label></div>
+        <div class="form-row"><label class="muted">Année : <select id="budget-year"></select></label><label class="muted">Mois : <select id="budget-month"><option value="all">Toute l’année</option><option value="01">Janvier</option><option value="02">Février</option><option value="03">Mars</option><option value="04">Avril</option><option value="05">Mai</option><option value="06">Juin</option><option value="07">Juillet</option><option value="08">Août</option><option value="09">Septembre</option><option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option></select></label><label class="muted">Cheval : <select id="budget-horse"><option value="all">Tous les chevaux</option></select></label></div>
         <div id="budget-content"></div>
       </div>
     </section>
@@ -1260,10 +1261,7 @@
           unit: "kg",
           bagKg: 20,
           estimatedDailyKg: 1.5,
-          purchases: [
-            { date: todayISO(-36), bags: 2, kgPerBag: 20 },
-            { date: todayISO(-14), bags: 2, kgPerBag: 20 }
-          ],
+          purchases: [],
           openedBags: [
             { date: todayISO(-14), kgPerBag: 20 },
             { date: todayISO(-4), kgPerBag: 20 }
@@ -1275,10 +1273,7 @@
           unit: "kg",
           bagKg: 20,
           estimatedDailyKg: 1.2,
-          purchases: [
-            { date: todayISO(-30), bags: 2, kgPerBag: 20 },
-            { date: todayISO(-10), bags: 2, kgPerBag: 20 }
-          ],
+          purchases: [],
           openedBags: [
             { date: todayISO(-10), kgPerBag: 20 },
             { date: todayISO(-2), kgPerBag: 20 }
@@ -1290,10 +1285,7 @@
           unit: "L",
           bagKg: 5,
           estimatedDailyKg: 0.15,
-          purchases: [
-            { date: todayISO(-55), bags: 1, kgPerBag: 5 },
-            { date: todayISO(-20), bags: 1, kgPerBag: 5 }
-          ],
+          purchases: [],
           openedBags: [
             { date: todayISO(-20), kgPerBag: 5 }
           ]
@@ -1304,10 +1296,7 @@
           unit: "kg",
           bagKg: 20,
           estimatedDailyKg: 1.8,
-          purchases: [
-            { date: todayISO(-24), bags: 3, kgPerBag: 20 },
-            { date: todayISO(-8), bags: 2, kgPerBag: 20 }
-          ],
+          purchases: [],
           openedBags: [
             { date: todayISO(-8), kgPerBag: 20 },
             { date: todayISO(-2), kgPerBag: 20 }
@@ -1319,9 +1308,7 @@
           unit: "kg",
           bagKg: 25,
           estimatedDailyKg: 8.0,
-          purchases: [
-            { date: todayISO(-10), bags: 4, kgPerBag: 25 }
-          ],
+          purchases: [],
           openedBags: [
             { date: todayISO(-10), kgPerBag: 25 },
             { date: todayISO(-6), kgPerBag: 25 },
@@ -1639,6 +1626,7 @@
 
       if (!localRaw) {
         state = normalizeImportedState(data.state);
+        applyEquicareCleanup();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         rerenderAfterCloudLoad();
         setCloudStatus("Données chargées depuis le cloud", "online");
@@ -1653,6 +1641,7 @@
       );
       if (choice === "1") {
         state = normalizeImportedState(data.state);
+        applyEquicareCleanup();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         rerenderAfterCloudLoad();
         setCloudStatus("Données cloud chargées", "online");
@@ -2966,7 +2955,7 @@
       const d = state.horseProfiles[h.id] || {};
       const photo = d.photoData ? `<img class="horse-photo" src="${d.photoData}" alt="Photo de ${escapeHtml(h.name)}">` : `<div class="horse-photo profile-placeholder">🐴</div>`;
       document.getElementById("horse-profile-content").innerHTML = `
-        <div class="horse-profile">${photo}<div style="flex:1"><strong>${escapeHtml(h.name)}</strong><div class="muted">Fiche individuelle</div><label class="btn btn-secondary btn-sm" style="margin-top:7px;cursor:pointer">📷 Ajouter / modifier la photo<input id="horse-photo-input" type="file" accept="image/*" capture="environment" hidden></label></div></div>
+        <div class="horse-profile">${photo}<div style="flex:1"><strong>${escapeHtml(h.name)}</strong><div class="muted">Fiche individuelle</div><label class="btn btn-secondary btn-sm" style="margin-top:7px;cursor:pointer">📷 Ajouter / modifier la photo<input id="horse-photo-input" type="file" accept="image/*" hidden></label></div></div>
         <div class="form-row">
           <label class="info-field">Nom du cheval<input id="profile-name" value="${escapeHtml(h.name)}"></label>
           <label class="info-field">Nom usuel<input id="profile-callname" value="${escapeHtml(d.callName || "")}" placeholder="Nom d'écurie"></label>
@@ -2987,7 +2976,7 @@
         <label class="info-field" style="margin-top:9px">Notes<textarea id="profile-notes" rows="3" placeholder="Particularités, informations utiles...">${escapeHtml(d.notes || "")}</textarea></label>
         <div class="form-row">
           <button class="btn btn-primary" onclick="saveHorseProfile()">Enregistrer la fiche</button>
-          <label class="btn btn-secondary" style="cursor:pointer">📖 Importer le livret SIRE<input id="sire-photo-input" type="file" accept="image/*" capture="environment" hidden></label>
+          <label class="btn btn-secondary" style="cursor:pointer">📖 Importer le livret SIRE<input id="sire-photo-input" type="file" accept="image/*" hidden></label>
         </div>
         <div class="sire-note">Photographie la page d'identification du livret. L'extraction automatique nécessite de configurer un service IA sécurisé (API côté serveur). Sans ce service, la photo pourra être sélectionnée mais les champs devront être saisis ou vérifiés manuellement.</div>
         <div id="sire-import-status" class="muted" style="margin-top:7px"></div>
@@ -3137,7 +3126,7 @@
           <div class="form-row"><button class="btn btn-primary btn-sm" onclick="addWeightRecord()">Enregistrer la pesée</button></div>
         </div>
         <div class="sub-section"><div class="sub-section-header"><strong class="sub-section-title">Évolution du poids</strong><span class="muted">${records.length} pesée(s)</span></div>${chart}</div>
-        <div class="weight-history">${[...records].reverse().map(r=>`<div class="weight-row"><span><strong>${formatDateFR(r.date)}</strong>${r.note?"<br><span class='muted'>"+escapeHtml(r.note)+"</span>":""}</span><span><strong>${Number(r.kg).toLocaleString("fr-FR")} kg</strong> <button class="btn btn-outline btn-sm" onclick="deleteWeightRecord('${escapeAttr(r.id)}')">✕</button></span></div>`).join("") || '<div class="muted">Ajoute une première pesée pour afficher la courbe.</div>'}</div>`;
+        <div class="weight-history">${[...records].reverse().map(r=>`<div class="weight-row"><span><strong>${formatDateFR(r.date)}</strong>${r.note?"<br><span class='muted'>"+escapeHtml(r.note)+"</span>":""}${r.photoData?`<br><img src="${r.photoData}" alt="Photo de la pesée" style="width:76px;height:64px;object-fit:cover;border-radius:8px;margin-top:6px">`:""}</span><span><strong>${Number(r.kg).toLocaleString("fr-FR")} kg</strong> <button class="btn btn-outline btn-sm" onclick="deleteWeightRecord('${escapeAttr(r.id)}')">✕</button></span></div>`).join("") || '<div class="muted">Ajoute une première pesée pour afficher la courbe.</div>'}</div>`;
     }
 
     function buildWeightChart(records) {
@@ -3329,6 +3318,75 @@
     renderAlertsAndWeather();
     fetchWeather();
     initCloudSync();
-  </script>
+  
+    // ÉquiCare – évolutions demandées (migration idempotente)
+    const EQUICARE_CLEANUP_VERSION = '2026-11-25-clean-false-histories';
+    function applyEquicareCleanup() {
+      if (state._migrationFlags?.includes(EQUICARE_CLEANUP_VERSION)) return;
+      (state.foods || []).forEach(f => { f.purchases = []; f.openedBags = []; });
+      state.pharmacy = [];
+      if (state.dewormings) Object.keys(state.dewormings).forEach(k => { state.dewormings[k] = []; });
+      state._migrationFlags = [...(state._migrationFlags || []), EQUICARE_CLEANUP_VERSION];
+      // Contacts become one shared list, merging any previous per-horse lists without duplicates.
+      const merged = [];
+      Object.values(state.practitionerContacts || {}).flat().forEach(c => {
+        if (c && /Arthur\s+Luserne/i.test(c.name||'')) c.name = 'Arthur HAYCOBS';
+        if (c && !merged.some(x => x.id === c.id || (x.name === c.name && x.phone === c.phone))) merged.push(c);
+      });
+      state.practitionerContacts = { shared: merged };
+      Object.values(state.healthVisits || {}).forEach(group => Object.values(group || {}).forEach(pr => (pr.visits || []).forEach(v => { if (/Arthur\s+Luserne/i.test(v.provider || '')) v.provider = 'Arthur HAYCOBS'; })));
+      saveState();
+    }
+    applyEquicareCleanup();
+
+    // Confirmation visible à l'écran, sans prétendre que le cloud est synchronisé avant son retour.
+    function equicareToast(message, error=false) {
+      let el=document.getElementById('equicare-toast');
+      if(!el){el=document.createElement('div');el.id='equicare-toast';el.style.cssText='position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:99999;background:#1e3a2f;color:white;padding:12px 18px;border-radius:12px;box-shadow:0 5px 24px #0003;max-width:90%;font-size:.9rem;text-align:center';document.body.appendChild(el);}
+      el.textContent=message;el.style.background=error?'#9b3028':'#1e3a2f';el.style.display='block';clearTimeout(window._equicareToastTimer);window._equicareToastTimer=setTimeout(()=>el.style.display='none',2600);
+    }
+    const _equicareSaveState = saveState;
+    saveState = function(){ _equicareSaveState(); equicareToast('Modification enregistrée sur cet appareil. Synchronisation cloud en cours si le compte est connecté.'); };
+    const _equicareSyncStateToCloud = syncStateToCloud;
+    syncStateToCloud = async function(){ const ok=await _equicareSyncStateToCloud(); if(ok) equicareToast('Modification enregistrée et synchronisée avec Supabase.'); else if(supabaseClient&&cloudUser) equicareToast('La synchronisation a échoué : consulte le message de statut.',true); return ok; };
+
+    // Foin : nombre de rounds converti en kilos (base 180 kg / round).
+    const foodUnitSelect=document.getElementById('new-food-unit');
+    const foodBagsInput=document.getElementById('new-food-bags');
+    const foinConversion=document.getElementById('foin-kg-conversion');
+    function updateFoinConversion(){ if(!foinConversion)return; const isRound=foodUnitSelect?.value==='round'; foinConversion.textContent=isRound?`${(Number(foodBagsInput?.value||0)*180).toLocaleString('fr-FR')} kg au total (180 kg / round)`:''; }
+    foodUnitSelect?.addEventListener('change',updateFoinConversion);foodBagsInput?.addEventListener('input',updateFoinConversion);
+    const _equicareCreateFoodClick = document.getElementById('btn-create-food').onclick;
+    document.getElementById('btn-create-food').addEventListener('click',()=>{ if(foodUnitSelect.value==='round'){ const n=Math.max(1,Number(foodBagsInput.value)||1); document.getElementById('new-food-bag-qty').value='180'; foodUnitSelect.value='kg'; document.getElementById('new-food-name').value=document.getElementById('new-food-name').value||'Foin'; updateFoinConversion(); } },true);
+
+    // Contacts partagés entre chevaux, commentaires et photo galerie.
+    function renderContacts(){
+      const contacts=state.practitionerContacts.shared||[];
+      const host=document.getElementById('contacts-content'); if(!host)return;
+      host.innerHTML=`<div class="item-card"><strong>Ajouter un intervenant commun</strong><div class="form-row"><label class="info-field">Spécialité / type<input id="contact-type" placeholder="Vétérinaire, maréchal…"></label><label class="info-field">Nom<input id="contact-name" placeholder="Nom / cabinet"></label></div><div class="form-row"><label class="info-field">Téléphone<input id="contact-phone" type="tel" placeholder="06…"></label><label class="info-field">E-mail<input id="contact-email" type="email" placeholder="contact@…"></label></div><label class="info-field">Photo<input id="contact-photo-new" type="file" accept="image/*"></label><label class="info-field">Commentaires<textarea id="contact-comments" rows="2"></textarea></label><label class="info-field">Message type<textarea id="contact-template" rows="2" placeholder="Bonjour, je souhaiterais convenir d'un rendez-vous."></textarea></label><button class="btn btn-primary btn-sm" onclick="addPractitionerContact()">Ajouter le contact</button></div>${contacts.map(c=>`<div class="contact-card"><div class="item-top"><div>${c.photoData?`<img src="${c.photoData}" style="width:64px;height:64px;object-fit:cover;border-radius:12px;vertical-align:middle;margin-right:8px">`:''}<strong>${escapeHtml(c.type||'Intervenant')}</strong><div>${escapeHtml(c.name||'')}</div><div class="muted">${escapeHtml(c.phone||'')} ${c.email?'• '+escapeHtml(c.email):''}</div></div><button class="btn btn-outline btn-sm" onclick="deletePractitionerContact('${escapeAttr(c.id)}')">Supprimer</button></div><div class="muted" style="margin:8px 0">${escapeHtml(c.comments||'')}</div><label class="info-field">Photo de l’intervenant<input type="file" accept="image/*" onchange="updateContactPhoto('${escapeAttr(c.id)}',this.files[0])"></label><div class="form-row"><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','sms')">SMS</button><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','email')">Gmail / e-mail</button></div><label class="info-field">Modifier les commentaires<textarea onchange="updateContactComments('${escapeAttr(c.id)}',this.value)">${escapeHtml(c.comments||'')}</textarea></label></div>`).join('')||'<div class="muted">Aucun intervenant enregistré.</div>'}`;
+    }
+    async function addPractitionerContact(){
+      const v=id=>document.getElementById(id)?.value.trim()||'';const type=v('contact-type'),name=v('contact-name');if(!type||!name){alert('Renseigne le type et le nom.');return;}
+      let photoData='';const file=document.getElementById('contact-photo-new')?.files?.[0];if(file)photoData=await resizeImageFile(file,700,.72);
+      state.practitionerContacts.shared ||= [];state.practitionerContacts.shared.push({id:'contact-'+Date.now(),type,name,phone:v('contact-phone'),email:v('contact-email'),template:v('contact-template'),comments:v('contact-comments'),photoData});saveState();renderContacts();
+    }
+    function updateContactComments(id,value){const c=(state.practitionerContacts.shared||[]).find(x=>x.id===id);if(c){c.comments=value;saveState();}}
+    async function updateContactPhoto(id,file){if(!file)return;const c=(state.practitionerContacts.shared||[]).find(x=>x.id===id);if(!c)return;c.photoData=await resizeImageFile(file,700,.72);saveState();renderContacts();}
+    function deletePractitionerContact(id){state.practitionerContacts.shared=(state.practitionerContacts.shared||[]).filter(c=>c.id!==id);saveState();renderContacts();}
+    function prepareContactAppointment(id,mode){const c=(state.practitionerContacts.shared||[]).find(x=>x.id===id);if(!c)return;const message=(c.template||'Bonjour, je souhaiterais convenir d’un rendez-vous.').replaceAll('{cheval}','Sacramento ou Bella');if(mode==='sms'){if(!c.phone){alert('Ajoute un numéro de téléphone.');return;}location.href=`sms:${c.phone.replace(/\s/g,'')}?body=${encodeURIComponent(message)}`;}else{if(!c.email){alert('Ajoute une adresse e-mail.');return;}location.href=`mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent('Demande de rendez-vous')}&body=${encodeURIComponent(message)}`;}}
+
+    // Photos de galerie pour les pesées : sauvegardées dans la fiche de chaque mesure.
+    const _renderWeightOriginal=renderWeight;
+    renderWeight=function(){_renderWeightOriginal();const input=document.createElement('input');input.type='file';input.accept='image/*';input.id='weight-photo-input';input.style.display='none';document.getElementById('weight-content')?.querySelector('.item-card')?.appendChild(input);const label=document.createElement('label');label.className='btn btn-secondary btn-sm';label.textContent='📷 Photo de la pesée';label.appendChild(input);document.getElementById('weight-content')?.querySelector('.item-card')?.appendChild(label);};
+    const _addWeightRecordOriginal=addWeightRecord;
+    addWeightRecord=async function(){const file=document.getElementById('weight-photo-input')?.files?.[0];let photoData='';if(file)photoData=await resizeImageFile(file,900,.72);const date=document.getElementById('weight-date').value,kg=Number(document.getElementById('weight-value').value),note=document.getElementById('weight-note').value.trim();if(!date||!Number.isFinite(kg)||kg<=0){alert('Saisis une date et un poids valide.');return;}state.weightRecords[activeWeightHorse] ||= [];state.weightRecords[activeWeightHorse].push({id:'weight-'+Date.now(),date,kg,note,photoData});saveState();renderWeight();};
+
+    // Camemberts et filtre mensuel + comparaison de l'année précédente.
+    const _renderBudgetOriginal=renderBudget;
+    renderBudget=function(){_renderBudgetOriginal();const monthSel=document.getElementById('budget-month');if(!monthSel)return;const year=Number(document.getElementById('budget-year').value)||new Date().getFullYear(),month=monthSel.value;const entries=[];(state.foods||[]).forEach(f=>(f.purchases||[]).forEach(p=>entries.push({date:p.date,cat:'Alimentation',price:Number(p.totalPrice||0),allocation:p.allocation||{}})));(state.pharmacy||[]).forEach(p=>entries.push({date:p.purchaseDate||p.expiryDate,cat:'Pharmacie',price:Number(p.price||0),horseId:p.horseId||'shared'}));Object.entries(state.healthVisits||{}).forEach(([hid,ps])=>Object.values(ps||{}).forEach(pr=>(pr.visits||[]).forEach(v=>entries.push({date:v.date,cat:'Interventions',price:Number(v.price||0),horseId:hid}))));const horse=document.getElementById('budget-horse').value;function totals(y){const a={};entries.filter(e=>Number((e.date||'').slice(0,4))===y&&(month==='all'||(e.date||'').slice(5,7)===month)).forEach(e=>{let val=e.price;if(e.cat==='Alimentation'&&horse!=='all')val*=Number(e.allocation[horse]||0)/100;else if(e.cat!=='Alimentation'&&horse!=='all'&&e.horseId!==horse&&e.horseId!=='shared')val=0;else if(e.cat!=='Alimentation'&&horse!=='all'&&e.horseId==='shared')val/=state.horses.length||1;if(val>0)a[e.cat]=(a[e.cat]||0)+val;});return a;}function pie(obj){const vals=Object.values(obj),sum=vals.reduce((a,b)=>a+b,0);if(!sum)return '<p class="muted">Aucune dépense</p>';let angle=0;const colors=['#315b45','#c69b55','#789b8a','#a96b55','#77839b'];const stops=Object.entries(obj).map(([k,v],i)=>{const start=angle;angle+=v/sum*360;return `${colors[i%colors.length]} ${start}deg ${angle}deg`;}).join(',');return `<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div style="width:150px;height:150px;border-radius:50%;background:conic-gradient(${stops})"></div><div>${Object.entries(obj).map(([k,v],i)=>`<div class="budget-row"><span>${escapeHtml(k)}</span><strong>${v.toFixed(2)} €</strong></div>`).join('')}</div></div>`;}const current=totals(year),previous=totals(year-1);const panel=document.createElement('div');panel.innerHTML=`<h3>Répartition ${year}${month==='all'?'':' – '+month}</h3>${pie(current)}<h3>Comparaison avec ${year-1}</h3>${pie(previous)}`;document.getElementById('budget-content').appendChild(panel);};
+    document.getElementById('budget-month')?.addEventListener('change',renderBudget);
+    document.getElementById('budget-year')?.addEventListener('change',renderBudget);
+    document.getElementById('budget-horse')?.addEventListener('change',renderBudget);
+</script>
 </body>
 </html>
