@@ -436,7 +436,7 @@
     /* 4 sub-tabs inside Santé */
     .health-subnav {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, 1fr); /* mêmes styles d’origine, une colonne par onglet */
       gap: 6px;
       background: var(--surface-soft);
       border: 1px solid var(--border);
@@ -664,7 +664,7 @@
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
       gap: 6px;
     }
@@ -726,6 +726,24 @@
       padding: 16px;
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
     }
+
+
+    /* Informations chevaux : fiches, contacts et suivi du poids */
+    .info-subnav { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; background:var(--surface-soft); border:1px solid var(--border); border-radius:14px; padding:5px; margin-bottom:14px; }
+    .info-subbtn { border:0; background:transparent; color:var(--muted); font-weight:700; font-size:.78rem; padding:10px 5px; border-radius:10px; cursor:pointer; }
+    .info-subbtn.active { background:var(--primary); color:#fff; }
+    .info-panel.hidden { display:none!important; }
+    .info-field { display:flex; flex-direction:column; gap:4px; flex:1; min-width:130px; font-size:.78rem; color:var(--muted); }
+    .info-field input,.info-field select,.info-field textarea { width:100%; min-width:0; }
+    .horse-profile { display:flex; gap:14px; align-items:center; margin-bottom:12px; }
+    .horse-photo { width:94px; height:94px; border-radius:14px; object-fit:cover; background:var(--surface-soft); border:1px solid var(--border); }
+    .profile-placeholder { display:grid; place-items:center; font-size:2rem; color:var(--muted); }
+    .weight-chart { width:100%; height:auto; display:block; background:var(--surface-soft); border:1px solid var(--border); border-radius:12px; }
+    .weight-history { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+    .weight-row { display:flex; justify-content:space-between; gap:8px; align-items:center; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:8px 10px; font-size:.82rem; }
+    .contact-card { background:var(--surface-soft); border:1px solid var(--border); border-radius:12px; padding:12px; margin:9px 0; }
+    .sire-note { background:var(--info-light); color:#1e3a8a; padding:10px 12px; border-radius:10px; font-size:.8rem; margin-top:8px; }
+    @media(max-width:380px) { .info-subbtn {font-size:.7rem;padding:9px 2px;} .horse-photo{width:76px;height:76px;} }
 
     .hidden { display: none !important; }
   </style>
@@ -944,6 +962,36 @@
         </div>
       </div>
     </section>
+
+    <!-- TAB 4 : INFORMATIONS -->
+    <section id="tab-info" class="tab-panel hidden">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Informations des chevaux</h2>
+            <div class="muted">Fiches individuelles, contacts et suivi du poids.</div>
+          </div>
+        </div>
+        <div class="info-subnav" role="tablist" aria-label="Sections Informations">
+          <button class="info-subbtn active" data-info-sub="info-horses">🐴 Chevaux</button>
+          <button class="info-subbtn" data-info-sub="info-contacts">📞 Intervenants</button>
+          <button class="info-subbtn" data-info-sub="info-weight">⚖️ Poids</button>
+        </div>
+        <div id="info-horses" class="info-panel">
+          <div class="horse-tabs" id="info-horse-tabs"></div>
+          <div id="horse-profile-content"></div>
+        </div>
+        <div id="info-contacts" class="info-panel hidden">
+          <div class="horse-tabs" id="contact-horse-tabs"></div>
+          <div class="muted">Enregistre les coordonnées de tes intervenants pour chaque cheval. Le bouton Rendez-vous prépare un message que tu peux relire avant de l'envoyer.</div>
+          <div id="contacts-content"></div>
+        </div>
+        <div id="info-weight" class="info-panel hidden">
+          <div class="horse-tabs" id="weight-horse-tabs"></div>
+          <div id="weight-content"></div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <nav class="bottom-nav">
@@ -958,6 +1006,10 @@
     <button class="nav-btn" data-tab="tab-health">
       <span class="nav-icon">🩺</span>
       <span>Santé</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-info">
+      <span class="nav-icon">📋</span>
+      <span>Informations</span>
     </button>
   </nav>
 
@@ -1114,6 +1166,9 @@
         { id: "trotteur", name: "Trotteur Français (20 ans)" },
         { id: "arabe", name: "Pur-Sang Arabe (15 ans)" }
       ],
+      horseProfiles: {},
+      practitionerContacts: {},
+      weightRecords: {},
       foods: [
         {
           id: "exquis",
@@ -1382,6 +1437,9 @@
           ...structuredClone(DEFAULT_STATE),
           ...parsed,
           horses,
+          horseProfiles: parsed.horseProfiles || {},
+          practitionerContacts: parsed.practitionerContacts || {},
+          weightRecords: parsed.weightRecords || {},
           config: { ...DEFAULT_STATE.config, ...(parsed.config || {}) },
           foods: sanitizeFoods(parsed.foods || DEFAULT_STATE.foods),
           pharmacy: Array.isArray(parsed.pharmacy) ? parsed.pharmacy : structuredClone(DEFAULT_STATE.pharmacy),
@@ -2506,6 +2564,254 @@
       }
     }
 
+
+    // ---------- INFORMATIONS : profils, contacts et poids ----------
+    let activeInfoSub = "info-horses";
+    let activeInfoHorse = state.horses[0]?.id || "";
+    let activeContactHorse = activeInfoHorse;
+    let activeWeightHorse = activeInfoHorse;
+
+    function ensureHorseInfo() {
+      state.horseProfiles ||= {};
+      state.practitionerContacts ||= {};
+      state.weightRecords ||= {};
+      state.horses.forEach(h => {
+        state.horseProfiles[h.id] ||= {};
+        state.practitionerContacts[h.id] ||= [];
+        state.weightRecords[h.id] ||= [];
+      });
+    }
+
+    function switchInfoSub(subId) {
+      activeInfoSub = subId;
+      document.querySelectorAll(".info-panel").forEach(el => el.classList.toggle("hidden", el.id !== subId));
+      document.querySelectorAll(".info-subbtn").forEach(el => el.classList.toggle("active", el.dataset.infoSub === subId));
+      renderInformation();
+    }
+
+    document.querySelectorAll(".info-subbtn").forEach(btn => {
+      btn.addEventListener("click", () => switchInfoSub(btn.dataset.infoSub));
+    });
+
+    function renderHorseTabs(containerId, selectedId, callbackName) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = state.horses.map(h => `<button class="horse-chip ${h.id === selectedId ? "active" : ""}" onclick="${callbackName}('${escapeAttr(h.id)}')">${escapeHtml(h.name)}</button>`).join("");
+    }
+
+    function selectInfoHorse(id) { activeInfoHorse=id; renderHorseProfile(); }
+    function selectContactHorse(id) { activeContactHorse=id; renderContacts(); }
+    function selectWeightHorse(id) { activeWeightHorse=id; renderWeight(); }
+
+    function renderHorseProfile() {
+      ensureHorseInfo();
+      renderHorseTabs("info-horse-tabs", activeInfoHorse, "selectInfoHorse");
+      const h = state.horses.find(x => x.id === activeInfoHorse);
+      if (!h) return;
+      const d = state.horseProfiles[h.id] || {};
+      const photo = d.photoData ? `<img class="horse-photo" src="${d.photoData}" alt="Photo de ${escapeHtml(h.name)}">` : `<div class="horse-photo profile-placeholder">🐴</div>`;
+      document.getElementById("horse-profile-content").innerHTML = `
+        <div class="horse-profile">${photo}<div style="flex:1"><strong>${escapeHtml(h.name)}</strong><div class="muted">Fiche individuelle</div><label class="btn btn-secondary btn-sm" style="margin-top:7px;cursor:pointer">📷 Ajouter / modifier la photo<input id="horse-photo-input" type="file" accept="image/*" capture="environment" hidden></label></div></div>
+        <div class="form-row">
+          <label class="info-field">Nom du cheval<input id="profile-name" value="${escapeHtml(h.name)}"></label>
+          <label class="info-field">Nom usuel<input id="profile-callname" value="${escapeHtml(d.callName || "")}" placeholder="Nom d'écurie"></label>
+        </div>
+        <div class="form-row">
+          <label class="info-field">Race<input id="profile-breed" value="${escapeHtml(d.breed || "")}" placeholder="Race"></label>
+          <label class="info-field">Sexe<select id="profile-sex"><option value="">Non renseigné</option><option ${d.sex==="Jument"?"selected":""}>Jument</option><option ${d.sex==="Hongre"?"selected":""}>Hongre</option><option ${d.sex==="Étalon"?"selected":""}>Étalon</option></select></label>
+          <label class="info-field">Date de naissance<input id="profile-birth" type="date" value="${escapeHtml(d.birthDate || "")}"></label>
+        </div>
+        <div class="form-row">
+          <label class="info-field">N° SIRE<input id="profile-sire" value="${escapeHtml(d.sireNumber || "")}" placeholder="Numéro SIRE"></label>
+          <label class="info-field">N° transpondeur<input id="profile-chip" value="${escapeHtml(d.chipNumber || "")}" placeholder="Puce électronique"></label>
+        </div>
+        <div class="form-row">
+          <label class="info-field">Père<input id="profile-sirefather" value="${escapeHtml(d.father || "")}"></label>
+          <label class="info-field">Mère<input id="profile-siremother" value="${escapeHtml(d.mother || "")}"></label>
+        </div>
+        <label class="info-field" style="margin-top:9px">Notes<textarea id="profile-notes" rows="3" placeholder="Particularités, informations utiles...">${escapeHtml(d.notes || "")}</textarea></label>
+        <div class="form-row">
+          <button class="btn btn-primary" onclick="saveHorseProfile()">Enregistrer la fiche</button>
+          <label class="btn btn-secondary" style="cursor:pointer">📖 Importer le livret SIRE<input id="sire-photo-input" type="file" accept="image/*" capture="environment" hidden></label>
+        </div>
+        <div class="sire-note">Photographie la page d'identification du livret. L'extraction automatique nécessite de configurer un service IA sécurisé (API côté serveur). Sans ce service, la photo pourra être sélectionnée mais les champs devront être saisis ou vérifiés manuellement.</div>
+        <div id="sire-import-status" class="muted" style="margin-top:7px"></div>
+      `;
+      document.getElementById("horse-photo-input").addEventListener("change", e => handleHorsePhoto(e.target.files[0]));
+      document.getElementById("sire-photo-input").addEventListener("change", e => importSirePhoto(e.target.files[0]));
+    }
+
+    function saveHorseProfile() {
+      const h = state.horses.find(x => x.id === activeInfoHorse);
+      if (!h) return;
+      const val = id => document.getElementById(id)?.value?.trim() || "";
+      h.name = val("profile-name") || h.name;
+      state.horseProfiles[h.id] = {
+        ...(state.horseProfiles[h.id] || {}),
+        callName:val("profile-callname"), breed:val("profile-breed"), sex:val("profile-sex"),
+        birthDate:val("profile-birth"), sireNumber:val("profile-sire"), chipNumber:val("profile-chip"),
+        father:val("profile-sirefather"), mother:val("profile-siremother"), notes:val("profile-notes")
+      };
+      saveState(); renderHorseProfile(); renderHealthVisits(); renderAllCare();
+    }
+
+    function resizeImageFile(file, maxSide=1100, quality=.78) {
+      return new Promise((resolve,reject) => {
+        const reader = new FileReader();
+        reader.onerror=reject;
+        reader.onload=() => {
+          const img = new Image();
+          img.onerror=reject;
+          img.onload=() => {
+            const scale=Math.min(1,maxSide/Math.max(img.width,img.height));
+            const canvas=document.createElement("canvas");
+            canvas.width=Math.round(img.width*scale); canvas.height=Math.round(img.height*scale);
+            canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+            resolve(canvas.toDataURL("image/jpeg",quality));
+          };
+          img.src=reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleHorsePhoto(file) {
+      if (!file) return;
+      try {
+        const data=await resizeImageFile(file,900,.72);
+        state.horseProfiles[activeInfoHorse] ||= {};
+        state.horseProfiles[activeInfoHorse].photoData=data;
+        saveState(); renderHorseProfile();
+      } catch { alert("Impossible de lire cette photo."); }
+    }
+
+    async function importSirePhoto(file) {
+      if (!file) return;
+      const status=document.getElementById("sire-import-status");
+      status.textContent="Préparation de la photo…";
+      try {
+        const data=await resizeImageFile(file,1800,.86);
+        // GitHub Pages ne fournit pas de serveur API. Endpoint optionnel à déployer séparément.
+        const endpoint=window.EQUICARE_SIRE_API_URL || "";
+        if (!endpoint) {
+          status.textContent="Photo chargée. Pour activer l'extraction IA, configure un endpoint sécurisé dans EQUICARE_SIRE_API_URL et déploie le backend. Aucun champ n'a été modifié.";
+          state.horseProfiles[activeInfoHorse] ||= {};
+          state.horseProfiles[activeInfoHorse].sirePhotoPending=true;
+          saveState();
+          return;
+        }
+        status.textContent="Analyse du livret en cours…";
+        const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:data,horseId:activeInfoHorse})});
+        if (!response.ok) throw new Error("Le service d'extraction a répondu avec une erreur.");
+        const extracted=await response.json();
+        const profile=state.horseProfiles[activeInfoHorse] ||= {};
+        const mapping={name:"name",breed:"breed",birthDate:"birthDate",sireNumber:"sireNumber",chipNumber:"chipNumber",father:"father",mother:"mother",sex:"sex"};
+        Object.entries(mapping).forEach(([apiKey,field])=>{if(extracted[apiKey]) profile[field]=String(extracted[apiKey]);});
+        if (extracted.name) state.horses.find(h=>h.id===activeInfoHorse).name=String(extracted.name);
+        profile.sireExtractionNeedsReview=true;
+        saveState(); renderHorseProfile();
+        const msg=document.getElementById("sire-import-status");
+        if(msg) msg.textContent="Extraction terminée : vérifie chaque information avec le livret original avant validation.";
+      } catch(err) {
+        status.textContent="L'analyse automatique n'a pas abouti : "+err.message;
+      }
+    }
+
+    function renderContacts() {
+      ensureHorseInfo();
+      renderHorseTabs("contact-horse-tabs",activeContactHorse,"selectContactHorse");
+      const contacts=state.practitionerContacts[activeContactHorse] || [];
+      document.getElementById("contacts-content").innerHTML=`
+        <div class="item-card">
+          <strong>Ajouter un intervenant</strong>
+          <div class="form-row">
+            <label class="info-field">Spécialité / type<input id="contact-type" placeholder="Vétérinaire, ostéopathe…"></label>
+            <label class="info-field">Nom<input id="contact-name" placeholder="Nom / cabinet"></label>
+          </div>
+          <div class="form-row">
+            <label class="info-field">Téléphone<input id="contact-phone" type="tel" placeholder="06…"></label>
+            <label class="info-field">E-mail<input id="contact-email" type="email" placeholder="contact@…"></label>
+          </div>
+          <label class="info-field" style="margin-top:8px">Message type<textarea id="contact-template" rows="3" placeholder="Bonjour, je souhaiterais convenir d'un rendez-vous pour {cheval}."></textarea></label>
+          <div class="form-row"><button class="btn btn-primary btn-sm" onclick="addPractitionerContact()">Ajouter le contact</button></div>
+        </div>
+        ${contacts.map(c=>`<div class="contact-card">
+          <div class="item-top"><div><strong>${escapeHtml(c.type)}</strong><div>${escapeHtml(c.name)}</div><div class="muted">${escapeHtml(c.phone||"")} ${c.email?"• "+escapeHtml(c.email):""}</div></div><button class="btn btn-outline btn-sm" onclick="deletePractitionerContact('${escapeAttr(c.id)}')">Supprimer</button></div>
+          <div class="form-row"><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','sms')">💬 Rendez-vous par SMS</button><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','email')">✉️ Rendez-vous par e-mail</button></div>
+        </div>`).join("") || `<div class="muted">Aucun intervenant enregistré pour ce cheval.</div>`}`;
+    }
+
+    function addPractitionerContact() {
+      const val=id=>document.getElementById(id).value.trim();
+      const type=val("contact-type"), name=val("contact-name");
+      if(!type||!name){alert("Renseigne au minimum le type et le nom de l'intervenant.");return;}
+      state.practitionerContacts[activeContactHorse].push({id:"contact-"+Date.now(),type,name,phone:val("contact-phone"),email:val("contact-email"),template:val("contact-template")});
+      saveState(); renderContacts();
+    }
+    function deletePractitionerContact(id) {
+      state.practitionerContacts[activeContactHorse]=state.practitionerContacts[activeContactHorse].filter(c=>c.id!==id);
+      saveState(); renderContacts();
+    }
+    function prepareContactAppointment(id,mode) {
+      const c=state.practitionerContacts[activeContactHorse].find(x=>x.id===id);
+      const h=state.horses.find(x=>x.id===activeContactHorse);
+      if(!c||!h)return;
+      const message=(c.template||"Bonjour, je souhaiterais convenir d'un rendez-vous pour {cheval}. Quelles seraient vos prochaines disponibilités ?").replaceAll("{cheval}",h.name);
+      if(mode==="sms") {
+        if(!c.phone){alert("Ajoute un numéro de téléphone à cet intervenant.");return;}
+        window.location.href=`sms:${c.phone.replace(/\s/g,"")}?body=${encodeURIComponent(message)}`;
+      } else {
+        if(!c.email){alert("Ajoute une adresse e-mail à cet intervenant.");return;}
+        window.location.href=`mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent("Demande de rendez-vous – "+h.name)}&body=${encodeURIComponent(message)}`;
+      }
+    }
+
+    function renderWeight() {
+      ensureHorseInfo();
+      renderHorseTabs("weight-horse-tabs",activeWeightHorse,"selectWeightHorse");
+      const records=[...(state.weightRecords[activeWeightHorse]||[])].sort((a,b)=>a.date.localeCompare(b.date));
+      const chart=buildWeightChart(records);
+      document.getElementById("weight-content").innerHTML=`
+        <div class="item-card">
+          <strong>Ajouter une pesée</strong>
+          <div class="form-row">
+            <label class="info-field">Date<input id="weight-date" type="date" value="${todayISO(0)}"></label>
+            <label class="info-field">Poids (kg)<input id="weight-value" type="number" min="1" max="2000" step=".1" placeholder="Ex. 500"></label>
+          </div>
+          <label class="info-field" style="margin-top:8px">Commentaire (facultatif)<input id="weight-note" placeholder="Ex. pesée après vermifuge…"></label>
+          <div class="form-row"><button class="btn btn-primary btn-sm" onclick="addWeightRecord()">Enregistrer la pesée</button></div>
+        </div>
+        <div class="sub-section"><div class="sub-section-header"><strong class="sub-section-title">Évolution du poids</strong><span class="muted">${records.length} pesée(s)</span></div>${chart}</div>
+        <div class="weight-history">${[...records].reverse().map(r=>`<div class="weight-row"><span><strong>${formatDateFR(r.date)}</strong>${r.note?"<br><span class='muted'>"+escapeHtml(r.note)+"</span>":""}</span><span><strong>${Number(r.kg).toLocaleString("fr-FR")} kg</strong> <button class="btn btn-outline btn-sm" onclick="deleteWeightRecord('${escapeAttr(r.id)}')">✕</button></span></div>`).join("") || '<div class="muted">Ajoute une première pesée pour afficher la courbe.</div>'}</div>`;
+    }
+
+    function buildWeightChart(records) {
+      if(!records.length)return '<div class="muted">Aucune donnée pour le moment.</div>';
+      if(records.length===1)return `<div style="padding:20px;text-align:center"><strong style="font-size:1.6rem">${Number(records[0].kg).toLocaleString("fr-FR")} kg</strong><div class="muted">Première pesée enregistrée le ${formatDateFR(records[0].date)}. Ajoute d'autres pesées pour tracer une courbe.</div></div>`;
+      const vals=records.map(r=>Number(r.kg)).filter(Number.isFinite), min=Math.min(...vals), max=Math.max(...vals);
+      const pad=Math.max(5,(max-min)*.18), lo=min-pad, hi=max+pad;
+      const x=i=>42+i*(316/(records.length-1)), y=v=>14+(hi-v)*(142/(hi-lo));
+      const pts=records.map((r,i)=>`${x(i)},${y(Number(r.kg))}`).join(" ");
+      const dots=records.map((r,i)=>`<circle cx="${x(i)}" cy="${y(Number(r.kg))}" r="4" fill="#1e3a2f"><title>${formatDateFR(r.date)} : ${r.kg} kg</title></circle>`).join("");
+      return `<svg class="weight-chart" viewBox="0 0 380 205" role="img" aria-label="Courbe d'évolution du poids">${[0,1,2,3].map(i=>{const yy=14+i*47;return `<line x1="38" y1="${yy}" x2="360" y2="${yy}" stroke="#ddd6ca" stroke-dasharray="3 3"/><text x="32" y="${yy+4}" text-anchor="end" font-size="10" fill="#5d6860">${(hi-i*(hi-lo)/3).toFixed(0)}</text>`}).join("")}<polyline points="${pts}" fill="none" stroke="#1e3a2f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${dots}<text x="42" y="190" font-size="10" fill="#5d6860">${formatDateFR(records[0].date)}</text><text x="360" y="190" text-anchor="end" font-size="10" fill="#5d6860">${formatDateFR(records[records.length-1].date)}</text></svg>`;
+    }
+    function addWeightRecord() {
+      const date=document.getElementById("weight-date").value, kg=Number(document.getElementById("weight-value").value), note=document.getElementById("weight-note").value.trim();
+      if(!date||!Number.isFinite(kg)||kg<=0){alert("Saisis une date et un poids valide.");return;}
+      state.weightRecords[activeWeightHorse].push({id:"weight-"+Date.now(),date,kg,note});
+      saveState();renderWeight();
+    }
+    function deleteWeightRecord(id) {
+      state.weightRecords[activeWeightHorse]=state.weightRecords[activeWeightHorse].filter(r=>r.id!==id);
+      saveState();renderWeight();
+    }
+    function renderInformation() {
+      ensureHorseInfo();
+      if(activeInfoSub==="info-horses")renderHorseProfile();
+      if(activeInfoSub==="info-contacts")renderContacts();
+      if(activeInfoSub==="info-weight")renderWeight();
+    }
+
     function switchTab(tabId, skipScrollTop = false) {
       activeTab = tabId;
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
@@ -2514,6 +2820,7 @@
         b.classList.toggle("active", b.dataset.tab === tabId);
       });
       renderAlertsAndWeather();
+      if (tabId === "tab-info") renderInformation();
       if (!skipScrollTop) {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -2632,6 +2939,7 @@
       navigator.serviceWorker.register("sw.js").catch(() => {});
     }
 
+    ensureHorseInfo();
     syncConfigInputs();
     renderFoods();
     renderAllCare();
