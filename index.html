@@ -762,6 +762,12 @@
     .auth-actions .btn { flex:1; min-width:120px; }
     .cloud-banner { padding:9px 11px; border-radius:10px; background:var(--primary-light); color:var(--primary); font-size:.8rem; margin:10px 0; }
 
+    .weather-summary {background:#e6f3e8;border:1px solid #b8d9bf;color:#173d25;border-radius:12px;padding:12px;margin:10px 0;font-size:.88rem;}
+    .weather-summary strong {color:#12351f;}
+    .weather-alert {margin-top:7px;padding:8px 10px;border-radius:9px;background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;}
+    .weather-alert.ok {background:#f0fdf4;border-color:#bbf7d0;color:#166534;}
+    .contact-card .identity-layout {display:flex;align-items:flex-start;gap:14px;}
+    .contact-card .identity-photo {width:104px;height:128px;flex:0 0 104px;object-fit:cover;border-radius:10px;border:1px solid var(--border);background:var(--surface-soft);}
     .hidden { display: none !important; }
   </style>
 </head>
@@ -791,7 +797,7 @@
       <div class="card" id="weather-card">
         <div class="card-header">
           <h2 class="card-title">Météo & Conditions</h2>
-          <span class="muted" id="weather-updated">Chargement...</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="muted" id="weather-updated">Chargement...</span><button type="button" class="btn btn-outline btn-sm" id="btn-app-update">↻ Mise à jour</button></div>
         </div>
 
         <div class="weather-hero">
@@ -833,7 +839,7 @@
           </div>
         </div>
 
-        <div class="weather-metrics" style="margin-top:8px;"><div class="metric-box"><div class="metric-label">Vent / rafales</div><div class="metric-val" id="w-wind">--</div></div><div class="metric-box"><div class="metric-label">Pluie actuelle</div><div class="metric-val" id="w-rain">--</div></div></div>
+        <div class="weather-summary" id="weather-summary"><strong>Résumé météo</strong><div id="weather-summary-main">Prévisions en cours de chargement…</div><div id="weather-summary-alerts"></div></div><div class="weather-metrics" style="margin-top:8px;"><div class="metric-box"><div class="metric-label">Vent / rafales</div><div class="metric-val" id="w-wind">--</div></div><div class="metric-box"><div class="metric-label">Pluie actuelle</div><div class="metric-val" id="w-rain">--</div></div></div>
         <div class="muted" style="margin-bottom:6px;">Prochaines heures (10h–21h journée & 21h–10h nuit/matin) :</div>
         <div class="hourly-strip" id="hourly-strip"></div>
       </div>
@@ -976,7 +982,7 @@
             <div class="form-row">
               <input type="text" id="new-pharma-name" placeholder="Produit (ex. Bétadine, Compresses, Pansement...)" style="flex:1;min-width:190px;" />
               <input type="text" id="new-pharma-qty" placeholder="Quantité / format (ex. 1 flacon, 10)" style="width:155px;" />
-              <input type="date" id="new-pharma-expiry" />
+              <label class="info-field">Date d’achat<input type="date" id="new-pharma-purchase" /></label><label class="info-field">Date de péremption<input type="date" id="new-pharma-expiry" /></label>
               <input type="number" id="new-pharma-price" placeholder="Prix (€)" min="0" step="0.01" style="width:110px;" />
               <select id="new-pharma-horse" style="min-width:150px;"><option value="shared">Commun aux chevaux</option></select>
             </div>
@@ -1017,7 +1023,7 @@
     </section>
 
     <!-- TAB COURSES -->
-    <section id="tab-shopping" class="tab-panel hidden"><div class="card"><div class="card-header"><div><h2 class="card-title">Liste de courses</h2><div class="muted">Classe tes achats par magasin et coche-les au fur et à mesure.</div></div></div><div class="form-row"><input id="shopping-item" placeholder="Article à acheter" style="flex:1;min-width:160px"><select id="shopping-store"><option>Coopérative Kramer</option><option>Équitation</option><option>Agradi</option><option>Decathlon</option></select><input id="shopping-qty" placeholder="Quantité" style="width:100px"><button class="btn btn-primary btn-sm" id="shopping-add">Ajouter</button></div><div id="shopping-list"></div></div></section>
+    <section id="tab-shopping" class="tab-panel hidden"><div class="card"><div class="card-header"><div><h2 class="card-title">Liste de courses</h2><div class="muted">Classe tes achats par magasin et coche-les au fur et à mesure.</div></div></div><div class="form-row"><input id="shopping-item" placeholder="Article à acheter" style="flex:1;min-width:160px"><select id="shopping-store"><option>Coopérative Kramer</option><option>Équitation</option><option>Agradi</option><option>Decathlon</option></select><input id="shopping-qty" placeholder="Quantité" style="width:100px"><button type="button" class="btn btn-primary btn-sm" id="shopping-add">Ajouter</button></div><div id="shopping-list"></div></div></section>
 
     <!-- TAB 5 : BUDGET -->
     <section id="tab-budget" class="tab-panel hidden">
@@ -2247,7 +2253,7 @@
       if (weatherData && weatherData.current) {
         const cur = weatherData.current;
         document.getElementById("w-temp").textContent = `${Math.round(cur.temperature_2m)}°C`;
-        const windEl=document.getElementById("w-wind"); if(windEl) windEl.textContent = Number(cur.wind_gusts_10m||0)>=40 ? `Vent fort • ${Math.round(cur.wind_speed_10m||0)} km/h, rafales ${Math.round(cur.wind_gusts_10m)} km/h` : `Vent ${Math.round(cur.wind_speed_10m||0)} km/h (rafales ${Math.round(cur.wind_gusts_10m||0)} km/h)`;
+        const windEl=document.getElementById("w-wind"); if(windEl){const ws=Number(cur.wind_speed_10m||0),wg=Number(cur.wind_gusts_10m||0),wl=wg>=90||ws>=60?"Tempête":(wg>=60||ws>=40?"Vent fort":(ws>=20?"Vent modéré":"Vent léger")); windEl.textContent = `${wl} • ${Math.round(ws)} km/h (rafales ${Math.round(wg)} km/h)`;}
         const rainEl=document.getElementById("w-rain"); if(rainEl){const hourlyRain=(weatherData.hourly?.precipitation||[]).slice(0,24).reduce((a,b)=>a+Number(b||0),0);rainEl.textContent = Number(cur.precipitation||0)>0 ? `En cours • ${Number(cur.precipitation).toFixed(1)} mm` : (hourlyRain>0?`Prévue aujourd’hui • ${hourlyRain.toFixed(1)} mm`:`Pas de pluie prévue aujourd’hui`);}
         document.getElementById("w-desc").textContent = weatherCodeLabel(cur.weather_code);
         document.getElementById("w-day-min").textContent =
@@ -2257,6 +2263,7 @@
         document.getElementById("w-uv-max").textContent = uvInfo.maxUv.toFixed(1);
       }
 
+      renderWeatherWeek();
       const strip = document.getElementById("hourly-strip");
       if (weatherData && weatherData.hourly && weatherData.hourly.time) {
         const now = new Date();
@@ -2303,8 +2310,35 @@
       return map[code] || "Conditions variables";
     }
 
+    function renderWeatherWeek(){
+      const main=document.getElementById("weather-summary-main"), alerts=document.getElementById("weather-summary-alerts");
+      if(!main||!alerts||!weatherData?.daily){if(main)main.textContent="Prévisions indisponibles pour le moment.";return;}
+      const d=weatherData.daily, fmt=(v)=>Number(v||0).toFixed(1).replace(".",",");
+      const dayMinText=document.getElementById("w-day-min")?.textContent||"--°C";
+      const nightMinText=document.getElementById("w-night-min")?.textContent||"--°C";
+      const cur=weatherData.current||{};
+      const speed=Number(cur.wind_speed_10m||0), gust=Number(cur.wind_gusts_10m||0);
+      const windLabel=(v,g)=>g>=90||v>=60?"Tempête":(g>=60||v>=40?"Vent fort":(v>=20?"Vent modéré":"Vent léger"));
+      main.innerHTML=`Température minimale : journée <strong>${escapeHtml(dayMinText)}</strong>, nuit <strong>${escapeHtml(nightMinText)}</strong>. Vent actuel : <strong>${windLabel(speed,gust)}</strong> (${Math.round(speed)} km/h, rafales ${Math.round(gust)} km/h).`;
+      const windDays=[], rainDays=[];
+      for(let i=0;i<(d.time||[]).length;i++){
+        const date=new Date((d.time[i]||"")+"T12:00:00");
+        const day=date.toLocaleDateString("fr-FR",{weekday:"long",day:"2-digit",month:"2-digit"});
+        const vmax=Number(d.wind_speed_10m_max?.[i]||0), gmax=Number(d.wind_gusts_10m_max?.[i]||0), rain=Number(d.precipitation_sum?.[i]||0);
+        const level=windLabel(vmax,gmax);
+        if(level==="Vent fort"||level==="Tempête")windDays.push(`${day} : ${level.toLowerCase()} (max ${Math.round(vmax)} km/h, rafales ${Math.round(gmax)} km/h)`);
+        if(rain>=20)rainDays.push(`${day} : ${fmt(rain)} mm attendus`);
+      }
+      const parts=[];
+      if(windDays.length)parts.push(`<div class="weather-alert">⚠️ <strong>Vent fort / tempête dans les 7 jours :</strong> ${windDays.map(escapeHtml).join(" ; ")}</div>`);
+      else parts.push('<div class="weather-alert ok">✓ Aucun vent fort ni épisode de tempête détecté sur les 7 prochains jours.</div>');
+      if(rainDays.length)parts.push(`<div class="weather-alert">🌧️ <strong>Pluies fortes dans les 7 jours (≥ 20 mm/jour) :</strong> ${rainDays.map(escapeHtml).join(" ; ")}</div>`);
+      else parts.push('<div class="weather-alert ok">✓ Aucune pluie forte (≥ 20 mm/jour) détectée sur les 7 prochains jours.</div>');
+      alerts.innerHTML=parts.join("");
+    }
+
     async function fetchWeather() {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation&hourly=temperature_2m,uv_index,precipitation,wind_gusts_10m&daily=uv_index_max,temperature_2m_min,temperature_2m_max&timezone=Europe%2FParis&forecast_days=3`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation&hourly=temperature_2m,uv_index,precipitation,wind_gusts_10m&daily=uv_index_max,temperature_2m_min,temperature_2m_max,wind_speed_10m_max,wind_gusts_10m_max,precipitation_sum,precipitation_hours&timezone=Europe%2FParis&forecast_days=7`;
       try {
         const res = await fetch(url);
         weatherData = await res.json();
@@ -2781,15 +2815,18 @@
             <div class="item-top">
               <div>
                 <div class="item-name">${escapeHtml(item.name)}</div>
-                <div class="muted">Péremption : <strong>${formatDateFR(item.expiryDate)}</strong>${item.qty ? ` • ${escapeHtml(item.qty)}` : ""}</div>
+                <div class="muted">Achat : <strong>${formatDateFR(item.purchaseDate||"")}</strong> • Péremption : <strong>${formatDateFR(item.expiryDate)}</strong>${item.qty ? ` • ${escapeHtml(item.qty)}` : ""}</div>
                 ${item.notes ? `<div class="muted" style="margin-top:3px;">${escapeHtml(item.notes)}</div>` : ""}
                 <div class="muted">Achat : ${Number(item.price||0).toFixed(2)} € • ${item.horseId && item.horseId!="shared" ? escapeHtml(state.horses.find(h=>h.id===item.horseId)?.name||"") : "Commun"}</div>
               </div>
               <span class="badge ${badgeClass}">${badgeText}</span>
             </div>
             <div class="form-row">
-              <label class="muted" style="font-size:0.78rem;">Date péremption :
-                <input type="date" value="${item.expiryDate}" onchange="updatePharmaExpiry('${escapeAttr(item.id)}', this.value)" />
+              <label class="muted" style="font-size:0.78rem;">Date d’achat :
+                <input type="date" value="${item.purchaseDate||""}" onchange="updatePharmaPurchaseDate('${escapeAttr(item.id)}', this.value)" />
+              </label>
+              <label class="muted" style="font-size:0.78rem;">Date de péremption :
+                <input type="date" value="${item.expiryDate||""}" onchange="updatePharmaExpiry('${escapeAttr(item.id)}', this.value)" />
               </label>
               <button class="btn btn-outline btn-sm" onclick="editPharmaItem('${escapeAttr(item.id)}')">Modifier</button>
               <button class="btn btn-outline btn-sm" onclick="deletePharmaItem('${escapeAttr(item.id)}')">Supprimer</button>
@@ -2798,6 +2835,8 @@
         `;
       }).join("");
     }
+
+    function updatePharmaPurchaseDate(id,newDate){if(!newDate)return;const item=(state.pharmacy||[]).find(p=>p.id===id);if(!item)return;item.purchaseDate=newDate;saveState();renderPharmacy();renderBudget();}
 
     function updatePharmaExpiry(id, newDate) {
       if (!newDate) return;
@@ -2820,6 +2859,7 @@
     }
 
     document.getElementById("btn-toggle-add-pharma").addEventListener("click", () => {
+      document.getElementById("new-pharma-purchase").value = todayISO(0);
       document.getElementById("new-pharma-expiry").value = todayISO(60);
       document.getElementById("new-pharma-horse").innerHTML = '<option value="shared">Commun aux chevaux</option>'+state.horses.map(h=>`<option value="${escapeAttr(h.id)}">${escapeHtml(h.name)}</option>`).join("");
       document.getElementById("add-pharma-form").classList.toggle("hidden");
@@ -2833,8 +2873,9 @@
       const name = document.getElementById("new-pharma-name").value.trim();
       const qty = document.getElementById("new-pharma-qty").value.trim();
       const expiryDate = document.getElementById("new-pharma-expiry").value;
+      const purchaseDate = document.getElementById("new-pharma-purchase").value;
       const notes = document.getElementById("new-pharma-notes").value.trim();
-      if (!name || !expiryDate) return;
+      if (!name || !purchaseDate || !expiryDate) { alert("Renseigne le nom, la date d’achat et la date de péremption."); return; }
 
       state.pharmacy = state.pharmacy || [];
       state.pharmacy.unshift({
@@ -2845,7 +2886,7 @@
         notes,
         price: Math.max(0, Number(document.getElementById("new-pharma-price").value)||0),
         horseId: document.getElementById("new-pharma-horse").value || "shared",
-        purchaseDate: todayISO(0)
+        purchaseDate
       });
 
       document.getElementById("new-pharma-name").value = "";
@@ -3008,7 +3049,7 @@
         birthDate:val("profile-birth"), sireNumber:val("profile-sire"), chipNumber:val("profile-chip"),
         father:val("profile-sirefather"), mother:val("profile-siremother"), notes:val("profile-notes")
       };
-      saveState(); renderHorseProfile(); renderHealthVisits(); renderAllCare();
+      saveState(); renderHorseProfile(); renderHealthVisits(); renderAllCare(); if(activeWeightHorse===h.id) renderWeight();
     }
 
     function resizeImageFile(file, maxSide=1100, quality=.78) {
@@ -3273,6 +3314,7 @@
     });
 
     document.getElementById("btn-refresh-weather").addEventListener("click", fetchWeather);
+    document.getElementById("btn-app-update")?.addEventListener("click",()=>{try{sessionStorage.setItem("equicare-reload-tab",activeTab||"tab-home");}catch(e){};location.reload();});
 
     document.getElementById("btn-export-json").addEventListener("click", () => {
       const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -3375,7 +3417,7 @@
     function renderContacts(){
       const contacts=state.practitionerContacts.shared||[];
       const host=document.getElementById('contacts-content'); if(!host)return;
-      host.innerHTML=`<div class="item-card"><strong>Ajouter un intervenant commun</strong><div class="form-row"><label class="info-field">Spécialité / type<input id="contact-type" placeholder="Vétérinaire, maréchal…"></label><label class="info-field">Nom<input id="contact-name" placeholder="Nom / cabinet"></label></div><div class="form-row"><label class="info-field">Téléphone<input id="contact-phone" type="tel" placeholder="06…"></label><label class="info-field">E-mail<input id="contact-email" type="email" placeholder="contact@…"></label></div><label class="info-field">Photo<input id="contact-photo-new" type="file" accept="image/*"></label><label class="info-field">Commentaires<textarea id="contact-comments" rows="2"></textarea></label><label class="info-field">Message type<textarea id="contact-template" rows="2" placeholder="Bonjour, je souhaiterais convenir d'un rendez-vous."></textarea></label><button class="btn btn-primary btn-sm" onclick="addPractitionerContact()">Ajouter le contact</button></div>${contacts.map(c=>`<div class="contact-card"><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">${c.photoData?`<img src="${c.photoData}" alt="Photo de ${escapeHtml(c.name||'intervenant')}" style="width:96px;height:112px;object-fit:cover;border-radius:12px;border:1px solid var(--border)">`:`<div class="horse-photo profile-placeholder" style="width:96px;height:112px">👤</div>`}<div style="flex:1"><strong>${escapeHtml(c.name||'Intervenant')}</strong><div class="muted">${escapeHtml(c.type||'')}</div><div class="muted">${escapeHtml(c.phone||'')} ${c.email?'• '+escapeHtml(c.email):''}</div></div><button class="btn btn-outline btn-sm" onclick="deletePractitionerContact('${escapeAttr(c.id)}')">Supprimer</button></div><div class="muted" style="margin:8px 0">${escapeHtml(c.comments||'')}</div><label class="info-field">Photo de l’intervenant<input type="file" accept="image/*" onchange="updateContactPhoto('${escapeAttr(c.id)}',this.files[0])"></label><div class="form-row"><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','sms')">SMS</button><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','email')">Gmail / e-mail</button></div><label class="info-field">Modifier les commentaires<textarea onchange="updateContactComments('${escapeAttr(c.id)}',this.value)">${escapeHtml(c.comments||'')}</textarea></label></div>`).join('')||'<div class="muted">Aucun intervenant enregistré.</div>'}`;
+      host.innerHTML=`<div class="item-card"><strong>Ajouter un intervenant commun</strong><div class="form-row"><label class="info-field">Spécialité / type<input id="contact-type" placeholder="Vétérinaire, maréchal…"></label><label class="info-field">Nom<input id="contact-name" placeholder="Nom / cabinet"></label></div><div class="form-row"><label class="info-field">Téléphone<input id="contact-phone" type="tel" placeholder="06…"></label><label class="info-field">E-mail<input id="contact-email" type="email" placeholder="contact@…"></label></div><label class="info-field">Photo<input id="contact-photo-new" type="file" accept="image/*"></label><label class="info-field">Commentaires<textarea id="contact-comments" rows="2"></textarea></label><label class="info-field">Message type<textarea id="contact-template" rows="2" placeholder="Bonjour, je souhaiterais convenir d'un rendez-vous."></textarea></label><button class="btn btn-primary btn-sm" onclick="addPractitionerContact()">Ajouter le contact</button></div>${contacts.map(c=>`<div class="contact-card"><div class="identity-layout">${c.photoData?`<img class="identity-photo" src="${c.photoData}" alt="Photo de ${escapeHtml(c.name||'intervenant')}">`:`<div class="identity-photo" style="display:grid;place-items:center;font-size:2rem">👤</div>`}<div style="flex:1;min-width:0"><strong>${escapeHtml(c.name||'Intervenant')}</strong><div class="muted">${escapeHtml(c.type||'')}</div><div class="muted">${escapeHtml(c.phone||'')}</div><div class="muted">${escapeHtml(c.email||'')}</div><div style="margin-top:8px"><button class="btn btn-outline btn-sm" onclick="deletePractitionerContact('${escapeAttr(c.id)}')">Supprimer</button></div></div></div><div class="muted" style="margin:8px 0">${escapeHtml(c.comments||'')}</div><label class="info-field">Photo de l’intervenant<input type="file" accept="image/*" onchange="updateContactPhoto('${escapeAttr(c.id)}',this.files[0])"></label><div class="form-row"><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','sms')">SMS</button><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','email')">Gmail / e-mail</button></div><label class="info-field">Modifier les commentaires<textarea onchange="updateContactComments('${escapeAttr(c.id)}',this.value)">${escapeHtml(c.comments||'')}</textarea></label></div>`).join('')||'<div class="muted">Aucun intervenant enregistré.</div>'}`;
     }
     async function addPractitionerContact(){
       const v=id=>document.getElementById(id)?.value.trim()||'';const type=v('contact-type'),name=v('contact-name');if(!type||!name){alert('Renseigne le type et le nom.');return;}
@@ -3407,7 +3449,11 @@
     function renderShoppingList(){const host=document.getElementById('shopping-list');if(!host)return;const stores=['Coopérative Kramer','Équitation','Agradi','Decathlon'];host.innerHTML=stores.map(store=>{const items=state.shoppingList.filter(x=>x.store===store);return `<div class="sub-section"><h3>${store}</h3>${items.map(x=>`<div class="weight-row"><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" ${x.done?'checked':''} onchange="toggleShoppingItem('${x.id}',this.checked)"><span style="${x.done?'text-decoration:line-through;opacity:.6':''}">${escapeHtml(x.name)} ${x.qty?'— '+escapeHtml(x.qty):''}</span></label><button class="btn btn-outline btn-sm" onclick="deleteShoppingItem('${x.id}')">×</button></div>`).join('')||'<div class="muted">Aucun article.</div>'}</div>`;}).join('');}
     function toggleShoppingItem(id,done){const x=state.shoppingList.find(x=>x.id===id);if(x){x.done=done;saveState();renderShoppingList();}}
     function deleteShoppingItem(id){state.shoppingList=state.shoppingList.filter(x=>x.id!==id);saveState();renderShoppingList();}
-    document.getElementById('shopping-add')?.addEventListener('click',()=>{const name=document.getElementById('shopping-item').value.trim();if(!name)return;state.shoppingList.push({id:'shop-'+Date.now(),name,store:document.getElementById('shopping-store').value,qty:document.getElementById('shopping-qty').value.trim(),done:false});document.getElementById('shopping-item').value='';document.getElementById('shopping-qty').value='';saveState();renderShoppingList();});
+    function addShoppingItem(){const name=(document.getElementById('shopping-item')?.value||'').trim();if(!name){alert('Saisis le nom de l’article à ajouter.');document.getElementById('shopping-item')?.focus();return;}state.shoppingList ||= [];state.shoppingList.push({id:'shop-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name,store:document.getElementById('shopping-store')?.value||'Coopérative Kramer',qty:(document.getElementById('shopping-qty')?.value||'').trim(),done:false});const item=document.getElementById('shopping-item'),qty=document.getElementById('shopping-qty');if(item)item.value='';if(qty)qty.value='';saveState();renderShoppingList();}
+    // Bind explicitly to the button (rather than relying on inline HTML handlers).
+    document.getElementById('shopping-add')?.addEventListener('click',addShoppingItem);
+    document.getElementById('shopping-item')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addShoppingItem();}});
+    window.toggleShoppingItem=toggleShoppingItem; window.deleteShoppingItem=deleteShoppingItem;
     const _switchTabShopping=switchTab;
     switchTab=function(tabId,scroll=true){_switchTabShopping(tabId,scroll);if(tabId==='tab-shopping')renderShoppingList();};
     // Harmonise the foin reference as rounds; one round is 180 kg. Older quantities are converted where possible.
@@ -3416,6 +3462,7 @@
     // Keep labels on horse selectors tied to actual horse names, never generic horse numbers.
     document.querySelectorAll('input[placeholder*="cheval 1"],input[placeholder*="cheval 2"]').forEach((el,i)=>{el.placeholder=i===0?`Part ${state.horses[0]?.name||'Sacramento'} (%)`:`Part ${state.horses[1]?.name||'Bella'} (%)`;});
     renderShoppingList();
+    try{const savedTab=sessionStorage.getItem("equicare-reload-tab");if(savedTab&&document.getElementById(savedTab)){sessionStorage.removeItem("equicare-reload-tab");switchTab(savedTab,true);}}catch(e){}
     renderFoods();
     renderAllCare();
     renderPharmacy();
