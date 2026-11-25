@@ -1,0 +1,3199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1e3a2f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>ÉquiCare — Gestion Chevaux</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --surface: #ffffff;
+      --surface-soft: #faf8f4;
+      --ink: #1d241f;
+      --muted: #5d6860;
+      --primary: #1e3a2f;
+      --primary-light: #e6efe9;
+      --accent: #b45309;
+      --accent-light: #fef3c7;
+      --danger: #b91c1c;
+      --danger-light: #fee2e2;
+      --info: #1d4ed8;
+      --info-light: #dbeafe;
+      --ok: #15803d;
+      --ok-light: #dcfce7;
+      --border: #e2ddd3;
+      --radius: 16px;
+      --shadow: 0 4px 18px rgba(29, 36, 31, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+      padding-bottom: 92px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(244, 241, 234, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.08rem;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 14px 14px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Strict alert widget: empty and completely hidden when no alert matches the active tab */
+    #smart-alert-widget:empty {
+      display: none;
+    }
+
+    .smart-widget {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .alert-card {
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      border: 1px solid transparent;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+      text-align: left;
+      width: 100%;
+    }
+
+    .alert-card:hover {
+      filter: brightness(0.985);
+    }
+
+    .alert-card:active {
+      transform: scale(0.985);
+    }
+
+    .alert-blanket {
+      background: var(--info-light);
+      border-color: #93c5fd;
+      color: #1e3a8a;
+    }
+
+    .alert-day-blanket {
+      background: #e0f2fe;
+      border-color: #7dd3fc;
+      color: #0c4a6e;
+    }
+
+    .alert-uv {
+      background: var(--accent-light);
+      border-color: #fcd34d;
+      color: #78350f;
+    }
+
+    .alert-food {
+      background: var(--danger-light);
+      border-color: #fca5a5;
+      color: #7f1d1d;
+    }
+
+    .alert-care {
+      background: #f3e8ff;
+      border-color: #d8b4fe;
+      color: #4c1d95;
+    }
+
+    /* Individual practitioner alert button style */
+    .provider-alert-btn {
+      background: #faf5ff;
+      border: 1px solid #c4b5fd;
+      border-left: 4px solid #6d28d9;
+      color: #3b0764;
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: transform 0.14s ease, background-color 0.14s ease;
+    }
+
+    .provider-alert-btn.urgent {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      border-left-color: #b91c1c;
+      color: #7f1d1d;
+    }
+
+    .provider-alert-btn:active {
+      transform: scale(0.985);
+    }
+
+    .provider-alert-main {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .provider-alert-icon {
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+
+    .provider-alert-text {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .provider-alert-summary {
+      font-weight: 800;
+      font-size: 0.88rem;
+      line-height: 1.25;
+    }
+
+    .provider-alert-meta {
+      font-size: 0.76rem;
+      opacity: 0.88;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .alert-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .alert-title {
+      font-weight: 800;
+      font-size: 0.94rem;
+      margin-bottom: 2px;
+    }
+
+    .alert-desc {
+      font-size: 0.82rem;
+      opacity: 0.95;
+    }
+
+    .alert-link-pill {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 9px;
+      border-radius: 10px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      color: inherit;
+      white-space: nowrap;
+    }
+
+    @keyframes targetPulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(30, 58, 47, 0.45);
+        border-color: var(--primary);
+        background-color: var(--primary-light);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(30, 58, 47, 0);
+        border-color: var(--primary);
+      }
+      100% {
+        box-shadow: var(--shadow);
+      }
+    }
+
+    .highlight-target {
+      animation: targetPulse 1.8s ease-out;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 15px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .card-title {
+      font-weight: 800;
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .weather-hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(135deg, var(--primary) 0%, #2c5242 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+
+    .temp-big {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.05;
+    }
+
+    .weather-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .metric-box {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 10px;
+      text-align: center;
+    }
+
+    .metric-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .metric-val {
+      font-weight: 800;
+      font-size: 0.95rem;
+      margin-top: 2px;
+    }
+
+    .hourly-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 2px;
+      border-radius: 12px;
+    }
+
+    .hour-pill {
+      min-width: 78px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px;
+      text-align: center;
+      flex-shrink: 0;
+      font-size: 0.78rem;
+    }
+
+    .hour-pill.night-cold {
+      border-color: #60a5fa;
+      background: #eff6ff;
+    }
+
+    .hour-pill.day-cold {
+      border-color: #38bdf8;
+      background: #f0f9ff;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 11px;
+      padding: 9px 13px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--ink);
+    }
+
+    .btn-sm {
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      border-radius: 9px;
+    }
+
+    /* 4 sub-tabs inside Santé */
+    .health-subnav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr); /* mêmes styles d’origine, une colonne par onglet */
+      gap: 6px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 5px;
+      margin-bottom: 14px;
+    }
+
+    .health-subbtn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.76rem;
+      padding: 9px 4px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .health-subbtn span:last-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .health-subbtn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(30, 58, 47, 0.2);
+    }
+
+    .horse-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .horse-chip {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      font-weight: 700;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+
+    .horse-chip.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .item-card {
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      border-radius: 14px;
+      padding: 13px;
+      margin-bottom: 10px;
+    }
+
+    .item-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .item-name {
+      font-weight: 800;
+      font-size: 0.98rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.73rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge-ok { background: var(--ok-light); color: var(--ok); }
+    .badge-warn { background: var(--accent-light); color: var(--accent); }
+    .badge-danger { background: var(--danger-light); color: var(--danger); }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .stat-mini {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .stat-mini .k {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .stat-mini .v {
+      font-weight: 800;
+      font-size: 0.92rem;
+      margin-top: 2px;
+    }
+
+    .bag-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      margin-bottom: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .purchase-log {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .purchase-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 5px;
+    }
+
+    .p-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px 8px;
+      color: var(--ink);
+      font-size: 0.75rem;
+    }
+
+    .sub-section {
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      border-radius: 14px;
+      padding: 13px;
+      margin-bottom: 12px;
+    }
+
+    .sub-section-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .sub-section-title {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--primary);
+    }
+
+    .visit-entry {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 11px;
+      margin-top: 8px;
+      font-size: 0.83rem;
+    }
+
+    .visit-entry-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 3px;
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    input, select, textarea {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.86rem;
+      font-family: inherit;
+    }
+
+    input[type="date"] {
+      padding: 7px 9px;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 25;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+      gap: 6px;
+    }
+
+    .nav-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 7px 6px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .nav-btn span:last-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .nav-btn.active {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .nav-icon {
+      font-size: 1.15rem;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border-radius: var(--radius);
+      max-width: 520px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 16px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+    }
+
+
+    /* Informations chevaux : fiches, contacts et suivi du poids */
+    .info-subnav { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; background:var(--surface-soft); border:1px solid var(--border); border-radius:14px; padding:5px; margin-bottom:14px; }
+    .info-subbtn { border:0; background:transparent; color:var(--muted); font-weight:700; font-size:.78rem; padding:10px 5px; border-radius:10px; cursor:pointer; }
+    .info-subbtn.active { background:var(--primary); color:#fff; }
+    .info-panel.hidden { display:none!important; }
+    .info-field { display:flex; flex-direction:column; gap:4px; flex:1; min-width:130px; font-size:.78rem; color:var(--muted); }
+    .info-field input,.info-field select,.info-field textarea { width:100%; min-width:0; }
+    .horse-profile { display:flex; gap:14px; align-items:center; margin-bottom:12px; }
+    .horse-photo { width:94px; height:94px; border-radius:14px; object-fit:cover; background:var(--surface-soft); border:1px solid var(--border); }
+    .profile-placeholder { display:grid; place-items:center; font-size:2rem; color:var(--muted); }
+    .weight-chart { width:100%; height:auto; display:block; background:var(--surface-soft); border:1px solid var(--border); border-radius:12px; }
+    .weight-history { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+    .weight-row { display:flex; justify-content:space-between; gap:8px; align-items:center; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:8px 10px; font-size:.82rem; }
+    .contact-card { background:var(--surface-soft); border:1px solid var(--border); border-radius:12px; padding:12px; margin:9px 0; }
+    .sire-note { background:var(--info-light); color:#1e3a8a; padding:10px 12px; border-radius:10px; font-size:.8rem; margin-top:8px; }
+    @media(max-width:380px) { .info-subbtn {font-size:.7rem;padding:9px 2px;} .horse-photo{width:76px;height:76px;} }
+
+    .cloud-status { font-size:.72rem; color:var(--muted); white-space:nowrap; }
+    .cloud-status.online { color:var(--ok); }
+    .cloud-status.error { color:var(--danger); }
+    .auth-help { font-size:.82rem; color:var(--muted); margin:0 0 12px; }
+    .auth-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+    .auth-actions .btn { flex:1; min-width:120px; }
+    .cloud-banner { padding:9px 11px; border-radius:10px; background:var(--primary-light); color:var(--primary); font-size:.8rem; margin:10px 0; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-logo">🐴</div>
+      <div>
+        <div class="brand-title">ÉquiCare</div>
+        <div class="brand-sub" id="header-sub">Labarthe-sur-Lèze (31860)</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="btn-refresh-weather" title="Actualiser la météo">↻</button>
+      <button class="icon-btn" id="btn-export-json" title="Exporter mes données">⬇</button>
+      <button class="icon-btn" id="btn-cloud-account" title="Compte et synchronisation">☁</button>
+      <button class="icon-btn" id="btn-info" title="Aide & installation">i</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Strict alert widget: hidden/empty when no alert applies to the current tab -->
+    <div id="smart-alert-widget" class="smart-widget" aria-live="polite"></div>
+
+    <!-- TAB 1: ALERTES & MÉTÉO -->
+    <section id="tab-home" class="tab-panel">
+      <div class="card" id="weather-card">
+        <div class="card-header">
+          <h2 class="card-title">Météo & Conditions</h2>
+          <span class="muted" id="weather-updated">Chargement...</span>
+        </div>
+
+        <div class="weather-hero">
+          <div>
+            <div class="temp-big" id="w-temp">--°C</div>
+            <div id="w-desc" style="font-size:0.9rem;opacity:0.92;">Récupération des prévisions...</div>
+          </div>
+          <div style="text-align:right;font-size:0.82rem;opacity:0.92;">
+            <div>Journée 10h–21h min : <strong id="w-day-min">--°C</strong></div>
+            <div>Nuit/matin 21h–10h min : <strong id="w-night-min">--°C</strong></div>
+            <div>UV max : <strong id="w-uv-max">--</strong></div>
+          </div>
+        </div>
+
+        <div class="weather-metrics">
+          <div class="metric-box">
+            <div class="metric-label">Journée (10h–21h, &lt; <span id="lbl-day-th">5</span>°C)</div>
+            <div class="metric-val" id="m-day-blanket">--</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Nuit/matin (21h–10h, &lt; <span id="lbl-cold-th">5</span>°C)</div>
+            <div class="metric-val" id="m-blanket">--</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Masque UV (seuil ≥ <span id="lbl-uv-th">6</span>)</div>
+            <div class="metric-val" id="m-uv">--</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Aliments à racheter</div>
+            <div class="metric-val" id="m-food">--</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Soins & RDV à prévoir</div>
+            <div class="metric-val" id="m-care">--</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Pharmacie (≤ <span id="lbl-pharma-days">30</span> j)</div>
+            <div class="metric-val" id="m-pharma">--</div>
+          </div>
+        </div>
+
+        <div class="muted" style="margin-bottom:6px;">Prochaines heures (10h–21h journée & 21h–10h nuit/matin) :</div>
+        <div class="hourly-strip" id="hourly-strip"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Réglages des seuils d'alerte</h2>
+        </div>
+        <div class="form-row">
+          <label class="muted">Seuil journée 10h–21h :
+            <input type="number" id="cfg-day-th" step="0.5" style="width:74px;" /> °C
+          </label>
+          <label class="muted">Seuil nuit/matin 21h–10h :
+            <input type="number" id="cfg-cold-th" step="0.5" style="width:74px;" /> °C
+          </label>
+          <label class="muted">Seuil UV masque :
+            <input type="number" id="cfg-uv-th" min="1" max="12" step="1" style="width:68px;" />
+          </label>
+          <label class="muted">Alerte stock ≤
+            <input type="number" id="cfg-stock-days" min="1" max="60" step="1" style="width:68px;" /> j
+          </label>
+          <label class="muted">Vermifuge ≤
+            <input type="number" id="cfg-deworm-days" min="1" max="60" step="1" style="width:68px;" /> j
+          </label>
+          <label class="muted">Vaccin ≤
+            <input type="number" id="cfg-vaccine-days" min="1" max="120" step="1" style="width:68px;" /> j
+          </label>
+          <label class="muted">Péremption pharma ≤
+            <input type="number" id="cfg-pharma-days" min="1" max="120" step="1" style="width:68px;" /> j
+          </label>
+          <label class="muted">RDV intervenant ≤
+            <input type="number" id="cfg-visit-days" min="1" max="90" step="1" style="width:68px;" /> j
+          </label>
+          <button class="btn btn-primary btn-sm" id="btn-save-cfg">Enregistrer</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: ALIMENTS -->
+    <section id="tab-foods" class="tab-panel hidden">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Sacs / bidons achetés, ouverts & jours de stock</h2>
+            <div class="muted">Aliments solides en kg (conso en kg/j) • Huile de lin en litres (conso affichée en mL/j, défaut 150 mL/j).</div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-toggle-add-food">+ Nouvel aliment</button>
+        </div>
+
+        <div id="add-food-form" class="item-card hidden">
+          <div class="item-name" style="margin-bottom:8px;">Ajouter une référence d'aliment</div>
+          <div class="form-row">
+            <input type="text" id="new-food-name" placeholder="Nom (ex. Foin de prairie ou Huile de lin)" style="flex:1;min-width:180px;" />
+            <select id="new-food-unit" style="width:110px;">
+              <option value="kg">kg (solide)</option>
+              <option value="L">Litres (L)</option>
+            </select>
+            <input type="number" id="new-food-bags" placeholder="Nb" min="1" step="1" style="width:74px;" />
+            <input type="number" id="new-food-bag-qty" placeholder="Qté / unité" step="0.5" style="width:108px;" />
+            <input type="date" id="new-food-date" />
+          </div>
+          <div class="form-row">
+            <input type="number" id="new-food-daily-rate" placeholder="Conso / j (kg ou mL)" step="1" style="width:185px;" />
+            <button class="btn btn-primary btn-sm" id="btn-create-food">Ajouter</button>
+            <button class="btn btn-outline btn-sm" id="btn-cancel-food">Annuler</button>
+          </div>
+        </div>
+
+        <div id="foods-list"></div>
+      </div>
+    </section>
+
+    <!-- TAB 3: SANTÉ (4 sub-sections: Intervenant, Vaccin, Vermifuge, Pharmacie) -->
+    <section id="tab-health" class="tab-panel hidden">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Santé & Suivi vétérinaire</h2>
+            <div class="muted">Intervenants réguliers, vaccins, vermifuges et pharmacie.</div>
+          </div>
+        </div>
+
+        <div class="health-subnav" role="tablist" aria-label="Sous-parties Santé">
+          <button class="health-subbtn active" data-sub="sub-providers">
+            <span>🧑‍⚕️</span>
+            <span>Intervenant</span>
+          </button>
+          <button class="health-subbtn" data-sub="sub-vaccines">
+            <span>🩺</span>
+            <span>Vaccin</span>
+          </button>
+          <button class="health-subbtn" data-sub="sub-deworm">
+            <span>💊</span>
+            <span>Vermifuge</span>
+          </button>
+          <button class="health-subbtn" data-sub="sub-pharmacy">
+            <span>🩹</span>
+            <span>Pharmacie</span>
+          </button>
+        </div>
+
+        <!-- SUB-SECTION 1: INTERVENANT -->
+        <div id="sub-providers" class="health-subpanel">
+          <div class="muted" style="margin-bottom:10px;">Vétérinaire, Maréchal, Ostéopathe, Dentiste : programmez les visites régulières et enregistrez chaque venue.</div>
+          <div class="horse-tabs" id="health-horse-tabs"></div>
+          <div id="health-practitioners-list"></div>
+        </div>
+
+        <!-- SUB-SECTION 2: VACCIN -->
+        <div id="sub-vaccines" class="health-subpanel hidden">
+          <div class="muted" style="margin-bottom:10px;">Suivi vaccinal par cheval (alerte 30 jours avant l'échéance).</div>
+          <div class="horse-tabs" id="vaccines-horse-tabs"></div>
+          <div id="vaccines-list"></div>
+        </div>
+
+        <!-- SUB-SECTION 3: VERMIFUGE -->
+        <div id="sub-deworm" class="health-subpanel hidden">
+          <div class="muted" style="margin-bottom:10px;">Suivi des vermifuges par cheval (alerte 7 jours avant l'échéance).</div>
+          <div class="horse-tabs" id="deworm-horse-tabs"></div>
+          <div id="deworm-list"></div>
+        </div>
+
+        <!-- SUB-SECTION 4: PHARMACIE -->
+        <div id="sub-pharmacy" class="health-subpanel hidden">
+          <div class="card-header" style="margin-top:4px;">
+            <div class="muted">Alerte automatique <span id="pharma-alert-days-label">30</span> jours avant la date de péremption.</div>
+            <button class="btn btn-primary btn-sm" id="btn-toggle-add-pharma">+ Nouveau produit</button>
+          </div>
+
+          <div id="add-pharma-form" class="item-card hidden">
+            <div class="item-name" style="margin-bottom:8px;">Ajouter un produit en pharmacie</div>
+            <div class="form-row">
+              <input type="text" id="new-pharma-name" placeholder="Produit (ex. Bétadine, Compresses, Pansement...)" style="flex:1;min-width:190px;" />
+              <input type="text" id="new-pharma-qty" placeholder="Quantité / format (ex. 1 flacon, 10)" style="width:155px;" />
+              <input type="date" id="new-pharma-expiry" />
+            </div>
+            <div class="form-row">
+              <input type="text" id="new-pharma-notes" placeholder="Notes / usage (optionnel)" style="flex:1;min-width:180px;" />
+              <button class="btn btn-primary btn-sm" id="btn-create-pharma">Ajouter</button>
+              <button class="btn btn-outline btn-sm" id="btn-cancel-pharma">Annuler</button>
+            </div>
+          </div>
+
+          <div id="pharmacy-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4 : INFORMATIONS -->
+    <section id="tab-info" class="tab-panel hidden">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Informations des chevaux</h2>
+            <div class="muted">Fiches individuelles, contacts et suivi du poids.</div>
+          </div>
+        </div>
+        <div class="info-subnav" role="tablist" aria-label="Sections Informations">
+          <button class="info-subbtn active" data-info-sub="info-horses">🐴 Chevaux</button>
+          <button class="info-subbtn" data-info-sub="info-contacts">📞 Intervenants</button>
+          <button class="info-subbtn" data-info-sub="info-weight">⚖️ Poids</button>
+        </div>
+        <div id="info-horses" class="info-panel">
+          <div class="horse-tabs" id="info-horse-tabs"></div>
+          <div id="horse-profile-content"></div>
+        </div>
+        <div id="info-contacts" class="info-panel hidden">
+          <div class="horse-tabs" id="contact-horse-tabs"></div>
+          <div class="muted">Enregistre les coordonnées de tes intervenants pour chaque cheval. Le bouton Rendez-vous prépare un message que tu peux relire avant de l'envoyer.</div>
+          <div id="contacts-content"></div>
+        </div>
+        <div id="info-weight" class="info-panel hidden">
+          <div class="horse-tabs" id="weight-horse-tabs"></div>
+          <div id="weight-content"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="tab-home">
+      <span class="nav-icon">🌤️</span>
+      <span>Alertes & Météo</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-foods">
+      <span class="nav-icon">🌾</span>
+      <span>Aliments</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-health">
+      <span class="nav-icon">🩺</span>
+      <span>Santé</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-info">
+      <span class="nav-icon">📋</span>
+      <span>Informations</span>
+    </button>
+  </nav>
+
+  <!-- Compte et synchronisation cloud -->
+  <div class="modal-backdrop" id="cloud-auth-modal">
+    <div class="modal-box">
+      <h3 style="margin-top:0;">Compte ÉquiCare</h3>
+      <p class="auth-help">Connecte-toi pour retrouver tes données sur tes différents appareils. Tes données locales restent également sauvegardées sur cet appareil.</p>
+      <div id="cloud-config-warning" class="cloud-banner hidden">La connexion Supabase n'est pas encore configurée. Ajoute l'URL et la clé publique de ton projet dans les paramètres du fichier HTML.</div>
+      <div id="cloud-auth-form">
+        <label class="info-field" style="margin-bottom:10px;">Adresse e-mail
+          <input type="email" id="cloud-email" autocomplete="email" placeholder="tonadresse@exemple.fr" />
+        </label>
+        <label class="info-field">Mot de passe
+          <input type="password" id="cloud-password" autocomplete="current-password" placeholder="8 caractères minimum" />
+        </label>
+        <div class="auth-actions">
+          <button class="btn btn-primary" id="btn-cloud-login">Se connecter</button>
+          <button class="btn btn-outline" id="btn-cloud-signup">Créer mon compte</button>
+        </div>
+      </div>
+      <div id="cloud-account-info" class="hidden">
+        <div class="cloud-banner" id="cloud-user-label"></div>
+        <div class="auth-actions">
+          <button class="btn btn-outline" id="btn-cloud-sync-now">Synchroniser maintenant</button>
+          <button class="btn btn-outline" id="btn-cloud-logout">Se déconnecter</button>
+        </div>
+      </div>
+      <p class="auth-help" id="cloud-auth-message" aria-live="polite"></p>
+      <div style="text-align:right;margin-top:10px;"><button class="btn btn-outline btn-sm" id="btn-cloud-close">Fermer</button></div>
+    </div>
+  </div>
+
+  <!-- Purchase Modal -->
+  <div class="modal-backdrop" id="buy-modal">
+    <div class="modal-box">
+      <h3 style="margin-top:0;" id="buy-modal-title">Nouvel achat</h3>
+      <p class="muted" id="buy-modal-sub"></p>
+      <div class="form-row">
+        <label class="muted">Date d'achat :
+          <input type="date" id="buy-date-input" />
+        </label>
+        <label class="muted"><span id="buy-count-label">Nombre de sacs</span> :
+          <input type="number" id="buy-bags-input" min="1" step="1" style="width:82px;" />
+        </label>
+        <label class="muted"><span id="buy-qty-label">Poids / sac (kg)</span> :
+          <input type="number" id="buy-qty-input" min="0.5" step="0.5" style="width:92px;" />
+        </label>
+      </div>
+      <div class="form-row" style="justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-outline btn-sm" id="btn-close-buy-modal">Annuler</button>
+        <button class="btn btn-primary btn-sm" id="btn-confirm-buy">Enregistrer l'achat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Open Bag/Container Modal -->
+  <div class="modal-backdrop" id="open-bag-modal">
+    <div class="modal-box">
+      <h3 style="margin-top:0;" id="open-bag-modal-title">Nouvelle ouverture</h3>
+      <p class="muted" id="open-bag-modal-sub"></p>
+      <div class="form-row">
+        <label class="muted">Date d'ouverture :
+          <input type="date" id="open-bag-date-input" />
+        </label>
+        <label class="muted"><span id="open-qty-label">Contenance (kg)</span> :
+          <input type="number" id="open-bag-qty-input" min="0.5" step="0.5" style="width:95px;" />
+        </label>
+      </div>
+      <div class="form-row" style="justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-outline btn-sm" id="btn-close-open-bag-modal">Annuler</button>
+        <button class="btn btn-primary btn-sm" id="btn-confirm-open-bag">Valider l'ouverture</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Practitioner Visit Modal -->
+  <div class="modal-backdrop" id="visit-modal">
+    <div class="modal-box">
+      <h3 style="margin-top:0;" id="visit-modal-title">Ajouter une venue</h3>
+      <p class="muted" id="visit-modal-sub"></p>
+      <div class="form-row">
+        <label class="muted">Date de venue :
+          <input type="date" id="visit-date-input" />
+        </label>
+        <label class="muted" style="flex:1;min-width:160px;">Nom / cabinet (optionnel) :
+          <input type="text" id="visit-provider-input" placeholder="Ex. Dr Dupont / Maréchal Martin" style="width:100%;" />
+        </label>
+      </div>
+      <div class="form-row">
+        <label class="muted" style="width:100%;">Détail de l'intervention :
+          <textarea id="visit-notes-input" rows="3" placeholder="Soins effectués, ferrure, bilan ostéo, remarques..." style="width:100%;margin-top:4px;"></textarea>
+        </label>
+      </div>
+      <div class="form-row" style="justify-content:flex-end;margin-top:14px;">
+        <button class="btn btn-outline btn-sm" id="btn-close-visit-modal">Annuler</button>
+        <button class="btn btn-primary btn-sm" id="btn-confirm-visit">Enregistrer la venue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Modal -->
+  <div class="modal-backdrop" id="info-modal">
+    <div class="modal-box">
+      <h3 style="margin-top:0;">À propos d'ÉquiCare</h3>
+      <p style="font-size:0.88rem;">
+        <strong>Widget d'alertes contextuel & cliquable :</strong> reste masqué/vide si aucune alerte correspondant à l'onglet en cours n'est active.
+      </p>
+      <ul style="font-size:0.85rem;padding-left:18px;">
+        <li><strong>Journée (10h–21h, seuil 5°C) :</strong> <em>couverture légère</em> entre 0°C et 5°C, <em>couverture moyenne</em> entre 0°C et -5°C, <em>grosse couverture</em> sous -5°C.</li>
+        <li><strong>Nuit/matin (21h–10h) :</strong> alerte couverture si température prévue &lt; seuil (5°C par défaut).</li>
+        <li><strong>Masque UV :</strong> indice UV maximal prévu ≥ seuil (6 par défaut).</li>
+        <li><strong>Rachat aliments :</strong> stock restant estimé ≤ seuil de jours ou ≤ 20%.</li>
+        <li><strong>Intervenants :</strong> un bouton d'alerte dédié par intervenant concerné (≤ 15 jours avant visite ou en retard) pour accéder directement à sa fiche.</li>
+      </ul>
+      <div style="text-align:right;margin-top:12px;">
+        <button class="btn btn-primary btn-sm" id="btn-close-info">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // CONFIGURATION SUPABASE : remplacer ces deux valeurs après création du projet.
+    // La clé anon/publishable est destinée au navigateur ; la sécurité repose sur les règles RLS SQL.
+    const SUPABASE_URL = "https://VOTRE-PROJET.supabase.co";
+    const SUPABASE_ANON_KEY = "VOTRE_CLE_PUBLIQUE_SUPABASE";
+    const SUPABASE_TABLE = "equicare_user_data";
+    const STORAGE_KEY = "equicare_state_v6";
+    const LAT = 43.4536;
+    const LON = 1.3661;
+
+    function todayISO(offsetDays = 0) {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function formatDateFR(iso) {
+      if (!iso) return "—";
+      const [y, m, d] = iso.split("-");
+      return `${d}/${m}/${y}`;
+    }
+
+    function daysBetween(isoA, isoB) {
+      const a = new Date(isoA + "T12:00:00");
+      const b = new Date(isoB + "T12:00:00");
+      return Math.max(1, Math.round((b - a) / 86400000));
+    }
+
+    function signedDaysFromToday(targetISO) {
+      const a = new Date(todayISO(0) + "T12:00:00");
+      const b = new Date(targetISO + "T12:00:00");
+      return Math.round((b - a) / 86400000);
+    }
+
+    function shortHorseLabel(fullName) {
+      if (!fullName) return "";
+      const clean = fullName.replace(/\s*\([^)]*\)/g, "").trim();
+      if (/trotteur/i.test(clean)) return "Trotteur";
+      if (/arabe/i.test(clean)) return "Arabe";
+      return clean;
+    }
+
+    function shortPractitionerLabel(pracObj) {
+      const raw = (pracObj.label || "").trim();
+      if (/maréchal/i.test(raw)) return "Maréchal";
+      if (/ostéo/i.test(raw)) return "Ostéopathe";
+      if (/dent/i.test(raw)) return "Dentiste";
+      if (/vétérin/i.test(raw)) return "Vétérinaire";
+      return raw || "Intervenant";
+    }
+
+    function isOilFood(food) {
+      return food.unit === "L" || /huile\s*de\s*lin/i.test(food.name || "");
+    }
+
+    const DEFAULT_STATE = {
+      config: {
+        dayThreshold: 5,
+        coldThreshold: 5,
+        uvThreshold: 6,
+        stockAlertDays: 5,
+        dewormAlertDays: 7,
+        vaccineAlertDays: 30,
+        pharmaAlertDays: 30,
+        visitAlertDays: 15
+      },
+      horses: [
+        { id: "trotteur", name: "Trotteur Français (20 ans)" },
+        { id: "arabe", name: "Pur-Sang Arabe (15 ans)" }
+      ],
+      horseProfiles: {},
+      practitionerContacts: {},
+      weightRecords: {},
+      foods: [
+        {
+          id: "exquis",
+          name: "Exquis Confort Digest",
+          unit: "kg",
+          bagKg: 20,
+          estimatedDailyKg: 1.5,
+          purchases: [
+            { date: todayISO(-36), bags: 2, kgPerBag: 20 },
+            { date: todayISO(-14), bags: 2, kgPerBag: 20 }
+          ],
+          openedBags: [
+            { date: todayISO(-14), kgPerBag: 20 },
+            { date: todayISO(-4), kgPerBag: 20 }
+          ]
+        },
+        {
+          id: "pulpe",
+          name: "Pulpe de betterave",
+          unit: "kg",
+          bagKg: 20,
+          estimatedDailyKg: 1.2,
+          purchases: [
+            { date: todayISO(-30), bags: 2, kgPerBag: 20 },
+            { date: todayISO(-10), bags: 2, kgPerBag: 20 }
+          ],
+          openedBags: [
+            { date: todayISO(-10), kgPerBag: 20 },
+            { date: todayISO(-2), kgPerBag: 20 }
+          ]
+        },
+        {
+          id: "huile-lin",
+          name: "Huile de lin pure",
+          unit: "L",
+          bagKg: 5,
+          estimatedDailyKg: 0.15,
+          purchases: [
+            { date: todayISO(-55), bags: 1, kgPerBag: 5 },
+            { date: todayISO(-20), bags: 1, kgPerBag: 5 }
+          ],
+          openedBags: [
+            { date: todayISO(-20), kgPerBag: 5 }
+          ]
+        },
+        {
+          id: "hartog",
+          name: "Hartog Luzerne",
+          unit: "kg",
+          bagKg: 20,
+          estimatedDailyKg: 1.8,
+          purchases: [
+            { date: todayISO(-24), bags: 3, kgPerBag: 20 },
+            { date: todayISO(-8), bags: 2, kgPerBag: 20 }
+          ],
+          openedBags: [
+            { date: todayISO(-8), kgPerBag: 20 },
+            { date: todayISO(-2), kgPerBag: 20 }
+          ]
+        },
+        {
+          id: "foin",
+          name: "Foin de prairie",
+          unit: "kg",
+          bagKg: 25,
+          estimatedDailyKg: 8.0,
+          purchases: [
+            { date: todayISO(-10), bags: 4, kgPerBag: 25 }
+          ],
+          openedBags: [
+            { date: todayISO(-10), kgPerBag: 25 },
+            { date: todayISO(-6), kgPerBag: 25 },
+            { date: todayISO(-2), kgPerBag: 25 }
+          ]
+        }
+      ],
+      dewormings: {
+        trotteur: [
+          { id: "dw-t1", label: "Vermifuge printemps (Ivermectine/Praziquantel)", lastDate: todayISO(-75), intervalDays: 90 },
+          { id: "dw-t2", label: "Vermifuge automne/hiver (Moxidectine)", lastDate: todayISO(-20), intervalDays: 120 }
+        ],
+        arabe: [
+          { id: "dw-a1", label: "Vermifuge printemps (Ivermectine/Praziquantel)", lastDate: todayISO(-75), intervalDays: 90 },
+          { id: "dw-a2", label: "Vermifuge automne/hiver (Moxidectine)", lastDate: todayISO(-20), intervalDays: 120 }
+        ]
+      },
+      vaccines: {
+        trotteur: [
+          { id: "vc-t1", label: "Grippe équine & Tétanos", lastDate: todayISO(-210), intervalDays: 365 },
+          { id: "vc-t2", label: "Rhinopneumonie (EHV-1 / EHV-4)", lastDate: todayISO(-140), intervalDays: 180 }
+        ],
+        arabe: [
+          { id: "vc-a1", label: "Grippe équine & Tétanos", lastDate: todayISO(-190), intervalDays: 365 },
+          { id: "vc-a2", label: "Rhinopneumonie (EHV-1 / EHV-4)", lastDate: todayISO(-140), intervalDays: 180 }
+        ]
+      },
+      pharmacy: [
+        {
+          id: "ph-1",
+          name: "Solution antiseptique (Bétadine)",
+          qty: "1 flacon 500 mL",
+          expiryDate: todayISO(22),
+          notes: "Soins plaies & membres"
+        },
+        {
+          id: "ph-2",
+          name: "Pommade cicatrisante",
+          qty: "1 tube",
+          expiryDate: todayISO(95),
+          notes: "Petites écorchures"
+        }
+      ],
+      healthVisits: {
+        trotteur: {
+          marechal: {
+            label: "Maréchal-ferrant",
+            icon: "🔨",
+            intervalWeeks: 10,
+            visits: [
+              { id: "hv-tm-1", date: todayISO(-58), provider: "Atelier maréchalerie", details: "Ferrure 4 pieds + parage régulier." }
+            ]
+          },
+          veterinaire: {
+            label: "Vétérinaire",
+            icon: "🩺",
+            intervalWeeks: 26,
+            visits: [
+              { id: "hv-tv-1", date: todayISO(-168), provider: "Clinique équine", details: "Bilan général annuel & auscultation." }
+            ]
+          },
+          osteopathe: {
+            label: "Ostéopathe",
+            icon: "🦴",
+            intervalWeeks: 24,
+            visits: [
+              { id: "hv-to-1", date: todayISO(-155), provider: "Ostéo équin", details: "Séance globale dos, bassin et cervicales." }
+            ]
+          },
+          dentiste: {
+            label: "Dentiste équin",
+            icon: "🦷",
+            intervalWeeks: 52,
+            visits: [
+              { id: "hv-td-1", date: todayISO(-280), provider: "Dentisterie équine", details: "Râpage des surdents et contrôle bouche." }
+            ]
+          }
+        },
+        arabe: {
+          marechal: {
+            label: "Maréchal-ferrant",
+            icon: "🔨",
+            intervalWeeks: 10,
+            visits: [
+              { id: "hv-am-1", date: todayISO(-58), provider: "Atelier maréchalerie", details: "Parage / ferrure et contrôle aplombs." }
+            ]
+          },
+          veterinaire: {
+            label: "Vétérinaire",
+            icon: "🩺",
+            intervalWeeks: 26,
+            visits: [
+              { id: "hv-av-1", date: todayISO(-168), provider: "Clinique équine", details: "Visite de contrôle général." }
+            ]
+          },
+          osteopathe: {
+            label: "Ostéopathe",
+            icon: "🦴",
+            intervalWeeks: 24,
+            visits: [
+              { id: "hv-ao-1", date: todayISO(-155), provider: "Ostéo équin", details: "Relâchement tensions épaules et garrot." }
+            ]
+          },
+          dentiste: {
+            label: "Dentiste équin",
+            icon: "🦷",
+            intervalWeeks: 52,
+            visits: [
+              { id: "hv-ad-1", date: todayISO(-280), provider: "Dentisterie équine", details: "Contrôle dentaire annuel." }
+            ]
+          }
+        }
+      }
+    };
+
+    const PRACTITIONER_ORDER = ["veterinaire", "marechal", "osteopathe", "dentiste"];
+
+    function normalizeHealthVisits(rawHealth, horses) {
+      const defaults = DEFAULT_STATE.healthVisits;
+      const result = {};
+      for (const h of horses) {
+        const horseDefault = defaults[h.id] || defaults.trotteur;
+        const horseRaw = (rawHealth && rawHealth[h.id]) || {};
+        result[h.id] = {};
+        const keys = Array.from(new Set([...PRACTITIONER_ORDER, ...Object.keys(horseDefault), ...Object.keys(horseRaw)]));
+        for (const key of keys) {
+          const base = horseDefault[key] || {
+            label: key.charAt(0).toUpperCase() + key.slice(1),
+            icon: "🧑‍⚕️",
+            intervalWeeks: 12,
+            visits: []
+          };
+          const custom = horseRaw[key] || {};
+          const visits = Array.isArray(custom.visits)
+            ? [...custom.visits].sort((a, b) => b.date.localeCompare(a.date))
+            : [...base.visits].sort((a, b) => b.date.localeCompare(a.date));
+          result[h.id][key] = {
+            label: custom.label || base.label,
+            icon: custom.icon || base.icon,
+            intervalWeeks: Math.max(1, parseInt(custom.intervalWeeks ?? base.intervalWeeks ?? 10, 10)),
+            visits
+          };
+        }
+      }
+      return result;
+    }
+
+    function sanitizeFoods(foods) {
+      const forbidden = /mila\s*moka|mille-à-mouka|métabolik|metabolik|fibra\s*light/i;
+      return (foods || [])
+        .filter(f => f && !forbidden.test(f.name || ""))
+        .map(f => {
+          const oil = /huile\s*de\s*lin/i.test(f.name || "") || f.unit === "L";
+          const unit = oil ? "L" : "kg";
+          const defaultQty = oil ? Number(f.bagKg || 5) : Number(f.bagKg || 20);
+          const defaultDailyL = oil
+            ? (Number(f.estimatedDailyKg) > 0 && Number(f.estimatedDailyKg) <= 5 ? Number(f.estimatedDailyKg) : 0.15)
+            : Number(f.estimatedDailyKg || 1);
+
+          const purchases = Array.isArray(f.purchases) && f.purchases.length
+            ? [...f.purchases]
+                .map(p => ({
+                  date: p.date,
+                  bags: Math.max(1, parseInt(p.bags || 1, 10)),
+                  kgPerBag: Number(p.kgPerBag || p.kg || defaultQty)
+                }))
+                .sort((a, b) => a.date.localeCompare(b.date))
+            : [{ date: todayISO(-10), bags: 1, kgPerBag: defaultQty }];
+
+          const openedBags = Array.isArray(f.openedBags)
+            ? [...f.openedBags]
+                .map(o => ({
+                  date: o.date,
+                  kgPerBag: Number(o.kgPerBag || defaultQty)
+                }))
+                .sort((a, b) => a.date.localeCompare(b.date))
+            : [{ date: purchases[purchases.length - 1].date, kgPerBag: defaultQty }];
+
+          return {
+            ...f,
+            unit,
+            bagKg: defaultQty,
+            estimatedDailyKg: defaultDailyL,
+            purchases,
+            openedBags
+          };
+        });
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(DEFAULT_STATE);
+        const parsed = JSON.parse(raw);
+        const horses = Array.isArray(parsed.horses) && parsed.horses.length ? parsed.horses : structuredClone(DEFAULT_STATE.horses);
+        return {
+          ...structuredClone(DEFAULT_STATE),
+          ...parsed,
+          horses,
+          horseProfiles: parsed.horseProfiles || {},
+          practitionerContacts: parsed.practitionerContacts || {},
+          weightRecords: parsed.weightRecords || {},
+          config: { ...DEFAULT_STATE.config, ...(parsed.config || {}) },
+          foods: sanitizeFoods(parsed.foods || DEFAULT_STATE.foods),
+          pharmacy: Array.isArray(parsed.pharmacy) ? parsed.pharmacy : structuredClone(DEFAULT_STATE.pharmacy),
+          healthVisits: normalizeHealthVisits(parsed.healthVisits, horses)
+        };
+      } catch {
+        return structuredClone(DEFAULT_STATE);
+      }
+    }
+
+    let state = loadState();
+    let weatherData = null;
+    let activeTab = "tab-home";
+    let activeHealthSubTab = "sub-providers";
+    let activeDewormHorse = state.horses[0].id;
+    let activeVaccineHorse = state.horses[0].id;
+    let activeHealthHorse = state.horses[0].id;
+    let buyingFoodId = null;
+    let openingFoodId = null;
+    let visitModalCtx = null;
+
+    let supabaseClient = null;
+    let cloudUser = null;
+    let cloudSaveTimer = null;
+    let cloudSaveInProgress = false;
+    let cloudSaveQueued = false;
+    let cloudHydrationDoneFor = null;
+
+    function isSupabaseConfigured() {
+      return SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("VOTRE-PROJET") &&
+        SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes("VOTRE_CLE");
+    }
+
+    function setCloudStatus(message, kind = "") {
+      const button = document.getElementById("btn-cloud-account");
+      if (!button) return;
+      button.title = message;
+      button.dataset.status = kind;
+      button.style.color = kind === "error" ? "var(--danger)" : (kind === "online" ? "var(--ok)" : "");
+    }
+
+    function saveState() {
+      // Sauvegarde locale immédiate : l'application reste utilisable hors connexion.
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+      catch (e) { console.warn("Sauvegarde locale impossible", e); }
+      // Synchronisation cloud différée pour regrouper les modifications rapprochées.
+      if (supabaseClient && cloudUser) {
+        clearTimeout(cloudSaveTimer);
+        cloudSaveTimer = setTimeout(syncStateToCloud, 900);
+        setCloudStatus("Modifications en attente de synchronisation", "");
+      }
+    }
+
+    async function syncStateToCloud() {
+      if (!supabaseClient || !cloudUser) return false;
+      if (cloudSaveInProgress) { cloudSaveQueued = true; return false; }
+      cloudSaveInProgress = true;
+      let succeeded = false;
+      try {
+        const snapshot = JSON.parse(JSON.stringify(state));
+        const { error } = await supabaseClient.from(SUPABASE_TABLE).upsert({
+          user_id: cloudUser.id,
+          state: snapshot,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "user_id" });
+        if (error) throw error;
+        succeeded = true;
+        setCloudStatus("Données synchronisées", "online");
+      } catch (error) {
+        console.error("Erreur de synchronisation ÉquiCare", error);
+        setCloudStatus("Erreur de synchronisation : " + (error.message || "connexion"), "error");
+        const msg = document.getElementById("cloud-auth-message");
+        if (msg) msg.textContent = "Synchronisation impossible : " + (error.message || "vérifie ta connexion et la configuration Supabase.");
+      } finally {
+        cloudSaveInProgress = false;
+        if (cloudSaveQueued) { cloudSaveQueued = false; await syncStateToCloud(); }
+      }
+      return succeeded;
+    }
+
+    function rerenderAfterCloudLoad() {
+      ensureHorseInfo();
+      syncConfigInputs();
+      renderFoods();
+      renderAllCare();
+      renderPharmacy();
+      renderAlertsAndWeather();
+      if (activeTab === "tab-info") renderInformation();
+    }
+
+    async function loadCloudStateForUser(user) {
+      if (!user || cloudHydrationDoneFor === user.id) return;
+      cloudHydrationDoneFor = user.id;
+      setCloudStatus("Chargement des données cloud…", "");
+      const { data, error } = await supabaseClient.from(SUPABASE_TABLE)
+        .select("state, updated_at").eq("user_id", user.id).maybeSingle();
+      if (error) {
+        cloudHydrationDoneFor = null;
+        setCloudStatus("Erreur de lecture cloud", "error");
+        throw error;
+      }
+
+      const localRaw = localStorage.getItem(STORAGE_KEY);
+      if (!data) {
+        // Première connexion : le contenu local est envoyé vers le compte.
+        const saved = await syncStateToCloud();
+        if (!saved) throw new Error("La première sauvegarde cloud a échoué. Consulte le message affiché dans le compte ÉquiCare.");
+        setCloudStatus("Première sauvegarde cloud effectuée", "online");
+        return;
+      }
+
+      if (!localRaw) {
+        state = normalizeImportedState(data.state);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        rerenderAfterCloudLoad();
+        setCloudStatus("Données chargées depuis le cloud", "online");
+        return;
+      }
+
+      const choice = prompt(
+        "Une sauvegarde ÉquiCare existe déjà en ligne.\n\n" +
+        "Tape 1 pour charger la sauvegarde en ligne sur cet appareil.\n" +
+        "Tape 2 pour envoyer les données de cet appareil vers le cloud (elles remplaceront la sauvegarde en ligne).\n" +
+        "Annule pour ne rien modifier pour le moment."
+      );
+      if (choice === "1") {
+        state = normalizeImportedState(data.state);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        rerenderAfterCloudLoad();
+        setCloudStatus("Données cloud chargées", "online");
+      } else if (choice === "2") {
+        await syncStateToCloud();
+      } else {
+        setCloudStatus("Connecté — synchronisation en attente", "");
+      }
+    }
+
+    function normalizeImportedState(parsed) {
+      const incoming = parsed && typeof parsed === "object" ? parsed : structuredClone(DEFAULT_STATE);
+      const horses = Array.isArray(incoming.horses) && incoming.horses.length ? incoming.horses : structuredClone(DEFAULT_STATE.horses);
+      return {
+        ...structuredClone(DEFAULT_STATE), ...incoming, horses,
+        horseProfiles: incoming.horseProfiles || {},
+        practitionerContacts: incoming.practitionerContacts || {},
+        weightRecords: incoming.weightRecords || {},
+        config: { ...DEFAULT_STATE.config, ...(incoming.config || {}) },
+        foods: sanitizeFoods(incoming.foods || DEFAULT_STATE.foods),
+        pharmacy: Array.isArray(incoming.pharmacy) ? incoming.pharmacy : structuredClone(DEFAULT_STATE.pharmacy),
+        healthVisits: normalizeHealthVisits(incoming.healthVisits, horses)
+      };
+    }
+
+    function openCloudAccountModal() {
+      document.getElementById("cloud-auth-modal").classList.add("open");
+      const configured = isSupabaseConfigured() && !!window.supabase;
+      document.getElementById("cloud-config-warning").classList.toggle("hidden", configured);
+      document.getElementById("cloud-auth-form").classList.toggle("hidden", !!cloudUser);
+      document.getElementById("cloud-account-info").classList.toggle("hidden", !cloudUser);
+      document.getElementById("cloud-user-label").textContent = cloudUser ? "Connecté : " + cloudUser.email : "";
+      if (!configured) document.getElementById("cloud-auth-message").textContent = "La synchronisation sera disponible après configuration de Supabase.";
+    }
+
+    async function cloudAuthAction(action) {
+      const msg = document.getElementById("cloud-auth-message");
+      if (!isSupabaseConfigured() || !supabaseClient) { msg.textContent = "Supabase n'est pas encore configuré dans ce fichier."; return; }
+      const email = document.getElementById("cloud-email").value.trim();
+      const password = document.getElementById("cloud-password").value;
+      if (!email || !password) { msg.textContent = "Saisis ton adresse e-mail et ton mot de passe."; return; }
+      msg.textContent = "Connexion en cours…";
+      try {
+        const result = action === "signup"
+          ? await supabaseClient.auth.signUp({ email, password })
+          : await supabaseClient.auth.signInWithPassword({ email, password });
+        if (result.error) throw result.error;
+        if (action === "signup" && !result.data.session) {
+          msg.textContent = "Compte créé. Vérifie ta boîte e-mail pour confirmer l'inscription, puis connecte-toi.";
+        } else {
+          cloudUser = result.data.user;
+          msg.textContent = "Compte connecté. Préparation de la synchronisation…";
+          await loadCloudStateForUser(cloudUser);
+          openCloudAccountModal();
+          msg.textContent = "Compte connecté. " + (cloudUser.email || "");
+        }
+      } catch (error) { msg.textContent = error.message || "Erreur de connexion."; }
+    }
+
+    async function initCloudSync() {
+      if (!isSupabaseConfigured() || !window.supabase?.createClient) {
+        setCloudStatus("Stockage local uniquement — Supabase à configurer", "");
+        return;
+      }
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) { setCloudStatus("Impossible de vérifier la session", "error"); return; }
+      if (data.session?.user) {
+        cloudUser = data.session.user;
+        try { await loadCloudStateForUser(cloudUser); } catch (e) { console.error(e); }
+      }
+      supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        if (event === "SIGNED_OUT") {
+          cloudUser = null; cloudHydrationDoneFor = null;
+          setCloudStatus("Déconnecté — données locales conservées", "");
+        } else if (session?.user && event === "SIGNED_IN") {
+          cloudUser = session.user;
+          try { await loadCloudStateForUser(cloudUser); } catch (e) { console.error(e); }
+        }
+      });
+      if (cloudUser) setCloudStatus("Compte connecté", "online");
+      else setCloudStatus("Non connecté — stockage local", "");
+    }
+
+    function scrollToAndHighlight(elementId) {
+      if (!elementId) return;
+      requestAnimationFrame(() => {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.remove("highlight-target");
+        void el.offsetWidth;
+        el.classList.add("highlight-target");
+        setTimeout(() => el.classList.remove("highlight-target"), 1900);
+      });
+    }
+
+    function computeFoodMetrics(food) {
+      const oil = isOilFood(food);
+      const unitLabel = oil ? "L" : "kg";
+      const containerWord = oil ? "bidon" : "sac";
+      const containersWord = oil ? "bidons" : "sacs";
+
+      const purchases = [...(food.purchases || [])].sort((a, b) => a.date.localeCompare(b.date));
+      const openedBags = [...(food.openedBags || [])].sort((a, b) => a.date.localeCompare(b.date));
+      const defaultQty = Number(food.bagKg || (oil ? 5 : 20));
+
+      const totalPurchasedBags = purchases.reduce((acc, p) => acc + Number(p.bags || 1), 0);
+      const totalPurchasedQty = purchases.reduce((acc, p) => acc + Number(p.bags || 1) * Number(p.kgPerBag || defaultQty), 0);
+      const openedCount = openedBags.length;
+      const closedBagsRemaining = Math.max(0, totalPurchasedBags - openedCount);
+
+      const lastPurchase = purchases[purchases.length - 1];
+      const lastPurchaseDate = lastPurchase ? lastPurchase.date : todayISO(-10);
+      const lastOpen = openedBags[openedBags.length - 1];
+      const lastOpenDate = lastOpen ? lastOpen.date : lastPurchaseDate;
+      const openBagQty = lastOpen ? Number(lastOpen.kgPerBag || defaultQty) : defaultQty;
+
+      let avgRateInBaseUnit = Number(food.estimatedDailyKg || (oil ? 0.15 : 1));
+      let avgDaysPerContainer = null;
+      let intervalsCount = 0;
+
+      if (openedBags.length >= 2) {
+        let totalDays = 0;
+        let totalQty = 0;
+        for (let i = 0; i < openedBags.length - 1; i++) {
+          totalDays += daysBetween(openedBags[i].date, openedBags[i + 1].date);
+          totalQty += Number(openedBags[i].kgPerBag || defaultQty);
+          intervalsCount++;
+        }
+        if (totalDays > 0 && totalQty > 0) {
+          avgRateInBaseUnit = totalQty / totalDays;
+          avgDaysPerContainer = totalDays / intervalsCount;
+        }
+      } else if (purchases.length >= 2) {
+        let totalDays = 0;
+        let totalQty = 0;
+        for (let i = 0; i < purchases.length - 1; i++) {
+          totalDays += daysBetween(purchases[i].date, purchases[i + 1].date);
+          totalQty += Number(purchases[i].bags || 1) * Number(purchases[i].kgPerBag || defaultQty);
+          intervalsCount++;
+        }
+        if (totalDays > 0 && totalQty > 0) {
+          avgRateInBaseUnit = totalQty / totalDays;
+          avgDaysPerContainer = avgRateInBaseUnit > 0 ? defaultQty / avgRateInBaseUnit : null;
+        }
+      }
+
+      if (!avgDaysPerContainer && avgRateInBaseUnit > 0) {
+        avgDaysPerContainer = defaultQty / avgRateInBaseUnit;
+      }
+
+      const daysSinceOpen = Math.max(0, daysBetween(lastOpenDate, todayISO(0)) - 1);
+      const usedInCurrentQty = openedCount > 0
+        ? Math.min(openBagQty, daysSinceOpen * avgRateInBaseUnit)
+        : 0;
+      const currentOpenRemainingQty = openedCount > 0
+        ? Math.max(0, openBagQty - usedInCurrentQty)
+        : 0;
+
+      const closedStockQty = closedBagsRemaining * defaultQty;
+      const totalRemainingQty = currentOpenRemainingQty + closedStockQty;
+      const remainingPct = totalPurchasedQty > 0
+        ? Math.min(100, Math.round((totalRemainingQty / totalPurchasedQty) * 100))
+        : 0;
+      const estimatedDaysLeft = avgRateInBaseUnit > 0
+        ? Math.max(0, Math.round(totalRemainingQty / avgRateInBaseUnit))
+        : 0;
+
+      const avgDisplay = oil
+        ? `${Math.round(avgRateInBaseUnit * 1000)} mL / j`
+        : `${avgRateInBaseUnit.toFixed(2)} kg / j`;
+
+      const avgInputDisplay = oil
+        ? Math.round(avgRateInBaseUnit * 1000)
+        : Number(avgRateInBaseUnit.toFixed(2));
+
+      const needsReorder =
+        estimatedDaysLeft <= Number(state.config.stockAlertDays || 5) || remainingPct <= 20;
+
+      return {
+        oil,
+        unitLabel,
+        containerWord,
+        containersWord,
+        purchases,
+        openedBags,
+        totalPurchasedBags,
+        totalPurchasedQty,
+        openedCount,
+        closedBagsRemaining,
+        lastPurchaseDate,
+        lastOpenDate,
+        currentOpenRemainingQty,
+        avgRateInBaseUnit,
+        avgDisplay,
+        avgInputDisplay,
+        avgDaysPerContainer,
+        intervalsCount,
+        totalRemainingQty,
+        remainingPct,
+        estimatedDaysLeft,
+        needsReorder
+      };
+    }
+
+    function checkDaytimeBlanket(hourly) {
+      if (!hourly || !hourly.time || !hourly.temperature_2m) {
+        return { triggered: false, blanketLabel: null, minTemp: null, slots: [] };
+      }
+      const dayTh = Number(state.config.dayThreshold ?? 5);
+      const now = new Date();
+      const windowEnd = new Date(now.getTime() + 36 * 3600 * 1000);
+
+      let minTemp = null;
+      const slots = [];
+
+      for (let i = 0; i < hourly.time.length; i++) {
+        const dt = new Date(hourly.time[i]);
+        if (dt < now || dt > windowEnd) continue;
+        const h = dt.getHours();
+        const isDayWindow = h >= 10 && h < 21;
+        if (!isDayWindow) continue;
+
+        const t = Number(hourly.temperature_2m[i]);
+        if (minTemp === null || t < minTemp) minTemp = t;
+
+        if (t < dayTh) {
+          slots.push(`${String(h).padStart(2, "0")}h (${t.toFixed(1)}°C)`);
+        }
+      }
+
+      if (minTemp === null || minTemp >= dayTh) {
+        return { triggered: false, blanketLabel: null, minTemp, slots };
+      }
+
+      let blanketLabel = "Couverture légère";
+      if (minTemp < -5) {
+        blanketLabel = "Grosse couverture";
+      } else if (minTemp < 0) {
+        blanketLabel = "Couverture moyenne";
+      } else {
+        blanketLabel = "Couverture légère";
+      }
+
+      return {
+        triggered: true,
+        blanketLabel,
+        minTemp,
+        slots
+      };
+    }
+
+    function checkNightMorningCold(hourly) {
+      if (!hourly || !hourly.time || !hourly.temperature_2m) {
+        return { triggered: false, minTemp: null, slots: [] };
+      }
+      const coldTh = Number(state.config.coldThreshold ?? 5);
+      const now = new Date();
+      const windowEnd = new Date(now.getTime() + 36 * 3600 * 1000);
+
+      let minTemp = null;
+      const slots = [];
+
+      for (let i = 0; i < hourly.time.length; i++) {
+        const dt = new Date(hourly.time[i]);
+        if (dt < now || dt > windowEnd) continue;
+        const h = dt.getHours();
+        const isTargetWindow = h >= 21 || h < 10;
+        if (!isTargetWindow) continue;
+
+        const t = Number(hourly.temperature_2m[i]);
+        if (minTemp === null || t < minTemp) minTemp = t;
+
+        if (t < coldTh) {
+          slots.push(`${String(h).padStart(2, "0")}h (${t.toFixed(1)}°C)`);
+        }
+      }
+
+      return {
+        triggered: slots.length > 0,
+        minTemp,
+        slots
+      };
+    }
+
+    function checkMaxUV(daily) {
+      if (!daily || !daily.uv_index_max || !daily.uv_index_max.length) {
+        return { triggered: false, maxUv: 0 };
+      }
+      const uvTh = Number(state.config.uvThreshold ?? 6);
+      const maxUv = Math.max(
+        Number(daily.uv_index_max[0] || 0),
+        Number(daily.uv_index_max[1] || 0)
+      );
+      return {
+        triggered: maxUv >= uvTh,
+        maxUv
+      };
+    }
+
+    function addDaysISO(iso, days) {
+      const d = new Date(iso + "T12:00:00");
+      d.setDate(d.getDate() + Number(days || 90));
+      return d.toISOString().slice(0, 10);
+    }
+
+    function getDueDewormings() {
+      const th = Number(state.config.dewormAlertDays ?? 7);
+      const out = [];
+      for (const h of state.horses) {
+        const list = state.dewormings[h.id] || [];
+        for (const item of list) {
+          const nextDate = addDaysISO(item.lastDate, item.intervalDays);
+          const daysLeft = signedDaysFromToday(nextDate);
+          if (daysLeft <= th) {
+            out.push({ itemId: item.id, horseId: h.id, horseName: h.name, label: item.label, nextDate, daysLeft });
+          }
+        }
+      }
+      return out.sort((a, b) => a.daysLeft - b.daysLeft);
+    }
+
+    function getDueVaccines() {
+      const th = Number(state.config.vaccineAlertDays ?? 30);
+      const out = [];
+      for (const h of state.horses) {
+        const list = state.vaccines[h.id] || [];
+        for (const item of list) {
+          const nextDate = addDaysISO(item.lastDate, item.intervalDays);
+          const daysLeft = signedDaysFromToday(nextDate);
+          if (daysLeft <= th) {
+            out.push({ itemId: item.id, horseId: h.id, horseName: h.name, label: item.label, nextDate, daysLeft });
+          }
+        }
+      }
+      return out.sort((a, b) => a.daysLeft - b.daysLeft);
+    }
+
+    function getExpiringPharmacy() {
+      const th = Number(state.config.pharmaAlertDays ?? 30);
+      return (state.pharmacy || [])
+        .map(item => ({ ...item, daysLeft: signedDaysFromToday(item.expiryDate) }))
+        .filter(item => item.daysLeft <= th)
+        .sort((a, b) => a.daysLeft - b.daysLeft);
+    }
+
+    function getPractitionerNextVisitInfo(pracObj) {
+      const intervalWeeks = Math.max(1, Number(pracObj.intervalWeeks || 10));
+      const sortedVisits = [...(pracObj.visits || [])].sort((a, b) => b.date.localeCompare(a.date));
+      const lastVisit = sortedVisits[0] || null;
+      const baseDate = lastVisit ? lastVisit.date : todayISO(-intervalWeeks * 7);
+      const nextDate = addDaysISO(baseDate, intervalWeeks * 7);
+      const daysLeft = signedDaysFromToday(nextDate);
+      return { lastVisit, nextDate, daysLeft, intervalWeeks };
+    }
+
+    /* Returns one alert record per practitioner & horse with an active reminder (<= visitAlertDays or overdue) */
+    function getUpcomingPractitionerReminders() {
+      const th = Number(state.config.visitAlertDays ?? 15);
+      const reminders = [];
+      for (const h of state.horses) {
+        const horseMap = (state.healthVisits && state.healthVisits[h.id]) || {};
+        for (const [key, prac] of Object.entries(horseMap)) {
+          const info = getPractitionerNextVisitInfo(prac);
+          if (info.daysLeft <= th) {
+            const shortPrac = shortPractitionerLabel(prac);
+            const shortHorse = shortHorseLabel(h.name);
+            const timingBrief = info.daysLeft < 0
+              ? `en retard de ${Math.abs(info.daysLeft)} j`
+              : (info.daysLeft === 0 ? `aujourd'hui` : `RDV dans ${info.daysLeft} j`);
+
+            reminders.push({
+              horseId: h.id,
+              horseName: h.name,
+              shortHorse,
+              practitionerKey: key,
+              practitionerLabel: prac.label,
+              shortPrac,
+              icon: prac.icon || "🧑‍⚕️",
+              nextDate: info.nextDate,
+              daysLeft: info.daysLeft,
+              intervalWeeks: info.intervalWeeks,
+              briefMessage: `${shortPrac} — ${shortHorse} : ${timingBrief}`,
+              metaMessage: `Prendre RDV • Prévu le ${formatDateFR(info.nextDate)} (toutes les ${info.intervalWeeks} sem.)`
+            });
+          }
+        }
+      }
+      return reminders.sort((a, b) => a.daysLeft - b.daysLeft);
+    }
+
+    /* Direct navigation handlers on alert click */
+    function goToWeatherAlert() {
+      if (activeTab !== "tab-home") {
+        switchTab("tab-home", true);
+      }
+      scrollToAndHighlight("hourly-strip");
+    }
+
+    function goToFoodAlert(foodId) {
+      if (activeTab !== "tab-foods") {
+        switchTab("tab-foods", true);
+      }
+      scrollToAndHighlight(foodId ? `food-card-${escapeAttr(foodId)}` : "foods-list");
+    }
+
+    function goToDewormAlert(horseId, itemId) {
+      if (horseId) {
+        activeDewormHorse = horseId;
+        renderCareList("dewormings", activeDewormHorse, "deworm-list", "deworm-horse-tabs");
+      }
+      openHealthSub("sub-deworm", null, itemId ? `care-card-${escapeAttr(itemId)}` : "deworm-list");
+    }
+
+    function goToVaccineAlert(horseId, itemId) {
+      if (horseId) {
+        activeVaccineHorse = horseId;
+        renderCareList("vaccines", activeVaccineHorse, "vaccines-list", "vaccines-horse-tabs");
+      }
+      openHealthSub("sub-vaccines", null, itemId ? `care-card-${escapeAttr(itemId)}` : "vaccines-list");
+    }
+
+    function goToPharmacyAlert(pharmaId) {
+      renderPharmacy();
+      openHealthSub("sub-pharmacy", null, pharmaId ? `pharma-card-${escapeAttr(pharmaId)}` : "pharmacy-list");
+    }
+
+    function goToPractitionerAlert(horseId, pracKey) {
+      openHealthSub("sub-providers", horseId, pracKey ? `sub-health-${escapeAttr(pracKey)}` : "health-practitioners-list");
+    }
+
+    function renderAlertsAndWeather() {
+      const widget = document.getElementById("smart-alert-widget");
+      const dayTh = Number(state.config.dayThreshold ?? 5);
+      const coldTh = Number(state.config.coldThreshold ?? 5);
+      const uvTh = Number(state.config.uvThreshold ?? 6);
+      const pharmaTh = Number(state.config.pharmaAlertDays ?? 30);
+
+      const dayInfo = weatherData ? checkDaytimeBlanket(weatherData.hourly) : { triggered: false, blanketLabel: null, minTemp: null, slots: [] };
+      const coldInfo = weatherData ? checkNightMorningCold(weatherData.hourly) : { triggered: false, minTemp: null, slots: [] };
+      const uvInfo = weatherData ? checkMaxUV(weatherData.daily) : { triggered: false, maxUv: 0 };
+      const foodsToReorder = state.foods
+        .map(f => ({ food: f, m: computeFoodMetrics(f) }))
+        .filter(x => x.m.needsReorder)
+        .sort((a, b) => a.m.estimatedDaysLeft - b.m.estimatedDaysLeft);
+      const dueDeworms = getDueDewormings();
+      const dueVaccines = getDueVaccines();
+      const expiringPharma = getExpiringPharmacy();
+      const upcomingVisits = getUpcomingPractitionerReminders();
+
+      const weatherCards = [];
+      const foodCards = [];
+      const healthCards = [];
+
+      if (dayInfo.triggered) {
+        weatherCards.push(`
+          <button type="button" class="alert-card alert-day-blanket" onclick="goToWeatherAlert()">
+            <div class="alert-body">
+              <div class="alert-title">☀️ Journée (10h–21h) : ${dayInfo.blanketLabel}</div>
+              <div class="alert-desc">Température prévue sous ${dayTh}°C en journée (min ${dayInfo.minTemp.toFixed(1)}°C : ${dayInfo.slots.slice(0, 4).join(", ")}).</div>
+            </div>
+            <span class="alert-link-pill">Voir météo →</span>
+          </button>
+        `);
+      }
+
+      if (coldInfo.triggered) {
+        weatherCards.push(`
+          <button type="button" class="alert-card alert-blanket" onclick="goToWeatherAlert()">
+            <div class="alert-body">
+              <div class="alert-title">🌙 Couverture conseillée (21h–10h)</div>
+              <div class="alert-desc">Température prévue sous ${coldTh}°C entre 21h et 10h (min ${coldInfo.minTemp.toFixed(1)}°C : ${coldInfo.slots.slice(0, 4).join(", ")}).</div>
+            </div>
+            <span class="alert-link-pill">Voir météo →</span>
+          </button>
+        `);
+      }
+
+      if (uvInfo.triggered) {
+        weatherCards.push(`
+          <button type="button" class="alert-card alert-uv" onclick="goToWeatherAlert()">
+            <div class="alert-body">
+              <div class="alert-title">🕶️ Masque anti-UV conseillé</div>
+              <div class="alert-desc">Indice UV maximal prévu de ${uvInfo.maxUv.toFixed(1)} (seuil ≥ ${uvTh}).</div>
+            </div>
+            <span class="alert-link-pill">Voir météo →</span>
+          </button>
+        `);
+      }
+
+      if (foodsToReorder.length > 0) {
+        const firstFood = foodsToReorder[0].food;
+        const names = foodsToReorder.map(x => `${x.food.name} (${x.m.estimatedDaysLeft}j)`).join(", ");
+        foodCards.push(`
+          <button type="button" class="alert-card alert-food" onclick="goToFoodAlert('${escapeAttr(firstFood.id)}')">
+            <div class="alert-body">
+              <div class="alert-title">🌾 Racheter des aliments</div>
+              <div class="alert-desc">Stock bas à prévoir : ${escapeHtml(names)}.</div>
+            </div>
+            <span class="alert-link-pill">Gérer les stocks →</span>
+          </button>
+        `);
+      }
+
+      if (dueDeworms.length > 0) {
+        const firstDeworm = dueDeworms[0];
+        const details = dueDeworms.map(d => {
+          const timing = d.daysLeft < 0 ? `en retard de ${Math.abs(d.daysLeft)} j` : `dans ${d.daysLeft} j (${formatDateFR(d.nextDate)})`;
+          return `${d.horseName} — ${d.label} (${timing})`;
+        }).join(" ; ");
+        healthCards.push(`
+          <button type="button" class="alert-card alert-care" onclick="goToDewormAlert('${escapeAttr(firstDeworm.horseId)}', '${escapeAttr(firstDeworm.itemId)}')">
+            <div class="alert-body">
+              <div class="alert-title">💊 Vermifuge à faire</div>
+              <div class="alert-desc">${escapeHtml(details)}</div>
+            </div>
+            <span class="alert-link-pill">Voir vermifuge →</span>
+          </button>
+        `);
+      }
+
+      if (dueVaccines.length > 0) {
+        const firstVaccine = dueVaccines[0];
+        const details = dueVaccines.map(v => {
+          const timing = v.daysLeft < 0 ? `en retard de ${Math.abs(v.daysLeft)} j` : `dans ${v.daysLeft} j (${formatDateFR(v.nextDate)})`;
+          return `${v.horseName} — ${v.label} (${timing})`;
+        }).join(" ; ");
+        healthCards.push(`
+          <button type="button" class="alert-card alert-care" onclick="goToVaccineAlert('${escapeAttr(firstVaccine.horseId)}', '${escapeAttr(firstVaccine.itemId)}')">
+            <div class="alert-body">
+              <div class="alert-title">🩺 Vaccin à prévoir</div>
+              <div class="alert-desc">${escapeHtml(details)}</div>
+            </div>
+            <span class="alert-link-pill">Voir vaccin →</span>
+          </button>
+        `);
+      }
+
+      if (expiringPharma.length > 0) {
+        const firstPharma = expiringPharma[0];
+        const details = expiringPharma.map(p => {
+          const timing = p.daysLeft < 0 ? `périmé depuis ${Math.abs(p.daysLeft)} j` : `périme dans ${p.daysLeft} j (${formatDateFR(p.expiryDate)})`;
+          return `${p.name} (${timing})`;
+        }).join(" ; ");
+        healthCards.push(`
+          <button type="button" class="alert-card alert-food" onclick="goToPharmacyAlert('${escapeAttr(firstPharma.id)}')">
+            <div class="alert-body">
+              <div class="alert-title">🩹 Péremption pharmacie (≤ ${pharmaTh} j)</div>
+              <div class="alert-desc">${escapeHtml(details)}</div>
+            </div>
+            <span class="alert-link-pill">Voir pharmacie →</span>
+          </button>
+        `);
+      }
+
+      /* Individual clickable alert button for each practitioner with an active reminder */
+      for (const r of upcomingVisits) {
+        const urgentClass = r.daysLeft < 0 ? "urgent" : "";
+        healthCards.push(`
+          <button type="button" class="provider-alert-btn ${urgentClass}" onclick="goToPractitionerAlert('${escapeAttr(r.horseId)}', '${escapeAttr(r.practitionerKey)}')">
+            <div class="provider-alert-main">
+              <span class="provider-alert-icon">${r.icon}</span>
+              <div class="provider-alert-text">
+                <div class="provider-alert-summary">${escapeHtml(r.briefMessage)}</div>
+                <div class="provider-alert-meta">${escapeHtml(r.metaMessage)}</div>
+              </div>
+            </div>
+            <span class="alert-link-pill">Voir fiche →</span>
+          </button>
+        `);
+      }
+
+      // Context filtering by active tab
+      let visibleAlertCards = [];
+      if (activeTab === "tab-home") {
+        visibleAlertCards = [...weatherCards, ...foodCards, ...healthCards];
+      } else if (activeTab === "tab-foods") {
+        visibleAlertCards = [...foodCards];
+      } else if (activeTab === "tab-health") {
+        visibleAlertCards = [...healthCards];
+      }
+
+      widget.innerHTML = visibleAlertCards.join("");
+
+      document.getElementById("lbl-day-th").textContent = dayTh;
+      document.getElementById("lbl-cold-th").textContent = coldTh;
+      document.getElementById("lbl-uv-th").textContent = uvTh;
+      document.getElementById("lbl-pharma-days").textContent = pharmaTh;
+      document.getElementById("pharma-alert-days-label").textContent = pharmaTh;
+      document.getElementById("m-day-blanket").textContent = dayInfo.triggered ? dayInfo.blanketLabel : "Non";
+      document.getElementById("m-blanket").textContent = coldInfo.triggered ? "Oui (<" + coldTh + "°C)" : "Non";
+      document.getElementById("m-uv").textContent = uvInfo.triggered ? "Oui (UV " + uvInfo.maxUv.toFixed(1) + ")" : "Non";
+      document.getElementById("m-food").textContent = foodsToReorder.length > 0 ? foodsToReorder.length + " réf." : "OK";
+      const careCount = dueDeworms.length + dueVaccines.length + upcomingVisits.length;
+      document.getElementById("m-care").textContent = careCount > 0 ? careCount + " alerte(s)" : "OK";
+      document.getElementById("m-pharma").textContent = expiringPharma.length > 0 ? expiringPharma.length + " prod." : "OK";
+
+      if (weatherData && weatherData.current) {
+        const cur = weatherData.current;
+        document.getElementById("w-temp").textContent = `${Math.round(cur.temperature_2m)}°C`;
+        document.getElementById("w-desc").textContent = weatherCodeLabel(cur.weather_code);
+        document.getElementById("w-day-min").textContent =
+          dayInfo.minTemp !== null ? `${dayInfo.minTemp.toFixed(1)}°C` : "--°C";
+        document.getElementById("w-night-min").textContent =
+          coldInfo.minTemp !== null ? `${coldInfo.minTemp.toFixed(1)}°C` : "--°C";
+        document.getElementById("w-uv-max").textContent = uvInfo.maxUv.toFixed(1);
+      }
+
+      const strip = document.getElementById("hourly-strip");
+      if (weatherData && weatherData.hourly && weatherData.hourly.time) {
+        const now = new Date();
+        const items = [];
+        for (let i = 0; i < weatherData.hourly.time.length && items.length < 18; i++) {
+          const dt = new Date(weatherData.hourly.time[i]);
+          if (dt.getTime() < now.getTime() - 3600000) continue;
+          const h = dt.getHours();
+          const t = Number(weatherData.hourly.temperature_2m[i]);
+          const uv = Number(weatherData.hourly.uv_index[i] || 0);
+          const isDayWindow = h >= 10 && h < 21;
+          const isColdDay = isDayWindow && t < dayTh;
+          const isColdNight = !isDayWindow && t < coldTh;
+          const cls = isColdDay ? "day-cold" : (isColdNight ? "night-cold" : "");
+          items.push(`
+            <div class="hour-pill ${cls}">
+              <div style="font-weight:700;">${String(h).padStart(2, "0")}h</div>
+              <div style="font-size:0.95rem;font-weight:800;margin:2px 0;">${t.toFixed(0)}°C</div>
+              <div class="muted">${isDayWindow ? "10h–21h" : "21h–10h"} • UV ${uv.toFixed(0)}</div>
+            </div>
+          `);
+        }
+        strip.innerHTML = items.join("");
+      }
+    }
+
+    function weatherCodeLabel(code) {
+      const map = {
+        0: "Ciel dégagé",
+        1: "Plutôt clair",
+        2: "Partiellement nuageux",
+        3: "Couvert",
+        45: "Brouillard",
+        48: "Brouillard givrant",
+        51: "Bruine légère",
+        53: "Bruine modérée",
+        61: "Pluie faible",
+        63: "Pluie modérée",
+        65: "Pluie forte",
+        71: "Neige faible",
+        80: "Averses",
+        95: "Orage"
+      };
+      return map[code] || "Conditions variables";
+    }
+
+    async function fetchWeather() {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code,wind_gusts_10m,precipitation&hourly=temperature_2m,uv_index,precipitation,wind_gusts_10m&daily=uv_index_max,temperature_2m_min,temperature_2m_max&timezone=Europe%2FParis&forecast_days=3`;
+      try {
+        const res = await fetch(url);
+        weatherData = await res.json();
+        const nowStr = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+        document.getElementById("weather-updated").textContent = `Màj ${nowStr}`;
+      } catch {
+        document.getElementById("weather-updated").textContent = "Hors ligne / Erreur réseau";
+      }
+      renderAlertsAndWeather();
+    }
+
+    function renderFoods() {
+      const container = document.getElementById("foods-list");
+      container.innerHTML = state.foods.map(food => {
+        const m = computeFoodMetrics(food);
+        const badgeClass = m.needsReorder ? "badge-danger" : (m.estimatedDaysLeft <= 8 ? "badge-warn" : "badge-ok");
+        const badgeText = m.needsReorder ? `À racheter (${m.estimatedDaysLeft} j)` : `${m.estimatedDaysLeft} j devant vous`;
+        const avgDaysText = m.avgDaysPerContainer ? `${m.avgDaysPerContainer.toFixed(1)} j / ${m.containerWord}` : "—";
+        const rateInputLabel = m.oil ? "Conso réf. (mL/j) :" : "Conso réf. (kg/j) :";
+        const rateStep = m.oil ? "10" : "0.05";
+
+        return `
+          <div class="item-card" id="food-card-${escapeAttr(food.id)}">
+            <div class="item-top">
+              <div>
+                <div class="item-name">${escapeHtml(food.name)}</div>
+                <div class="muted">Dernier achat : <strong>${formatDateFR(m.lastPurchaseDate)}</strong> • Dernier ${m.containerWord} ouvert : <strong>${formatDateFR(m.lastOpenDate)}</strong></div>
+              </div>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-mini">
+                <div class="k">Jours de stock devant vous</div>
+                <div class="v">${m.estimatedDaysLeft} jours (${m.totalRemainingQty.toFixed(2)} ${m.unitLabel})</div>
+              </div>
+              <div class="stat-mini">
+                <div class="k">${m.oil ? "Bidons fermés / Ouverts" : "Sacs fermés / Ouverts"}</div>
+                <div class="v">${m.closedBagsRemaining} fermé(s) • ${m.openedCount} ouvert(s)</div>
+              </div>
+              <div class="stat-mini">
+                <div class="k">Moyenne de consommation</div>
+                <div class="v">${m.avgDisplay} (${avgDaysText})</div>
+              </div>
+              <div class="stat-mini">
+                <div class="k">Total acheté cumulé</div>
+                <div class="v">${m.totalPurchasedBags} ${m.containerWord}(s) (${m.totalPurchasedQty.toFixed(1)} ${m.unitLabel})</div>
+              </div>
+            </div>
+
+            <div class="bag-banner">
+              <span>${m.oil ? "Bidon" : "Sac"} ouvert actuel : <strong>${m.currentOpenRemainingQty.toFixed(2)} ${m.unitLabel}</strong> estimés restants</span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm" onclick="openBagModal('${escapeAttr(food.id)}')">${m.oil ? "🛢️ Nouveau bidon ouvert" : "🎒 Nouveau sac ouvert"}</button>
+                <button class="btn btn-primary btn-sm" onclick="openBuyModal('${escapeAttr(food.id)}')">+ Acheter (${m.containersWord})</button>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label class="muted" style="font-size:0.78rem;">${rateInputLabel}
+                <input type="number" step="${rateStep}" min="1" value="${m.avgInputDisplay}" style="width:82px;padding:4px 6px;" onchange="updateFoodDailyEstimate('${escapeAttr(food.id)}', this.value)" />
+              </label>
+              <button class="btn btn-outline btn-sm" onclick="deleteFood('${escapeAttr(food.id)}')">Supprimer</button>
+            </div>
+
+            <div class="purchase-log">
+              <div>Achats enregistrés :</div>
+              <div class="purchase-pills">
+                ${m.purchases.map(p => `<span class="p-pill">${formatDateFR(p.date)} • ${p.bags} ${m.containerWord}(s) × ${p.kgPerBag} ${m.unitLabel}</span>`).join("")}
+              </div>
+              <div style="margin-top:6px;">${m.oil ? "Bidons ouverts enregistrés :" : "Sacs ouverts enregistrés :"}</div>
+              <div class="purchase-pills">
+                ${m.openedBags.map((o, idx) => `<span class="p-pill">${m.oil ? "Bidon" : "Sac"} #${idx + 1} ouvert le ${formatDateFR(o.date)} (${o.kgPerBag} ${m.unitLabel})</span>`).join("")}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updateFoodDailyEstimate(foodId, val) {
+      const n = parseFloat(val);
+      if (!n || n <= 0) return;
+      const food = state.foods.find(f => f.id === foodId);
+      if (!food) return;
+      food.estimatedDailyKg = isOilFood(food) ? n / 1000 : n;
+      saveState();
+      renderFoods();
+      renderAlertsAndWeather();
+    }
+
+    function deleteFood(foodId) {
+      state.foods = state.foods.filter(f => f.id !== foodId);
+      saveState();
+      renderFoods();
+      renderAlertsAndWeather();
+    }
+
+    function openBuyModal(foodId) {
+      const food = state.foods.find(f => f.id === foodId);
+      if (!food) return;
+      const oil = isOilFood(food);
+      buyingFoodId = foodId;
+      document.getElementById("buy-modal-title").textContent = `Nouvel achat — ${food.name}`;
+      document.getElementById("buy-modal-sub").textContent = oil
+        ? "Indiquez la date d'achat, le nombre de bidons et la contenance en litres (L)."
+        : "Indiquez la date d'achat, le nombre de sacs achetés et le poids d'un sac en kg.";
+      document.getElementById("buy-count-label").textContent = oil ? "Nombre de bidons" : "Nombre de sacs";
+      document.getElementById("buy-qty-label").textContent = oil ? "Litres / bidon (L)" : "Poids / sac (kg)";
+      document.getElementById("buy-date-input").value = todayISO(0);
+      document.getElementById("buy-bags-input").value = 1;
+      document.getElementById("buy-qty-input").value = food.bagKg || (oil ? 5 : 20);
+      document.getElementById("buy-modal").classList.add("open");
+    }
+
+    function closeBuyModal() {
+      buyingFoodId = null;
+      document.getElementById("buy-modal").classList.remove("open");
+    }
+
+    document.getElementById("btn-close-buy-modal").addEventListener("click", closeBuyModal);
+
+    document.getElementById("btn-confirm-buy").addEventListener("click", () => {
+      if (!buyingFoodId) return;
+      const dateVal = document.getElementById("buy-date-input").value;
+      const bagsVal = Math.max(1, parseInt(document.getElementById("buy-bags-input").value, 10) || 1);
+      const qtyVal = parseFloat(document.getElementById("buy-qty-input").value);
+      if (!dateVal || !qtyVal || qtyVal <= 0) return;
+
+      const food = state.foods.find(f => f.id === buyingFoodId);
+      if (!food) return;
+
+      food.purchases = food.purchases || [];
+      const existingIdx = food.purchases.findIndex(p => p.date === dateVal && Number(p.kgPerBag) === qtyVal);
+      if (existingIdx >= 0) {
+        food.purchases[existingIdx].bags = Number(food.purchases[existingIdx].bags || 1) + bagsVal;
+      } else {
+        food.purchases.push({ date: dateVal, bags: bagsVal, kgPerBag: qtyVal });
+      }
+      food.purchases.sort((a, b) => a.date.localeCompare(b.date));
+      food.bagKg = qtyVal;
+
+      saveState();
+      closeBuyModal();
+      renderFoods();
+      renderAlertsAndWeather();
+    });
+
+    function openBagModal(foodId) {
+      const food = state.foods.find(f => f.id === foodId);
+      if (!food) return;
+      const oil = isOilFood(food);
+      openingFoodId = foodId;
+      document.getElementById("open-bag-modal-title").textContent = oil
+        ? `Nouveau bidon ouvert — ${food.name}`
+        : `Nouveau sac ouvert — ${food.name}`;
+      document.getElementById("open-bag-modal-sub").textContent =
+        "Enregistrez la date d'ouverture pour mettre à jour le stock et la moyenne de consommation.";
+      document.getElementById("open-qty-label").textContent = oil ? "Contenance (L)" : "Poids du sac (kg)";
+      document.getElementById("open-bag-date-input").value = todayISO(0);
+      document.getElementById("open-bag-qty-input").value = food.bagKg || (oil ? 5 : 20);
+      document.getElementById("open-bag-modal").classList.add("open");
+    }
+
+    function closeOpenBagModal() {
+      openingFoodId = null;
+      document.getElementById("open-bag-modal").classList.remove("open");
+    }
+
+    document.getElementById("btn-close-open-bag-modal").addEventListener("click", closeOpenBagModal);
+
+    document.getElementById("btn-confirm-open-bag").addEventListener("click", () => {
+      if (!openingFoodId) return;
+      const dateVal = document.getElementById("open-bag-date-input").value;
+      const qtyVal = parseFloat(document.getElementById("open-bag-qty-input").value);
+      if (!dateVal || !qtyVal || qtyVal <= 0) return;
+
+      const food = state.foods.find(f => f.id === openingFoodId);
+      if (!food) return;
+
+      food.openedBags = food.openedBags || [];
+      food.openedBags.push({ date: dateVal, kgPerBag: qtyVal });
+      food.openedBags.sort((a, b) => a.date.localeCompare(b.date));
+
+      saveState();
+      closeOpenBagModal();
+      renderFoods();
+      renderAlertsAndWeather();
+    });
+
+    function renderCareList(categoryKey, horseId, containerId, tabsId) {
+      const tabsEl = document.getElementById(tabsId);
+      tabsEl.innerHTML = state.horses.map(h => `
+        <button class="horse-chip ${h.id === horseId ? "active" : ""}" onclick="selectCareHorse('${categoryKey}', '${escapeAttr(h.id)}')">
+          ${escapeHtml(h.name)}
+        </button>
+      `).join("");
+
+      const list = state[categoryKey][horseId] || [];
+      const container = document.getElementById(containerId);
+      const alertThreshold = categoryKey === "dewormings"
+        ? Number(state.config.dewormAlertDays ?? 7)
+        : Number(state.config.vaccineAlertDays ?? 30);
+
+      container.innerHTML = list.map(item => {
+        const nextDate = addDaysISO(item.lastDate, item.intervalDays);
+        const daysLeft = signedDaysFromToday(nextDate);
+        const badgeClass = daysLeft < 0 ? "badge-danger" : (daysLeft <= alertThreshold ? "badge-warn" : "badge-ok");
+        const badgeText = daysLeft < 0 ? `En retard (${Math.abs(daysLeft)} j)` : `Dans ${daysLeft} j`;
+
+        return `
+          <div class="item-card" id="care-card-${escapeAttr(item.id)}">
+            <div class="item-top">
+              <div>
+                <div class="item-name">${escapeHtml(item.label)}</div>
+                <div class="muted">Dernier : <strong>${formatDateFR(item.lastDate)}</strong> • Prochain : <strong>${formatDateFR(nextDate)}</strong> (tous les ${item.intervalDays} j)</div>
+              </div>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+            <div class="form-row">
+              <label class="muted" style="font-size:0.78rem;">Date effectuée :
+                <input type="date" value="${item.lastDate}" onchange="updateCareDate('${categoryKey}', '${escapeAttr(horseId)}', '${escapeAttr(item.id)}', this.value)" />
+              </label>
+              <button class="btn btn-secondary btn-sm" onclick="updateCareDate('${categoryKey}', '${escapeAttr(horseId)}', '${escapeAttr(item.id)}', '${todayISO(0)}')">Fait aujourd'hui</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function selectCareHorse(categoryKey, horseId) {
+      if (categoryKey === "dewormings") activeDewormHorse = horseId;
+      if (categoryKey === "vaccines") activeVaccineHorse = horseId;
+      renderAllCare();
+    }
+
+    function updateCareDate(categoryKey, horseId, itemId, newDate) {
+      if (!newDate) return;
+      const list = state[categoryKey][horseId] || [];
+      const entry = list.find(x => x.id === itemId);
+      if (!entry) return;
+      entry.lastDate = newDate;
+      saveState();
+      renderAllCare();
+    }
+
+    function renderAllCare() {
+      renderCareList("dewormings", activeDewormHorse, "deworm-list", "deworm-horse-tabs");
+      renderCareList("vaccines", activeVaccineHorse, "vaccines-list", "vaccines-horse-tabs");
+      renderHealthVisits();
+      renderAlertsAndWeather();
+    }
+
+    function renderHealthVisits() {
+      const tabsEl = document.getElementById("health-horse-tabs");
+      if (!tabsEl) return;
+      tabsEl.innerHTML = state.horses.map(h => `
+        <button class="horse-chip ${h.id === activeHealthHorse ? "active" : ""}" onclick="selectHealthHorse('${escapeAttr(h.id)}')">
+          ${escapeHtml(h.name)}
+        </button>
+      `).join("");
+
+      const horseMap = (state.healthVisits && state.healthVisits[activeHealthHorse]) || {};
+      const keys = Array.from(new Set([...PRACTITIONER_ORDER, ...Object.keys(horseMap)]));
+      const container = document.getElementById("health-practitioners-list");
+      const alertTh = Number(state.config.visitAlertDays ?? 15);
+
+      container.innerHTML = keys.map(key => {
+        const prac = horseMap[key];
+        if (!prac) return "";
+        const info = getPractitionerNextVisitInfo(prac);
+        const isReminder = info.daysLeft <= alertTh;
+        const badgeClass = info.daysLeft < 0 ? "badge-danger" : (isReminder ? "badge-warn" : "badge-ok");
+        const badgeText = info.daysLeft < 0
+          ? `RDV à prendre (${Math.abs(info.daysLeft)} j de retard)`
+          : (isReminder ? `Prendre RDV (${info.daysLeft} j)` : `Prochaine dans ${info.daysLeft} j`);
+
+        const visitsHtml = (prac.visits || []).length
+          ? [...prac.visits].sort((a, b) => b.date.localeCompare(a.date)).map(v => `
+              <div class="visit-entry">
+                <div class="visit-entry-top">
+                  <div>
+                    <strong>${formatDateFR(v.date)}</strong>
+                    ${v.provider ? `<span class="muted"> • ${escapeHtml(v.provider)}</span>` : ""}
+                  </div>
+                  <div style="display:flex;gap:6px;">
+                    <button class="btn btn-outline btn-sm" onclick="openVisitModal('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', '${escapeAttr(v.id)}')">Modifier</button>
+                    <button class="btn btn-outline btn-sm" onclick="deleteHealthVisit('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', '${escapeAttr(v.id)}')">Supprimer</button>
+                  </div>
+                </div>
+                <div>${escapeHtml(v.details || "Aucun détail renseigné.")}</div>
+              </div>
+            `).join("")
+          : `<div class="muted" style="margin-top:6px;">Aucune venue enregistrée pour le moment.</div>`;
+
+        return `
+          <div class="sub-section" id="sub-health-${escapeAttr(key)}">
+            <div class="sub-section-header">
+              <div>
+                <div class="sub-section-title">${prac.icon || "🧑‍⚕️"} ${escapeHtml(prac.label)}</div>
+                <div class="muted">
+                  Dernière venue : <strong>${info.lastVisit ? formatDateFR(info.lastVisit.date) : "—"}</strong> •
+                  Prochaine estimée : <strong>${formatDateFR(info.nextDate)}</strong>
+                </div>
+              </div>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+
+            <div class="form-row" style="margin-top:6px;">
+              <label class="muted" style="font-size:0.8rem;">Fréquence régulière : toutes les
+                <input type="number" min="1" max="104" step="1" value="${info.intervalWeeks}" style="width:66px;padding:4px 6px;" onchange="updatePractitionerInterval('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', this.value)" />
+                semaines
+              </label>
+              <button class="btn btn-primary btn-sm" onclick="openVisitModal('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', null)">+ Ajouter une venue</button>
+            </div>
+
+            ${visitsHtml}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function selectHealthHorse(horseId) {
+      activeHealthHorse = horseId;
+      renderHealthVisits();
+    }
+
+    function updatePractitionerInterval(horseId, pracKey, weeksVal) {
+      const weeks = Math.max(1, parseInt(weeksVal, 10) || 1);
+      const prac = state.healthVisits?.[horseId]?.[pracKey];
+      if (!prac) return;
+      prac.intervalWeeks = weeks;
+      saveState();
+      renderHealthVisits();
+      renderAlertsAndWeather();
+    }
+
+    function openVisitModal(horseId, pracKey, visitId) {
+      const horse = state.horses.find(h => h.id === horseId);
+      const prac = state.healthVisits?.[horseId]?.[pracKey];
+      if (!horse || !prac) return;
+
+      const existing = visitId ? (prac.visits || []).find(v => v.id === visitId) : null;
+      visitModalCtx = { horseId, pracKey, visitId: existing ? existing.id : null };
+
+      document.getElementById("visit-modal-title").textContent = existing
+        ? `Modifier la venue — ${prac.label}`
+        : `Nouvelle venue — ${prac.label}`;
+      document.getElementById("visit-modal-sub").textContent =
+        `${horse.name} • Fréquence actuelle : toutes les ${prac.intervalWeeks} semaines.`;
+      document.getElementById("visit-date-input").value = existing ? existing.date : todayISO(0);
+      document.getElementById("visit-provider-input").value = existing ? (existing.provider || "") : "";
+      document.getElementById("visit-notes-input").value = existing ? (existing.details || "") : "";
+      document.getElementById("visit-modal").classList.add("open");
+    }
+
+    function closeVisitModal() {
+      visitModalCtx = null;
+      document.getElementById("visit-modal").classList.remove("open");
+    }
+
+    document.getElementById("btn-close-visit-modal").addEventListener("click", closeVisitModal);
+
+    document.getElementById("btn-confirm-visit").addEventListener("click", () => {
+      if (!visitModalCtx) return;
+      const { horseId, pracKey, visitId } = visitModalCtx;
+      const prac = state.healthVisits?.[horseId]?.[pracKey];
+      if (!prac) return;
+
+      const dateVal = document.getElementById("visit-date-input").value;
+      const providerVal = document.getElementById("visit-provider-input").value.trim();
+      const detailsVal = document.getElementById("visit-notes-input").value.trim();
+      if (!dateVal) return;
+
+      prac.visits = prac.visits || [];
+      if (visitId) {
+        const target = prac.visits.find(v => v.id === visitId);
+        if (target) {
+          target.date = dateVal;
+          target.provider = providerVal;
+          target.details = detailsVal;
+        }
+      } else {
+        prac.visits.unshift({
+          id: "hv-" + Date.now(),
+          date: dateVal,
+          provider: providerVal,
+          details: detailsVal
+        });
+      }
+      prac.visits.sort((a, b) => b.date.localeCompare(a.date));
+
+      saveState();
+      closeVisitModal();
+      renderHealthVisits();
+      renderAlertsAndWeather();
+    });
+
+    function deleteHealthVisit(horseId, pracKey, visitId) {
+      const prac = state.healthVisits?.[horseId]?.[pracKey];
+      if (!prac) return;
+      prac.visits = (prac.visits || []).filter(v => v.id !== visitId);
+      saveState();
+      renderHealthVisits();
+      renderAlertsAndWeather();
+    }
+
+    function renderPharmacy() {
+      const container = document.getElementById("pharmacy-list");
+      const th = Number(state.config.pharmaAlertDays ?? 30);
+      const list = [...(state.pharmacy || [])].sort((a, b) => a.expiryDate.localeCompare(b.expiryDate));
+
+      if (!list.length) {
+        container.innerHTML = `<div class="muted">Aucun produit enregistré en pharmacie.</div>`;
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        const daysLeft = signedDaysFromToday(item.expiryDate);
+        let badgeClass = "badge-ok";
+        let badgeText = `OK (${daysLeft} j)`;
+        if (daysLeft < 0) {
+          badgeClass = "badge-danger";
+          badgeText = `Périmé (${Math.abs(daysLeft)} j)`;
+        } else if (daysLeft <= th) {
+          badgeClass = "badge-warn";
+          badgeText = `Expire dans ${daysLeft} j`;
+        }
+
+        return `
+          <div class="item-card" id="pharma-card-${escapeAttr(item.id)}">
+            <div class="item-top">
+              <div>
+                <div class="item-name">${escapeHtml(item.name)}</div>
+                <div class="muted">Péremption : <strong>${formatDateFR(item.expiryDate)}</strong>${item.qty ? ` • ${escapeHtml(item.qty)}` : ""}</div>
+                ${item.notes ? `<div class="muted" style="margin-top:3px;">${escapeHtml(item.notes)}</div>` : ""}
+              </div>
+              <span class="badge ${badgeClass}">${badgeText}</span>
+            </div>
+            <div class="form-row">
+              <label class="muted" style="font-size:0.78rem;">Date péremption :
+                <input type="date" value="${item.expiryDate}" onchange="updatePharmaExpiry('${escapeAttr(item.id)}', this.value)" />
+              </label>
+              <button class="btn btn-outline btn-sm" onclick="deletePharmaItem('${escapeAttr(item.id)}')">Supprimer</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updatePharmaExpiry(id, newDate) {
+      if (!newDate) return;
+      const item = (state.pharmacy || []).find(p => p.id === id);
+      if (!item) return;
+      item.expiryDate = newDate;
+      saveState();
+      renderPharmacy();
+      renderAlertsAndWeather();
+    }
+
+    function deletePharmaItem(id) {
+      state.pharmacy = (state.pharmacy || []).filter(p => p.id !== id);
+      saveState();
+      renderPharmacy();
+      renderAlertsAndWeather();
+    }
+
+    document.getElementById("btn-toggle-add-pharma").addEventListener("click", () => {
+      document.getElementById("new-pharma-expiry").value = todayISO(60);
+      document.getElementById("add-pharma-form").classList.toggle("hidden");
+    });
+
+    document.getElementById("btn-cancel-pharma").addEventListener("click", () => {
+      document.getElementById("add-pharma-form").classList.add("hidden");
+    });
+
+    document.getElementById("btn-create-pharma").addEventListener("click", () => {
+      const name = document.getElementById("new-pharma-name").value.trim();
+      const qty = document.getElementById("new-pharma-qty").value.trim();
+      const expiryDate = document.getElementById("new-pharma-expiry").value;
+      const notes = document.getElementById("new-pharma-notes").value.trim();
+      if (!name || !expiryDate) return;
+
+      state.pharmacy = state.pharmacy || [];
+      state.pharmacy.unshift({
+        id: "ph-" + Date.now(),
+        name,
+        qty,
+        expiryDate,
+        notes
+      });
+
+      document.getElementById("new-pharma-name").value = "";
+      document.getElementById("new-pharma-qty").value = "";
+      document.getElementById("new-pharma-notes").value = "";
+      document.getElementById("add-pharma-form").classList.add("hidden");
+
+      saveState();
+      renderPharmacy();
+      renderAlertsAndWeather();
+    });
+
+    function switchHealthSubTab(subId) {
+      activeHealthSubTab = subId;
+      document.querySelectorAll(".health-subpanel").forEach(p => {
+        p.classList.toggle("hidden", p.id !== subId);
+      });
+      document.querySelectorAll(".health-subbtn").forEach(b => {
+        b.classList.toggle("active", b.dataset.sub === subId);
+      });
+    }
+
+    function openHealthSub(subId, horseId, targetElementId) {
+      if (horseId && subId === "sub-providers") {
+        activeHealthHorse = horseId;
+        renderHealthVisits();
+      }
+      if (activeTab !== "tab-health") {
+        switchTab("tab-health", true);
+      }
+      switchHealthSubTab(subId);
+      if (targetElementId) {
+        scrollToAndHighlight(targetElementId);
+      }
+    }
+
+
+    // ---------- INFORMATIONS : profils, contacts et poids ----------
+    let activeInfoSub = "info-horses";
+    let activeInfoHorse = state.horses[0]?.id || "";
+    let activeContactHorse = activeInfoHorse;
+    let activeWeightHorse = activeInfoHorse;
+
+    function ensureHorseInfo() {
+      state.horseProfiles ||= {};
+      state.practitionerContacts ||= {};
+      state.weightRecords ||= {};
+      state.horses.forEach(h => {
+        state.horseProfiles[h.id] ||= {};
+        state.practitionerContacts[h.id] ||= [];
+        state.weightRecords[h.id] ||= [];
+      });
+    }
+
+    function switchInfoSub(subId) {
+      activeInfoSub = subId;
+      document.querySelectorAll(".info-panel").forEach(el => el.classList.toggle("hidden", el.id !== subId));
+      document.querySelectorAll(".info-subbtn").forEach(el => el.classList.toggle("active", el.dataset.infoSub === subId));
+      renderInformation();
+    }
+
+    document.querySelectorAll(".info-subbtn").forEach(btn => {
+      btn.addEventListener("click", () => switchInfoSub(btn.dataset.infoSub));
+    });
+
+    function renderHorseTabs(containerId, selectedId, callbackName) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = state.horses.map(h => `<button class="horse-chip ${h.id === selectedId ? "active" : ""}" onclick="${callbackName}('${escapeAttr(h.id)}')">${escapeHtml(h.name)}</button>`).join("");
+    }
+
+    function selectInfoHorse(id) { activeInfoHorse=id; renderHorseProfile(); }
+    function selectContactHorse(id) { activeContactHorse=id; renderContacts(); }
+    function selectWeightHorse(id) { activeWeightHorse=id; renderWeight(); }
+
+    function renderHorseProfile() {
+      ensureHorseInfo();
+      renderHorseTabs("info-horse-tabs", activeInfoHorse, "selectInfoHorse");
+      const h = state.horses.find(x => x.id === activeInfoHorse);
+      if (!h) return;
+      const d = state.horseProfiles[h.id] || {};
+      const photo = d.photoData ? `<img class="horse-photo" src="${d.photoData}" alt="Photo de ${escapeHtml(h.name)}">` : `<div class="horse-photo profile-placeholder">🐴</div>`;
+      document.getElementById("horse-profile-content").innerHTML = `
+        <div class="horse-profile">${photo}<div style="flex:1"><strong>${escapeHtml(h.name)}</strong><div class="muted">Fiche individuelle</div><label class="btn btn-secondary btn-sm" style="margin-top:7px;cursor:pointer">📷 Ajouter / modifier la photo<input id="horse-photo-input" type="file" accept="image/*" capture="environment" hidden></label></div></div>
+        <div class="form-row">
+          <label class="info-field">Nom du cheval<input id="profile-name" value="${escapeHtml(h.name)}"></label>
+          <label class="info-field">Nom usuel<input id="profile-callname" value="${escapeHtml(d.callName || "")}" placeholder="Nom d'écurie"></label>
+        </div>
+        <div class="form-row">
+          <label class="info-field">Race<input id="profile-breed" value="${escapeHtml(d.breed || "")}" placeholder="Race"></label>
+          <label class="info-field">Sexe<select id="profile-sex"><option value="">Non renseigné</option><option ${d.sex==="Jument"?"selected":""}>Jument</option><option ${d.sex==="Hongre"?"selected":""}>Hongre</option><option ${d.sex==="Étalon"?"selected":""}>Étalon</option></select></label>
+          <label class="info-field">Date de naissance<input id="profile-birth" type="date" value="${escapeHtml(d.birthDate || "")}"></label>
+        </div>
+        <div class="form-row">
+          <label class="info-field">N° SIRE<input id="profile-sire" value="${escapeHtml(d.sireNumber || "")}" placeholder="Numéro SIRE"></label>
+          <label class="info-field">N° transpondeur<input id="profile-chip" value="${escapeHtml(d.chipNumber || "")}" placeholder="Puce électronique"></label>
+        </div>
+        <div class="form-row">
+          <label class="info-field">Père<input id="profile-sirefather" value="${escapeHtml(d.father || "")}"></label>
+          <label class="info-field">Mère<input id="profile-siremother" value="${escapeHtml(d.mother || "")}"></label>
+        </div>
+        <label class="info-field" style="margin-top:9px">Notes<textarea id="profile-notes" rows="3" placeholder="Particularités, informations utiles...">${escapeHtml(d.notes || "")}</textarea></label>
+        <div class="form-row">
+          <button class="btn btn-primary" onclick="saveHorseProfile()">Enregistrer la fiche</button>
+          <label class="btn btn-secondary" style="cursor:pointer">📖 Importer le livret SIRE<input id="sire-photo-input" type="file" accept="image/*" capture="environment" hidden></label>
+        </div>
+        <div class="sire-note">Photographie la page d'identification du livret. L'extraction automatique nécessite de configurer un service IA sécurisé (API côté serveur). Sans ce service, la photo pourra être sélectionnée mais les champs devront être saisis ou vérifiés manuellement.</div>
+        <div id="sire-import-status" class="muted" style="margin-top:7px"></div>
+      `;
+      document.getElementById("horse-photo-input").addEventListener("change", e => handleHorsePhoto(e.target.files[0]));
+      document.getElementById("sire-photo-input").addEventListener("change", e => importSirePhoto(e.target.files[0]));
+    }
+
+    function saveHorseProfile() {
+      const h = state.horses.find(x => x.id === activeInfoHorse);
+      if (!h) return;
+      const val = id => document.getElementById(id)?.value?.trim() || "";
+      h.name = val("profile-name") || h.name;
+      state.horseProfiles[h.id] = {
+        ...(state.horseProfiles[h.id] || {}),
+        callName:val("profile-callname"), breed:val("profile-breed"), sex:val("profile-sex"),
+        birthDate:val("profile-birth"), sireNumber:val("profile-sire"), chipNumber:val("profile-chip"),
+        father:val("profile-sirefather"), mother:val("profile-siremother"), notes:val("profile-notes")
+      };
+      saveState(); renderHorseProfile(); renderHealthVisits(); renderAllCare();
+    }
+
+    function resizeImageFile(file, maxSide=1100, quality=.78) {
+      return new Promise((resolve,reject) => {
+        const reader = new FileReader();
+        reader.onerror=reject;
+        reader.onload=() => {
+          const img = new Image();
+          img.onerror=reject;
+          img.onload=() => {
+            const scale=Math.min(1,maxSide/Math.max(img.width,img.height));
+            const canvas=document.createElement("canvas");
+            canvas.width=Math.round(img.width*scale); canvas.height=Math.round(img.height*scale);
+            canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+            resolve(canvas.toDataURL("image/jpeg",quality));
+          };
+          img.src=reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleHorsePhoto(file) {
+      if (!file) return;
+      try {
+        const data=await resizeImageFile(file,900,.72);
+        state.horseProfiles[activeInfoHorse] ||= {};
+        state.horseProfiles[activeInfoHorse].photoData=data;
+        saveState(); renderHorseProfile();
+      } catch { alert("Impossible de lire cette photo."); }
+    }
+
+    async function importSirePhoto(file) {
+      if (!file) return;
+      const status=document.getElementById("sire-import-status");
+      status.textContent="Préparation de la photo…";
+      try {
+        const data=await resizeImageFile(file,1800,.86);
+        // GitHub Pages ne fournit pas de serveur API. Endpoint optionnel à déployer séparément.
+        const endpoint=window.EQUICARE_SIRE_API_URL || "";
+        if (!endpoint) {
+          status.textContent="Photo chargée. Pour activer l'extraction IA, configure un endpoint sécurisé dans EQUICARE_SIRE_API_URL et déploie le backend. Aucun champ n'a été modifié.";
+          state.horseProfiles[activeInfoHorse] ||= {};
+          state.horseProfiles[activeInfoHorse].sirePhotoPending=true;
+          saveState();
+          return;
+        }
+        status.textContent="Analyse du livret en cours…";
+        const response=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:data,horseId:activeInfoHorse})});
+        if (!response.ok) throw new Error("Le service d'extraction a répondu avec une erreur.");
+        const extracted=await response.json();
+        const profile=state.horseProfiles[activeInfoHorse] ||= {};
+        const mapping={name:"name",breed:"breed",birthDate:"birthDate",sireNumber:"sireNumber",chipNumber:"chipNumber",father:"father",mother:"mother",sex:"sex"};
+        Object.entries(mapping).forEach(([apiKey,field])=>{if(extracted[apiKey]) profile[field]=String(extracted[apiKey]);});
+        if (extracted.name) state.horses.find(h=>h.id===activeInfoHorse).name=String(extracted.name);
+        profile.sireExtractionNeedsReview=true;
+        saveState(); renderHorseProfile();
+        const msg=document.getElementById("sire-import-status");
+        if(msg) msg.textContent="Extraction terminée : vérifie chaque information avec le livret original avant validation.";
+      } catch(err) {
+        status.textContent="L'analyse automatique n'a pas abouti : "+err.message;
+      }
+    }
+
+    function renderContacts() {
+      ensureHorseInfo();
+      renderHorseTabs("contact-horse-tabs",activeContactHorse,"selectContactHorse");
+      const contacts=state.practitionerContacts[activeContactHorse] || [];
+      document.getElementById("contacts-content").innerHTML=`
+        <div class="item-card">
+          <strong>Ajouter un intervenant</strong>
+          <div class="form-row">
+            <label class="info-field">Spécialité / type<input id="contact-type" placeholder="Vétérinaire, ostéopathe…"></label>
+            <label class="info-field">Nom<input id="contact-name" placeholder="Nom / cabinet"></label>
+          </div>
+          <div class="form-row">
+            <label class="info-field">Téléphone<input id="contact-phone" type="tel" placeholder="06…"></label>
+            <label class="info-field">E-mail<input id="contact-email" type="email" placeholder="contact@…"></label>
+          </div>
+          <label class="info-field" style="margin-top:8px">Message type<textarea id="contact-template" rows="3" placeholder="Bonjour, je souhaiterais convenir d'un rendez-vous pour {cheval}."></textarea></label>
+          <div class="form-row"><button class="btn btn-primary btn-sm" onclick="addPractitionerContact()">Ajouter le contact</button></div>
+        </div>
+        ${contacts.map(c=>`<div class="contact-card">
+          <div class="item-top"><div><strong>${escapeHtml(c.type)}</strong><div>${escapeHtml(c.name)}</div><div class="muted">${escapeHtml(c.phone||"")} ${c.email?"• "+escapeHtml(c.email):""}</div></div><button class="btn btn-outline btn-sm" onclick="deletePractitionerContact('${escapeAttr(c.id)}')">Supprimer</button></div>
+          <div class="form-row"><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','sms')">💬 Rendez-vous par SMS</button><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','email')">✉️ Rendez-vous par e-mail</button></div>
+        </div>`).join("") || `<div class="muted">Aucun intervenant enregistré pour ce cheval.</div>`}`;
+    }
+
+    function addPractitionerContact() {
+      const val=id=>document.getElementById(id).value.trim();
+      const type=val("contact-type"), name=val("contact-name");
+      if(!type||!name){alert("Renseigne au minimum le type et le nom de l'intervenant.");return;}
+      state.practitionerContacts[activeContactHorse].push({id:"contact-"+Date.now(),type,name,phone:val("contact-phone"),email:val("contact-email"),template:val("contact-template")});
+      saveState(); renderContacts();
+    }
+    function deletePractitionerContact(id) {
+      state.practitionerContacts[activeContactHorse]=state.practitionerContacts[activeContactHorse].filter(c=>c.id!==id);
+      saveState(); renderContacts();
+    }
+    function prepareContactAppointment(id,mode) {
+      const c=state.practitionerContacts[activeContactHorse].find(x=>x.id===id);
+      const h=state.horses.find(x=>x.id===activeContactHorse);
+      if(!c||!h)return;
+      const message=(c.template||"Bonjour, je souhaiterais convenir d'un rendez-vous pour {cheval}. Quelles seraient vos prochaines disponibilités ?").replaceAll("{cheval}",h.name);
+      if(mode==="sms") {
+        if(!c.phone){alert("Ajoute un numéro de téléphone à cet intervenant.");return;}
+        window.location.href=`sms:${c.phone.replace(/\s/g,"")}?body=${encodeURIComponent(message)}`;
+      } else {
+        if(!c.email){alert("Ajoute une adresse e-mail à cet intervenant.");return;}
+        window.location.href=`mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent("Demande de rendez-vous – "+h.name)}&body=${encodeURIComponent(message)}`;
+      }
+    }
+
+    function renderWeight() {
+      ensureHorseInfo();
+      renderHorseTabs("weight-horse-tabs",activeWeightHorse,"selectWeightHorse");
+      const records=[...(state.weightRecords[activeWeightHorse]||[])].sort((a,b)=>a.date.localeCompare(b.date));
+      const chart=buildWeightChart(records);
+      document.getElementById("weight-content").innerHTML=`
+        <div class="item-card">
+          <strong>Ajouter une pesée</strong>
+          <div class="form-row">
+            <label class="info-field">Date<input id="weight-date" type="date" value="${todayISO(0)}"></label>
+            <label class="info-field">Poids (kg)<input id="weight-value" type="number" min="1" max="2000" step=".1" placeholder="Ex. 500"></label>
+          </div>
+          <label class="info-field" style="margin-top:8px">Commentaire (facultatif)<input id="weight-note" placeholder="Ex. pesée après vermifuge…"></label>
+          <div class="form-row"><button class="btn btn-primary btn-sm" onclick="addWeightRecord()">Enregistrer la pesée</button></div>
+        </div>
+        <div class="sub-section"><div class="sub-section-header"><strong class="sub-section-title">Évolution du poids</strong><span class="muted">${records.length} pesée(s)</span></div>${chart}</div>
+        <div class="weight-history">${[...records].reverse().map(r=>`<div class="weight-row"><span><strong>${formatDateFR(r.date)}</strong>${r.note?"<br><span class='muted'>"+escapeHtml(r.note)+"</span>":""}</span><span><strong>${Number(r.kg).toLocaleString("fr-FR")} kg</strong> <button class="btn btn-outline btn-sm" onclick="deleteWeightRecord('${escapeAttr(r.id)}')">✕</button></span></div>`).join("") || '<div class="muted">Ajoute une première pesée pour afficher la courbe.</div>'}</div>`;
+    }
+
+    function buildWeightChart(records) {
+      if(!records.length)return '<div class="muted">Aucune donnée pour le moment.</div>';
+      if(records.length===1)return `<div style="padding:20px;text-align:center"><strong style="font-size:1.6rem">${Number(records[0].kg).toLocaleString("fr-FR")} kg</strong><div class="muted">Première pesée enregistrée le ${formatDateFR(records[0].date)}. Ajoute d'autres pesées pour tracer une courbe.</div></div>`;
+      const vals=records.map(r=>Number(r.kg)).filter(Number.isFinite), min=Math.min(...vals), max=Math.max(...vals);
+      const pad=Math.max(5,(max-min)*.18), lo=min-pad, hi=max+pad;
+      const x=i=>42+i*(316/(records.length-1)), y=v=>14+(hi-v)*(142/(hi-lo));
+      const pts=records.map((r,i)=>`${x(i)},${y(Number(r.kg))}`).join(" ");
+      const dots=records.map((r,i)=>`<circle cx="${x(i)}" cy="${y(Number(r.kg))}" r="4" fill="#1e3a2f"><title>${formatDateFR(r.date)} : ${r.kg} kg</title></circle>`).join("");
+      return `<svg class="weight-chart" viewBox="0 0 380 205" role="img" aria-label="Courbe d'évolution du poids">${[0,1,2,3].map(i=>{const yy=14+i*47;return `<line x1="38" y1="${yy}" x2="360" y2="${yy}" stroke="#ddd6ca" stroke-dasharray="3 3"/><text x="32" y="${yy+4}" text-anchor="end" font-size="10" fill="#5d6860">${(hi-i*(hi-lo)/3).toFixed(0)}</text>`}).join("")}<polyline points="${pts}" fill="none" stroke="#1e3a2f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${dots}<text x="42" y="190" font-size="10" fill="#5d6860">${formatDateFR(records[0].date)}</text><text x="360" y="190" text-anchor="end" font-size="10" fill="#5d6860">${formatDateFR(records[records.length-1].date)}</text></svg>`;
+    }
+    function addWeightRecord() {
+      const date=document.getElementById("weight-date").value, kg=Number(document.getElementById("weight-value").value), note=document.getElementById("weight-note").value.trim();
+      if(!date||!Number.isFinite(kg)||kg<=0){alert("Saisis une date et un poids valide.");return;}
+      state.weightRecords[activeWeightHorse].push({id:"weight-"+Date.now(),date,kg,note});
+      saveState();renderWeight();
+    }
+    function deleteWeightRecord(id) {
+      state.weightRecords[activeWeightHorse]=state.weightRecords[activeWeightHorse].filter(r=>r.id!==id);
+      saveState();renderWeight();
+    }
+    function renderInformation() {
+      ensureHorseInfo();
+      if(activeInfoSub==="info-horses")renderHorseProfile();
+      if(activeInfoSub==="info-contacts")renderContacts();
+      if(activeInfoSub==="info-weight")renderWeight();
+    }
+
+    function switchTab(tabId, skipScrollTop = false) {
+      activeTab = tabId;
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+      document.getElementById(tabId).classList.remove("hidden");
+      document.querySelectorAll(".nav-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.tab === tabId);
+      });
+      renderAlertsAndWeather();
+      if (tabId === "tab-info") renderInformation();
+      if (!skipScrollTop) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+
+    document.querySelectorAll(".health-subbtn").forEach(btn => {
+      btn.addEventListener("click", () => switchHealthSubTab(btn.dataset.sub));
+    });
+
+    document.getElementById("btn-toggle-add-food").addEventListener("click", () => {
+      document.getElementById("new-food-date").value = todayISO(0);
+      document.getElementById("new-food-bags").value = 1;
+      document.getElementById("add-food-form").classList.toggle("hidden");
+    });
+
+    document.getElementById("btn-cancel-food").addEventListener("click", () => {
+      document.getElementById("add-food-form").classList.add("hidden");
+    });
+
+    document.getElementById("btn-create-food").addEventListener("click", () => {
+      const name = document.getElementById("new-food-name").value.trim();
+      const unit = document.getElementById("new-food-unit").value === "L" ? "L" : "kg";
+      const bags = Math.max(1, parseInt(document.getElementById("new-food-bags").value, 10) || 1);
+      const qtyPerUnit = parseFloat(document.getElementById("new-food-bag-qty").value) || (unit === "L" ? 5 : 20);
+      const dateVal = document.getElementById("new-food-date").value || todayISO(0);
+      const rawRate = parseFloat(document.getElementById("new-food-daily-rate").value);
+      const dailyInBase = rawRate > 0
+        ? (unit === "L" ? rawRate / 1000 : rawRate)
+        : (unit === "L" ? 0.15 : 1.5);
+
+      if (!name) return;
+
+      state.foods.unshift({
+        id: "food-" + Date.now(),
+        name,
+        unit,
+        bagKg: qtyPerUnit,
+        estimatedDailyKg: dailyInBase,
+        purchases: [{ date: dateVal, bags, kgPerBag: qtyPerUnit }],
+        openedBags: [{ date: dateVal, kgPerBag: qtyPerUnit }]
+      });
+
+      document.getElementById("new-food-name").value = "";
+      document.getElementById("new-food-bags").value = "";
+      document.getElementById("new-food-bag-qty").value = "";
+      document.getElementById("new-food-daily-rate").value = "";
+      document.getElementById("add-food-form").classList.add("hidden");
+
+      saveState();
+      renderFoods();
+      renderAlertsAndWeather();
+    });
+
+    function syncConfigInputs() {
+      document.getElementById("cfg-day-th").value = state.config.dayThreshold ?? 5;
+      document.getElementById("cfg-cold-th").value = state.config.coldThreshold ?? 5;
+      document.getElementById("cfg-uv-th").value = state.config.uvThreshold ?? 6;
+      document.getElementById("cfg-stock-days").value = state.config.stockAlertDays ?? 5;
+      document.getElementById("cfg-deworm-days").value = state.config.dewormAlertDays ?? 7;
+      document.getElementById("cfg-vaccine-days").value = state.config.vaccineAlertDays ?? 30;
+      document.getElementById("cfg-pharma-days").value = state.config.pharmaAlertDays ?? 30;
+      document.getElementById("cfg-visit-days").value = state.config.visitAlertDays ?? 15;
+    }
+
+    document.getElementById("btn-save-cfg").addEventListener("click", () => {
+      state.config.dayThreshold = parseFloat(document.getElementById("cfg-day-th").value);
+      state.config.coldThreshold = parseFloat(document.getElementById("cfg-cold-th").value);
+      state.config.uvThreshold = parseFloat(document.getElementById("cfg-uv-th").value);
+      state.config.stockAlertDays = parseInt(document.getElementById("cfg-stock-days").value, 10);
+      state.config.dewormAlertDays = parseInt(document.getElementById("cfg-deworm-days").value, 10);
+      state.config.vaccineAlertDays = parseInt(document.getElementById("cfg-vaccine-days").value, 10);
+      state.config.pharmaAlertDays = parseInt(document.getElementById("cfg-pharma-days").value, 10);
+      state.config.visitAlertDays = parseInt(document.getElementById("cfg-visit-days").value, 10);
+      saveState();
+      renderAlertsAndWeather();
+      renderFoods();
+      renderAllCare();
+      renderPharmacy();
+    });
+
+    document.getElementById("btn-refresh-weather").addEventListener("click", fetchWeather);
+
+    document.getElementById("btn-export-json").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `equicare-sauvegarde-${todayISO(0)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("btn-cloud-account").addEventListener("click", openCloudAccountModal);
+    document.getElementById("btn-cloud-close").addEventListener("click", () => document.getElementById("cloud-auth-modal").classList.remove("open"));
+    document.getElementById("btn-cloud-login").addEventListener("click", () => cloudAuthAction("login"));
+    document.getElementById("btn-cloud-signup").addEventListener("click", () => cloudAuthAction("signup"));
+    document.getElementById("btn-cloud-sync-now").addEventListener("click", async () => {
+      const msg = document.getElementById("cloud-auth-message");
+      msg.textContent = "Synchronisation en cours…";
+      const succeeded = await syncStateToCloud();
+      if (succeeded) msg.textContent = "Synchronisation réussie : les données ont été envoyées à Supabase.";
+      // En cas d'échec, conserver le message d'erreur précis affiché par syncStateToCloud().
+    });
+    document.getElementById("btn-cloud-logout").addEventListener("click", async () => {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      document.getElementById("cloud-auth-modal").classList.remove("open");
+    });
+
+    document.getElementById("btn-info").addEventListener("click", () => {
+      document.getElementById("info-modal").classList.add("open");
+    });
+
+    document.getElementById("btn-close-info").addEventListener("click", () => {
+      document.getElementById("info-modal").classList.remove("open");
+    });
+
+    function escapeHtml(str) {
+      return String(str || "").replace(/[&<>"']/g, s => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[s]));
+    }
+
+    function escapeAttr(str) {
+      return String(str || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+
+    ensureHorseInfo();
+    syncConfigInputs();
+    renderFoods();
+    renderAllCare();
+    renderPharmacy();
+    renderAlertsAndWeather();
+    fetchWeather();
+    initCloudSync();
+  </script>
+</body>
+</html>
