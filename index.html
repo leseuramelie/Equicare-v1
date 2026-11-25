@@ -436,7 +436,7 @@
     /* 4 sub-tabs inside Santé */
     .health-subnav {
       display: grid;
-      grid-template-columns: repeat(4, 1fr); /* mêmes styles d’origine, une colonne par onglet */
+      grid-template-columns: repeat(6, minmax(0, 1fr)); /* mêmes styles d’origine, une colonne par onglet */
       gap: 6px;
       background: var(--surface-soft);
       border: 1px solid var(--border);
@@ -664,7 +664,7 @@
       background: var(--surface);
       border-top: 1px solid var(--border);
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
       gap: 6px;
     }
@@ -833,6 +833,7 @@
           </div>
         </div>
 
+        <div class="weather-metrics" style="margin-top:8px;"><div class="metric-box"><div class="metric-label">Vent / rafales</div><div class="metric-val" id="w-wind">--</div></div><div class="metric-box"><div class="metric-label">Pluie actuelle</div><div class="metric-val" id="w-rain">--</div></div></div>
         <div class="muted" style="margin-bottom:6px;">Prochaines heures (10h–21h journée & 21h–10h nuit/matin) :</div>
         <div class="hourly-strip" id="hourly-strip"></div>
       </div>
@@ -877,7 +878,7 @@
         <div class="card-header">
           <div>
             <h2 class="card-title">Sacs / bidons achetés, ouverts & jours de stock</h2>
-            <div class="muted">Aliments solides en kg (conso en kg/j) • Huile de lin en litres (conso affichée en mL/j, défaut 150 mL/j).</div>
+            <div class="muted">Aliments solides en kg (foin acheté en rounds de 180 kg ; conversion en kg affichée) (conso en kg/j) • Huile de lin en litres (conso affichée en mL/j, défaut 150 mL/j).</div>
           </div>
           <button class="btn btn-primary btn-sm" id="btn-toggle-add-food">+ Nouvel aliment</button>
         </div>
@@ -899,8 +900,8 @@
           </div>
           <div class="form-row">
             <input type="number" id="new-food-daily-rate" placeholder="Conso / j (kg ou mL)" step="1" style="width:185px;" />
-            <input type="number" id="new-food-share-1" placeholder="Part cheval 1 (%)" min="0" max="100" value="50" style="width:130px;" />
-            <input type="number" id="new-food-share-2" placeholder="Part cheval 2 (%)" min="0" max="100" value="50" style="width:130px;" />
+            <input type="number" id="new-food-share-1" placeholder="Part Sacramento (%)" min="0" max="100" value="50" style="width:130px;" />
+            <input type="number" id="new-food-share-2" placeholder="Part Bella (%)" min="0" max="100" value="50" style="width:130px;" />
             <button class="btn btn-primary btn-sm" id="btn-create-food">Ajouter</button>
             <button class="btn btn-outline btn-sm" id="btn-cancel-food">Annuler</button>
           </div>
@@ -937,6 +938,7 @@
             <span>🩹</span>
             <span>Pharmacie</span>
           </button>
+          <button class="health-subbtn" data-sub="sub-weight"><span>⚖️</span><span>Poids</span></button>
         </div>
 
         <!-- SUB-SECTION 1: INTERVENANT -->
@@ -959,6 +961,8 @@
           <div class="horse-tabs" id="deworm-horse-tabs"></div>
           <div id="deworm-list"></div>
         </div>
+
+        <div id="sub-weight" class="health-subpanel hidden"><div class="muted" style="margin-bottom:10px;">Suivi du poids, de la hauteur au garrot et du périmètre thoracique.</div><div class="horse-tabs" id="weight-horse-tabs"></div><div id="weight-content"></div></div>
 
         <!-- SUB-SECTION 4: PHARMACIE -->
         <div id="sub-pharmacy" class="health-subpanel hidden">
@@ -994,13 +998,12 @@
         <div class="card-header">
           <div>
             <h2 class="card-title">Informations des chevaux</h2>
-            <div class="muted">Fiches individuelles, contacts et suivi du poids.</div>
+            <div class="muted">Fiches individuelles et contacts communs.</div>
           </div>
         </div>
         <div class="info-subnav" role="tablist" aria-label="Sections Informations">
           <button class="info-subbtn active" data-info-sub="info-horses">🐴 Chevaux</button>
           <button class="info-subbtn" data-info-sub="info-contacts">📞 Intervenants</button>
-          <button class="info-subbtn" data-info-sub="info-weight">⚖️ Poids</button>
         </div>
         <div id="info-horses" class="info-panel">
           <div class="horse-tabs" id="info-horse-tabs"></div>
@@ -1010,12 +1013,11 @@
           <div class="muted">Liste commune des intervenants pour les deux chevaux. Les boutons ouvrent ton application SMS ou Gmail avec le message prérempli.</div>
           <div id="contacts-content"></div>
         </div>
-        <div id="info-weight" class="info-panel hidden">
-          <div class="horse-tabs" id="weight-horse-tabs"></div>
-          <div id="weight-content"></div>
-        </div>
       </div>
     </section>
+
+    <!-- TAB COURSES -->
+    <section id="tab-shopping" class="tab-panel hidden"><div class="card"><div class="card-header"><div><h2 class="card-title">Liste de courses</h2><div class="muted">Classe tes achats par magasin et coche-les au fur et à mesure.</div></div></div><div class="form-row"><input id="shopping-item" placeholder="Article à acheter" style="flex:1;min-width:160px"><select id="shopping-store"><option>Coopérative Kramer</option><option>Équitation</option><option>Agradi</option><option>Decathlon</option></select><input id="shopping-qty" placeholder="Quantité" style="width:100px"><button class="btn btn-primary btn-sm" id="shopping-add">Ajouter</button></div><div id="shopping-list"></div></div></section>
 
     <!-- TAB 5 : BUDGET -->
     <section id="tab-budget" class="tab-panel hidden">
@@ -1044,6 +1046,7 @@
       <span class="nav-icon">📋</span>
       <span>Informations</span>
     </button>
+    <button class="nav-btn" data-tab="tab-shopping"><span class="nav-icon">🛒</span><span>Courses</span></button>
     <button class="nav-btn" data-tab="tab-budget">
       <span class="nav-icon">💶</span>
       <span>Budget</span>
@@ -1090,14 +1093,14 @@
           <input type="date" id="buy-date-input" />
         </label>
         <label class="muted"><span id="buy-count-label">Nombre de sacs</span> :
-          <input type="number" id="buy-bags-input" min="1" step="1" style="width:82px;" />
+          <input type="number" id="buy-bags-input" min="1" step="1" style="width:82px;" /><span id="buy-round-conversion" class="muted"></span>
         </label>
         <label class="muted"><span id="buy-qty-label">Poids / sac (kg)</span> :
           <input type="number" id="buy-qty-input" min="0.5" step="0.5" style="width:92px;" />
         </label>
         <label class="muted">Prix total (€) : <input type="number" id="buy-price-input" min="0" step="0.01" style="width:110px;" /></label>
       </div>
-      <div class="form-row"><label class="muted">Part du prix pour le cheval 1 (%) : <input type="number" id="buy-share-1" min="0" max="100" value="50" style="width:90px;" /></label><label class="muted">Part pour le cheval 2 (%) : <input type="number" id="buy-share-2" min="0" max="100" value="50" style="width:90px;" /></label></div>
+      <div class="form-row"><label class="muted">Part du prix pour Sacramento (%) : <input type="number" id="buy-share-1" min="0" max="100" value="50" style="width:90px;" /></label><label class="muted">Part pour Bella (%) : <input type="number" id="buy-share-2" min="0" max="100" value="50" style="width:90px;" /></label></div>
       <div class="form-row" style="justify-content:flex-end;margin-top:14px;">
         <button class="btn btn-outline btn-sm" id="btn-close-buy-modal">Annuler</button>
         <button class="btn btn-primary btn-sm" id="btn-confirm-buy">Enregistrer l'achat</button>
@@ -1292,7 +1295,7 @@
         },
         {
           id: "hartog",
-          name: "Hartog Luzerne",
+          name: "HARTOG HAYCOBS",
           unit: "kg",
           bagKg: 20,
           estimatedDailyKg: 1.8,
@@ -1741,9 +1744,10 @@
 
     function computeFoodMetrics(food) {
       const oil = isOilFood(food);
+      const hay = food.unit === "round" || food.id === "foin";
       const unitLabel = oil ? "L" : "kg";
-      const containerWord = oil ? "bidon" : "sac";
-      const containersWord = oil ? "bidons" : "sacs";
+      const containerWord = oil ? "bidon" : (hay ? "round" : "sac");
+      const containersWord = oil ? "bidons" : (hay ? "rounds" : "sacs");
 
       const purchases = [...(food.purchases || [])].sort((a, b) => a.date.localeCompare(b.date));
       const openedBags = [...(food.openedBags || [])].sort((a, b) => a.date.localeCompare(b.date));
@@ -2243,6 +2247,8 @@
       if (weatherData && weatherData.current) {
         const cur = weatherData.current;
         document.getElementById("w-temp").textContent = `${Math.round(cur.temperature_2m)}°C`;
+        const windEl=document.getElementById("w-wind"); if(windEl) windEl.textContent = Number(cur.wind_gusts_10m||0)>=40 ? `Vent fort • ${Math.round(cur.wind_speed_10m||0)} km/h, rafales ${Math.round(cur.wind_gusts_10m)} km/h` : `Vent ${Math.round(cur.wind_speed_10m||0)} km/h (rafales ${Math.round(cur.wind_gusts_10m||0)} km/h)`;
+        const rainEl=document.getElementById("w-rain"); if(rainEl){const hourlyRain=(weatherData.hourly?.precipitation||[]).slice(0,24).reduce((a,b)=>a+Number(b||0),0);rainEl.textContent = Number(cur.precipitation||0)>0 ? `En cours • ${Number(cur.precipitation).toFixed(1)} mm` : (hourlyRain>0?`Prévue aujourd’hui • ${hourlyRain.toFixed(1)} mm`:`Pas de pluie prévue aujourd’hui`);}
         document.getElementById("w-desc").textContent = weatherCodeLabel(cur.weather_code);
         document.getElementById("w-day-min").textContent =
           dayInfo.minTemp !== null ? `${dayInfo.minTemp.toFixed(1)}°C` : "--°C";
@@ -2298,7 +2304,7 @@
     }
 
     async function fetchWeather() {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code,wind_gusts_10m,precipitation&hourly=temperature_2m,uv_index,precipitation,wind_gusts_10m&daily=uv_index_max,temperature_2m_min,temperature_2m_max&timezone=Europe%2FParis&forecast_days=3`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation&hourly=temperature_2m,uv_index,precipitation,wind_gusts_10m&daily=uv_index_max,temperature_2m_min,temperature_2m_max&timezone=Europe%2FParis&forecast_days=3`;
       try {
         const res = await fetch(url);
         weatherData = await res.json();
@@ -2323,10 +2329,10 @@
         return `
           <div class="item-card" id="food-card-${escapeAttr(food.id)}">
             <div class="item-top">
-              <div>
+              <div style="display:flex;gap:10px;align-items:center">${food.productPhoto?`<img src="${food.productPhoto}" alt="Fiche produit ${escapeHtml(food.name)}" style="width:76px;height:88px;object-fit:contain;border-radius:8px;background:#fff">`:``}<div>
                 <div class="item-name">${escapeHtml(food.name)}</div>
                 <div class="muted">Dernier achat : <strong>${formatDateFR(m.lastPurchaseDate)}</strong> • Dernier ${m.containerWord} ouvert : <strong>${formatDateFR(m.lastOpenDate)}</strong></div>
-              </div>
+              </div></div>
               <span class="badge ${badgeClass}">${badgeText}</span>
             </div>
 
@@ -2336,7 +2342,7 @@
                 <div class="v">${m.estimatedDaysLeft} jours (${m.totalRemainingQty.toFixed(2)} ${m.unitLabel})</div>
               </div>
               <div class="stat-mini">
-                <div class="k">${m.oil ? "Bidons fermés / Ouverts" : "Sacs fermés / Ouverts"}</div>
+                <div class="k">${m.oil ? "Bidons fermés / Ouverts" : (food.unit === "round" || food.id === "foin" ? "Rounds fermés / Ouverts" : "Sacs fermés / Ouverts")}</div>
                 <div class="v">${m.closedBagsRemaining} fermé(s) • ${m.openedCount} ouvert(s)</div>
               </div>
               <div class="stat-mini">
@@ -2350,7 +2356,7 @@
             </div>
 
             <div class="bag-banner">
-              <span>${m.oil ? "Bidon" : "Sac"} ouvert actuel : <strong>${m.currentOpenRemainingQty.toFixed(2)} ${m.unitLabel}</strong> estimés restants</span>
+              <span>${m.oil ? "Bidon" : (food.unit === "round" || food.id === "foin" ? "Round" : "Sac")} ouvert actuel : <strong>${m.currentOpenRemainingQty.toFixed(2)} ${m.unitLabel}</strong> estimés restants</span>
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
                 <button class="btn btn-secondary btn-sm" onclick="openBagModal('${escapeAttr(food.id)}')">${m.oil ? "🛢️ Nouveau bidon ouvert" : "🎒 Nouveau sac ouvert"}</button>
                 <button class="btn btn-primary btn-sm" onclick="openBuyModal('${escapeAttr(food.id)}')">+ Acheter (${m.containersWord})</button>
@@ -2361,17 +2367,17 @@
               <label class="muted" style="font-size:0.78rem;">${rateInputLabel}
                 <input type="number" step="${rateStep}" min="1" value="${m.avgInputDisplay}" style="width:82px;padding:4px 6px;" onchange="updateFoodDailyEstimate('${escapeAttr(food.id)}', this.value)" />
               </label>
-              <button class="btn btn-outline btn-sm" onclick="deleteFood('${escapeAttr(food.id)}')">Supprimer</button>
+              <label class="btn btn-outline btn-sm">📄 Photo fiche produit<input type="file" accept="image/*" hidden onchange="saveFoodProductPhoto('${escapeAttr(food.id)}',this.files[0])"></label><button class="btn btn-secondary btn-sm" onclick="extractFoodProduct('${escapeAttr(food.id)}')">Extraire les informations</button><button class="btn btn-outline btn-sm" onclick="deleteFood('${escapeAttr(food.id)}')">Supprimer</button>
             </div>
 
             <div class="purchase-log">
               <div>Achats enregistrés :</div>
               <div class="purchase-pills">
-                ${m.purchases.map((p, idx) => `<span class="p-pill">${formatDateFR(p.date)} • ${p.bags} ${m.containerWord}(s) × ${p.kgPerBag} ${m.unitLabel} • ${Number(p.totalPrice||0).toFixed(2)} € <button class="btn btn-outline btn-sm" onclick="editFoodPurchase('${escapeAttr(food.id)}',${idx})">✎</button><button class="btn btn-outline btn-sm" onclick="deleteFoodPurchase('${escapeAttr(food.id)}',${idx})">×</button></span>`).join("")}
+                ${m.purchases.map((p, idx) => `<span class="p-pill">${formatDateFR(p.date)} • ${p.bags} ${m.containerWord}(s)${food.unit === "round" || food.id === "foin" ? ` (${Number(p.bags)*180} kg)` : ` × ${p.kgPerBag} ${m.unitLabel}`} • ${Number(p.totalPrice||0).toFixed(2)} € <button class="btn btn-outline btn-sm" onclick="editFoodPurchase('${escapeAttr(food.id)}',${idx})">✎</button><button class="btn btn-outline btn-sm" onclick="deleteFoodPurchase('${escapeAttr(food.id)}',${idx})">×</button></span>`).join("")}
               </div>
-              <div style="margin-top:6px;">${m.oil ? "Bidons ouverts enregistrés :" : "Sacs ouverts enregistrés :"}</div>
+              <div style="margin-top:6px;">${m.oil ? "Bidons ouverts enregistrés :" : (food.unit === "round" || food.id === "foin" ? "Rounds ouverts enregistrés :" : "Sacs ouverts enregistrés :")}</div>
               <div class="purchase-pills">
-                ${m.openedBags.map((o, idx) => `<span class="p-pill">${m.oil ? "Bidon" : "Sac"} #${idx + 1} ouvert le ${formatDateFR(o.date)} (${o.kgPerBag} ${m.unitLabel}) <button class="btn btn-outline btn-sm" onclick="editFoodOpening('${escapeAttr(food.id)}',${idx})">✎</button><button class="btn btn-outline btn-sm" onclick="deleteFoodOpening('${escapeAttr(food.id)}',${idx})">×</button></span>`).join("")}
+                ${m.openedBags.map((o, idx) => `<span class="p-pill">${m.oil ? "Bidon" : (food.unit === "round" || food.id === "foin" ? "Round" : "Sac")} #${idx + 1} ouvert le ${formatDateFR(o.date)} (${o.kgPerBag} ${m.unitLabel}) <button class="btn btn-outline btn-sm" onclick="editFoodOpening('${escapeAttr(food.id)}',${idx})">✎</button><button class="btn btn-outline btn-sm" onclick="deleteFoodOpening('${escapeAttr(food.id)}',${idx})">×</button></span>`).join("")}
               </div>
             </div>
           </div>
@@ -2382,13 +2388,13 @@
     function editFoodPurchase(foodId, idx) {
       const f=state.foods.find(x=>x.id===foodId), p=f?.purchases?.[idx]; if(!p)return;
       const date=prompt("Date de l'achat (AAAA-MM-JJ)",p.date); if(date===null)return;
-      const bags=prompt("Nombre de sacs/bidons",p.bags); if(bags===null)return;
-      const qty=prompt("Contenance par sac/bidon",p.kgPerBag); if(qty===null)return;
+      const bags=prompt(f.unit==="round"||f.id==="foin"?"Nombre de rounds":"Nombre de sacs/bidons",p.bags); if(bags===null)return;
+      const isHay=f.unit==="round"||f.id==="foin";const qty=isHay?180:prompt("Contenance par sac/bidon",p.kgPerBag); if(qty===null)return;
       const price=prompt("Prix total payé (€)",p.totalPrice??0); if(price===null)return;
       p.date=date; p.bags=Math.max(1,Number(bags)||1); p.kgPerBag=Math.max(.01,Number(qty)||p.kgPerBag); p.totalPrice=Math.max(0,Number(price)||0);
       const h1=state.horses[0],h2=state.horses[1];
-      const a1=prompt(`Part de ${h1?.name||"cheval 1"} (%)`,p.allocation?.[h1?.id]??50); if(a1===null)return;
-      const a2=prompt(`Part de ${h2?.name||"cheval 2"} (%)`,p.allocation?.[h2?.id]??(100-Number(a1))); if(a2===null)return;
+      const a1=prompt(`Part de ${h1?.name||"Sacramento"} (%)`,p.allocation?.[h1?.id]??50); if(a1===null)return;
+      const a2=prompt(`Part de ${h2?.name||"Bella"} (%)`,p.allocation?.[h2?.id]??(100-Number(a1))); if(a2===null)return;
       if(h1&&h2&&Math.round(Number(a1)+Number(a2))!==100){alert("La répartition doit totaliser 100 %.");return;}
       p.allocation={[h1?.id]:Math.max(0,Math.min(100,Number(a1)||0)),[h2?.id]:Math.max(0,Math.min(100,Number(a2)||0))};
       f.purchases.sort((a,b)=>a.date.localeCompare(b.date)); saveState(); renderFoods(); renderBudget();
@@ -2423,12 +2429,15 @@
       document.getElementById("buy-modal-title").textContent = `Nouvel achat — ${food.name}`;
       document.getElementById("buy-modal-sub").textContent = oil
         ? "Indiquez la date d'achat, le nombre de bidons et la contenance en litres (L)."
-        : "Indiquez la date d'achat, le nombre de sacs achetés et le poids d'un sac en kg.";
-      document.getElementById("buy-count-label").textContent = oil ? "Nombre de bidons" : "Nombre de sacs";
-      document.getElementById("buy-qty-label").textContent = oil ? "Litres / bidon (L)" : "Poids / sac (kg)";
+        : (food.unit === "round" || food.id === "foin" ? "Saisis le nombre de rounds : 1 round = 180 kg. Le poids total sera calculé automatiquement." : "Indiquez la date d'achat, le nombre de sacs achetés et le poids d'un sac en kg.");
+      document.getElementById("buy-count-label").textContent = oil ? "Nombre de bidons" : (food.unit === "round" || food.id === "foin" ? "Nombre de rounds" : "Nombre de sacs");
+      document.getElementById("buy-qty-label").textContent = oil ? "Litres / bidon (L)" : (food.unit === "round" || food.id === "foin" ? "Nombre de rounds (180 kg chacun)" : "Poids / sac (kg)");
       document.getElementById("buy-date-input").value = todayISO(0);
       document.getElementById("buy-bags-input").value = 1;
-      document.getElementById("buy-qty-input").value = food.bagKg || (oil ? 5 : 20);
+      const roundConv=document.getElementById("buy-round-conversion"); if(roundConv){roundConv.textContent=(food.unit === "round" || food.id === "foin")?"(180 kg)":"";}
+      document.getElementById("buy-qty-input").value = (food.unit === "round" || food.id === "foin") ? 180 : (food.bagKg || (oil ? 5 : 20));
+      if(food.unit === "round" || food.id === "foin"){document.getElementById("buy-qty-input").readOnly=true;document.getElementById("buy-qty-label").textContent="Poids fixe par round (kg)";}else{document.getElementById("buy-qty-input").readOnly=false;}
+      if(roundConv && (food.unit === "round" || food.id === "foin")){document.getElementById("buy-bags-input").oninput=()=>{roundConv.textContent=`(${Number(document.getElementById("buy-bags-input").value||0)*180} kg)`;};document.getElementById("buy-bags-input").oninput();}
       document.getElementById("buy-price-input").value = "";
       document.getElementById("buy-share-1").value = 50; document.getElementById("buy-share-2").value = 50;
       document.getElementById("buy-modal").classList.add("open");
@@ -2445,7 +2454,7 @@
       if (!buyingFoodId) return;
       const dateVal = document.getElementById("buy-date-input").value;
       const bagsVal = Math.max(1, parseInt(document.getElementById("buy-bags-input").value, 10) || 1);
-      const qtyVal = parseFloat(document.getElementById("buy-qty-input").value);
+      const qtyVal = (state.foods.find(f=>f.id===buyingFoodId)?.unit === "round" || buyingFoodId === "foin") ? 180 : parseFloat(document.getElementById("buy-qty-input").value);
       if (!dateVal || !qtyVal || qtyVal <= 0) return;
 
       const food = state.foods.find(f => f.id === buyingFoodId);
@@ -2478,9 +2487,10 @@
         : `Nouveau sac ouvert — ${food.name}`;
       document.getElementById("open-bag-modal-sub").textContent =
         "Enregistrez la date d'ouverture pour mettre à jour le stock et la moyenne de consommation.";
-      document.getElementById("open-qty-label").textContent = oil ? "Contenance (L)" : "Poids du sac (kg)";
+      document.getElementById("open-qty-label").textContent = oil ? "Contenance (L)" : (food.unit === "round" || food.id === "foin" ? "Poids du round (180 kg)" : "Poids du sac (kg)");
       document.getElementById("open-bag-date-input").value = todayISO(0);
-      document.getElementById("open-bag-qty-input").value = food.bagKg || (oil ? 5 : 20);
+      document.getElementById("open-bag-qty-input").value = (food.unit === "round" || food.id === "foin") ? 180 : (food.bagKg || (oil ? 5 : 20));
+      document.getElementById("open-bag-qty-input").readOnly = food.unit === "round" || food.id === "foin";
       document.getElementById("open-bag-modal").classList.add("open");
     }
 
@@ -2886,6 +2896,7 @@
 
     function switchHealthSubTab(subId) {
       activeHealthSubTab = subId;
+      if(subId === "sub-weight") renderWeight();
       document.querySelectorAll(".health-subpanel").forEach(p => {
         p.classList.toggle("hidden", p.id !== subId);
       });
@@ -2961,6 +2972,7 @@
           <label class="info-field">Nom usuel<input id="profile-callname" value="${escapeHtml(d.callName || "")}" placeholder="Nom d'écurie"></label>
         </div>
         <div class="form-row">
+          <label class="info-field">Hauteur au garrot (cm)<input id="profile-height" type="number" min="50" max="250" step="0.5" value="${escapeHtml(d.heightAtWithers || "")}" placeholder="Ex. 160"></label>
           <label class="info-field">Race<input id="profile-breed" value="${escapeHtml(d.breed || "")}" placeholder="Race"></label>
           <label class="info-field">Sexe<select id="profile-sex"><option value="">Non renseigné</option><option ${d.sex==="Jument"?"selected":""}>Jument</option><option ${d.sex==="Hongre"?"selected":""}>Hongre</option><option ${d.sex==="Étalon"?"selected":""}>Étalon</option></select></label>
           <label class="info-field">Date de naissance<input id="profile-birth" type="date" value="${escapeHtml(d.birthDate || "")}"></label>
@@ -2992,7 +3004,7 @@
       h.name = val("profile-name") || h.name;
       state.horseProfiles[h.id] = {
         ...(state.horseProfiles[h.id] || {}),
-        callName:val("profile-callname"), breed:val("profile-breed"), sex:val("profile-sex"),
+        callName:val("profile-callname"), breed:val("profile-breed"), heightAtWithers:Number(val("profile-height"))||null, sex:val("profile-sex"),
         birthDate:val("profile-birth"), sireNumber:val("profile-sire"), chipNumber:val("profile-chip"),
         father:val("profile-sirefather"), mother:val("profile-siremother"), notes:val("profile-notes")
       };
@@ -3121,12 +3133,14 @@
           <div class="form-row">
             <label class="info-field">Date<input id="weight-date" type="date" value="${todayISO(0)}"></label>
             <label class="info-field">Poids (kg)<input id="weight-value" type="number" min="1" max="2000" step=".1" placeholder="Ex. 500"></label>
+            <label class="info-field">Hauteur au garrot (cm)<input id="weight-height" type="number" min="50" max="250" step=".5" value="${escapeHtml(state.horseProfiles[activeWeightHorse]?.heightAtWithers || "")}" readonly></label>
+            <label class="info-field">Périmètre thoracique (cm)<input id="weight-girth" type="number" min="50" max="300" step=".5" placeholder="Ex. 185"></label>
           </div>
           <label class="info-field" style="margin-top:8px">Commentaire (facultatif)<input id="weight-note" placeholder="Ex. pesée après vermifuge…"></label>
           <div class="form-row"><button class="btn btn-primary btn-sm" onclick="addWeightRecord()">Enregistrer la pesée</button></div>
         </div>
         <div class="sub-section"><div class="sub-section-header"><strong class="sub-section-title">Évolution du poids</strong><span class="muted">${records.length} pesée(s)</span></div>${chart}</div>
-        <div class="weight-history">${[...records].reverse().map(r=>`<div class="weight-row"><span><strong>${formatDateFR(r.date)}</strong>${r.note?"<br><span class='muted'>"+escapeHtml(r.note)+"</span>":""}${r.photoData?`<br><img src="${r.photoData}" alt="Photo de la pesée" style="width:76px;height:64px;object-fit:cover;border-radius:8px;margin-top:6px">`:""}</span><span><strong>${Number(r.kg).toLocaleString("fr-FR")} kg</strong> <button class="btn btn-outline btn-sm" onclick="deleteWeightRecord('${escapeAttr(r.id)}')">✕</button></span></div>`).join("") || '<div class="muted">Ajoute une première pesée pour afficher la courbe.</div>'}</div>`;
+        <div class="weight-history">${[...records].reverse().map(r=>`<div class="weight-row"><span><strong>${formatDateFR(r.date)}</strong>${r.note?"<br><span class='muted'>"+escapeHtml(r.note)+"</span>":""}${r.photoData?`<br><img src="${r.photoData}" alt="Photo de la pesée" style="width:76px;height:64px;object-fit:cover;border-radius:8px;margin-top:6px">`:""}</span><span><strong>${Number(r.kg).toLocaleString("fr-FR")} kg</strong>${r.heightAtWithers?`<div class="muted">Garrot : ${r.heightAtWithers} cm</div>`:""}${r.girth?`<div class="muted">Périmètre thoracique : ${r.girth} cm</div>`:""} <button class="btn btn-outline btn-sm" onclick="deleteWeightRecord('${escapeAttr(r.id)}')">✕</button></span></div>`).join("") || '<div class="muted">Ajoute une première pesée pour afficher la courbe.</div>'}</div>`;
     }
 
     function buildWeightChart(records) {
@@ -3140,9 +3154,9 @@
       return `<svg class="weight-chart" viewBox="0 0 380 205" role="img" aria-label="Courbe d'évolution du poids">${[0,1,2,3].map(i=>{const yy=14+i*47;return `<line x1="38" y1="${yy}" x2="360" y2="${yy}" stroke="#ddd6ca" stroke-dasharray="3 3"/><text x="32" y="${yy+4}" text-anchor="end" font-size="10" fill="#5d6860">${(hi-i*(hi-lo)/3).toFixed(0)}</text>`}).join("")}<polyline points="${pts}" fill="none" stroke="#1e3a2f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${dots}<text x="42" y="190" font-size="10" fill="#5d6860">${formatDateFR(records[0].date)}</text><text x="360" y="190" text-anchor="end" font-size="10" fill="#5d6860">${formatDateFR(records[records.length-1].date)}</text></svg>`;
     }
     function addWeightRecord() {
-      const date=document.getElementById("weight-date").value, kg=Number(document.getElementById("weight-value").value), note=document.getElementById("weight-note").value.trim();
-      if(!date||!Number.isFinite(kg)||kg<=0){alert("Saisis une date et un poids valide.");return;}
-      state.weightRecords[activeWeightHorse].push({id:"weight-"+Date.now(),date,kg,note});
+      const date=document.getElementById("weight-date").value, kg=Number(document.getElementById("weight-value").value), note=document.getElementById("weight-note").value.trim(), height=Number(document.getElementById("weight-height").value)||null, girth=Number(document.getElementById("weight-girth").value)||null;
+      if(!date||!Number.isFinite(kg)||kg<=0||!girth){alert("Saisis une date, un poids et un périmètre thoracique valides.");return;}
+      state.weightRecords[activeWeightHorse].push({id:"weight-"+Date.now(),date,kg,note,heightAtWithers:height,girth});
       saveState();renderWeight();
     }
     function deleteWeightRecord(id) {
@@ -3153,7 +3167,6 @@
       ensureHorseInfo();
       if(activeInfoSub==="info-horses")renderHorseProfile();
       if(activeInfoSub==="info-contacts")renderContacts();
-      if(activeInfoSub==="info-weight")renderWeight();
     }
 
     function switchTab(tabId, skipScrollTop = false) {
@@ -3193,9 +3206,9 @@
 
     document.getElementById("btn-create-food").addEventListener("click", () => {
       const name = document.getElementById("new-food-name").value.trim();
-      const unit = document.getElementById("new-food-unit").value === "L" ? "L" : "kg";
+      const unit = document.getElementById("new-food-unit").value;
       const bags = Math.max(1, parseInt(document.getElementById("new-food-bags").value, 10) || 1);
-      const qtyPerUnit = parseFloat(document.getElementById("new-food-bag-qty").value) || (unit === "L" ? 5 : 20);
+      const qtyPerUnit = unit === "round" ? 180 : (parseFloat(document.getElementById("new-food-bag-qty").value) || (unit === "L" ? 5 : 20));
       const dateVal = document.getElementById("new-food-date").value || todayISO(0);
       const purchasePrice = Math.max(0, Number(document.getElementById("new-food-price").value) || 0);
       const horsesNow = state.horses || [];
@@ -3356,14 +3369,13 @@
     const foinConversion=document.getElementById('foin-kg-conversion');
     function updateFoinConversion(){ if(!foinConversion)return; const isRound=foodUnitSelect?.value==='round'; foinConversion.textContent=isRound?`${(Number(foodBagsInput?.value||0)*180).toLocaleString('fr-FR')} kg au total (180 kg / round)`:''; }
     foodUnitSelect?.addEventListener('change',updateFoinConversion);foodBagsInput?.addEventListener('input',updateFoinConversion);
-    const _equicareCreateFoodClick = document.getElementById('btn-create-food').onclick;
-    document.getElementById('btn-create-food').addEventListener('click',()=>{ if(foodUnitSelect.value==='round'){ const n=Math.max(1,Number(foodBagsInput.value)||1); document.getElementById('new-food-bag-qty').value='180'; foodUnitSelect.value='kg'; document.getElementById('new-food-name').value=document.getElementById('new-food-name').value||'Foin'; updateFoinConversion(); } },true);
+
 
     // Contacts partagés entre chevaux, commentaires et photo galerie.
     function renderContacts(){
       const contacts=state.practitionerContacts.shared||[];
       const host=document.getElementById('contacts-content'); if(!host)return;
-      host.innerHTML=`<div class="item-card"><strong>Ajouter un intervenant commun</strong><div class="form-row"><label class="info-field">Spécialité / type<input id="contact-type" placeholder="Vétérinaire, maréchal…"></label><label class="info-field">Nom<input id="contact-name" placeholder="Nom / cabinet"></label></div><div class="form-row"><label class="info-field">Téléphone<input id="contact-phone" type="tel" placeholder="06…"></label><label class="info-field">E-mail<input id="contact-email" type="email" placeholder="contact@…"></label></div><label class="info-field">Photo<input id="contact-photo-new" type="file" accept="image/*"></label><label class="info-field">Commentaires<textarea id="contact-comments" rows="2"></textarea></label><label class="info-field">Message type<textarea id="contact-template" rows="2" placeholder="Bonjour, je souhaiterais convenir d'un rendez-vous."></textarea></label><button class="btn btn-primary btn-sm" onclick="addPractitionerContact()">Ajouter le contact</button></div>${contacts.map(c=>`<div class="contact-card"><div class="item-top"><div>${c.photoData?`<img src="${c.photoData}" style="width:64px;height:64px;object-fit:cover;border-radius:12px;vertical-align:middle;margin-right:8px">`:''}<strong>${escapeHtml(c.type||'Intervenant')}</strong><div>${escapeHtml(c.name||'')}</div><div class="muted">${escapeHtml(c.phone||'')} ${c.email?'• '+escapeHtml(c.email):''}</div></div><button class="btn btn-outline btn-sm" onclick="deletePractitionerContact('${escapeAttr(c.id)}')">Supprimer</button></div><div class="muted" style="margin:8px 0">${escapeHtml(c.comments||'')}</div><label class="info-field">Photo de l’intervenant<input type="file" accept="image/*" onchange="updateContactPhoto('${escapeAttr(c.id)}',this.files[0])"></label><div class="form-row"><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','sms')">SMS</button><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','email')">Gmail / e-mail</button></div><label class="info-field">Modifier les commentaires<textarea onchange="updateContactComments('${escapeAttr(c.id)}',this.value)">${escapeHtml(c.comments||'')}</textarea></label></div>`).join('')||'<div class="muted">Aucun intervenant enregistré.</div>'}`;
+      host.innerHTML=`<div class="item-card"><strong>Ajouter un intervenant commun</strong><div class="form-row"><label class="info-field">Spécialité / type<input id="contact-type" placeholder="Vétérinaire, maréchal…"></label><label class="info-field">Nom<input id="contact-name" placeholder="Nom / cabinet"></label></div><div class="form-row"><label class="info-field">Téléphone<input id="contact-phone" type="tel" placeholder="06…"></label><label class="info-field">E-mail<input id="contact-email" type="email" placeholder="contact@…"></label></div><label class="info-field">Photo<input id="contact-photo-new" type="file" accept="image/*"></label><label class="info-field">Commentaires<textarea id="contact-comments" rows="2"></textarea></label><label class="info-field">Message type<textarea id="contact-template" rows="2" placeholder="Bonjour, je souhaiterais convenir d'un rendez-vous."></textarea></label><button class="btn btn-primary btn-sm" onclick="addPractitionerContact()">Ajouter le contact</button></div>${contacts.map(c=>`<div class="contact-card"><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">${c.photoData?`<img src="${c.photoData}" alt="Photo de ${escapeHtml(c.name||'intervenant')}" style="width:96px;height:112px;object-fit:cover;border-radius:12px;border:1px solid var(--border)">`:`<div class="horse-photo profile-placeholder" style="width:96px;height:112px">👤</div>`}<div style="flex:1"><strong>${escapeHtml(c.name||'Intervenant')}</strong><div class="muted">${escapeHtml(c.type||'')}</div><div class="muted">${escapeHtml(c.phone||'')} ${c.email?'• '+escapeHtml(c.email):''}</div></div><button class="btn btn-outline btn-sm" onclick="deletePractitionerContact('${escapeAttr(c.id)}')">Supprimer</button></div><div class="muted" style="margin:8px 0">${escapeHtml(c.comments||'')}</div><label class="info-field">Photo de l’intervenant<input type="file" accept="image/*" onchange="updateContactPhoto('${escapeAttr(c.id)}',this.files[0])"></label><div class="form-row"><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','sms')">SMS</button><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','email')">Gmail / e-mail</button></div><label class="info-field">Modifier les commentaires<textarea onchange="updateContactComments('${escapeAttr(c.id)}',this.value)">${escapeHtml(c.comments||'')}</textarea></label></div>`).join('')||'<div class="muted">Aucun intervenant enregistré.</div>'}`;
     }
     async function addPractitionerContact(){
       const v=id=>document.getElementById(id)?.value.trim()||'';const type=v('contact-type'),name=v('contact-name');if(!type||!name){alert('Renseigne le type et le nom.');return;}
@@ -3379,7 +3391,7 @@
     const _renderWeightOriginal=renderWeight;
     renderWeight=function(){_renderWeightOriginal();const input=document.createElement('input');input.type='file';input.accept='image/*';input.id='weight-photo-input';input.style.display='none';document.getElementById('weight-content')?.querySelector('.item-card')?.appendChild(input);const label=document.createElement('label');label.className='btn btn-secondary btn-sm';label.textContent='📷 Photo de la pesée';label.appendChild(input);document.getElementById('weight-content')?.querySelector('.item-card')?.appendChild(label);};
     const _addWeightRecordOriginal=addWeightRecord;
-    addWeightRecord=async function(){const file=document.getElementById('weight-photo-input')?.files?.[0];let photoData='';if(file)photoData=await resizeImageFile(file,900,.72);const date=document.getElementById('weight-date').value,kg=Number(document.getElementById('weight-value').value),note=document.getElementById('weight-note').value.trim();if(!date||!Number.isFinite(kg)||kg<=0){alert('Saisis une date et un poids valide.');return;}state.weightRecords[activeWeightHorse] ||= [];state.weightRecords[activeWeightHorse].push({id:'weight-'+Date.now(),date,kg,note,photoData});saveState();renderWeight();};
+    addWeightRecord=async function(){const file=document.getElementById('weight-photo-input')?.files?.[0];let photoData='';if(file)photoData=await resizeImageFile(file,900,.72);const date=document.getElementById('weight-date').value,kg=Number(document.getElementById('weight-value').value),note=document.getElementById('weight-note').value.trim(),height=Number(document.getElementById('weight-height')?.value)||null,girth=Number(document.getElementById('weight-girth')?.value)||null;if(!date||!Number.isFinite(kg)||kg<=0||!girth){alert('Saisis une date, un poids et un périmètre thoracique valides.');return;}state.weightRecords[activeWeightHorse] ||= [];state.weightRecords[activeWeightHorse].push({id:'weight-'+Date.now(),date,kg,note,photoData,heightAtWithers:height,girth});saveState();renderWeight();};
 
     // Camemberts et filtre mensuel + comparaison de l'année précédente.
     const _renderBudgetOriginal=renderBudget;
@@ -3387,6 +3399,29 @@
     document.getElementById('budget-month')?.addEventListener('change',renderBudget);
     document.getElementById('budget-year')?.addEventListener('change',renderBudget);
     document.getElementById('budget-horse')?.addEventListener('change',renderBudget);
+
+    // Compléments : fiches produits et liste de courses enregistrées dans la synchronisation d'état.
+    async function saveFoodProductPhoto(foodId,file){if(!file)return;const f=state.foods.find(x=>x.id===foodId);if(!f)return;f.productPhoto=await resizeImageFile(file,1100,.78);saveState();renderFoods();}
+    function extractFoodProduct(foodId){const f=state.foods.find(x=>x.id===foodId);if(!f)return;alert("La fiche produit est bien enregistrable depuis la galerie. L'extraction automatique de la composition nécessite encore de connecter le service IA sécurisé côté serveur ; aucune composition ne sera inventée ou déduite sans cette connexion.");}
+    state.shoppingList ||= [];
+    function renderShoppingList(){const host=document.getElementById('shopping-list');if(!host)return;const stores=['Coopérative Kramer','Équitation','Agradi','Decathlon'];host.innerHTML=stores.map(store=>{const items=state.shoppingList.filter(x=>x.store===store);return `<div class="sub-section"><h3>${store}</h3>${items.map(x=>`<div class="weight-row"><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" ${x.done?'checked':''} onchange="toggleShoppingItem('${x.id}',this.checked)"><span style="${x.done?'text-decoration:line-through;opacity:.6':''}">${escapeHtml(x.name)} ${x.qty?'— '+escapeHtml(x.qty):''}</span></label><button class="btn btn-outline btn-sm" onclick="deleteShoppingItem('${x.id}')">×</button></div>`).join('')||'<div class="muted">Aucun article.</div>'}</div>`;}).join('');}
+    function toggleShoppingItem(id,done){const x=state.shoppingList.find(x=>x.id===id);if(x){x.done=done;saveState();renderShoppingList();}}
+    function deleteShoppingItem(id){state.shoppingList=state.shoppingList.filter(x=>x.id!==id);saveState();renderShoppingList();}
+    document.getElementById('shopping-add')?.addEventListener('click',()=>{const name=document.getElementById('shopping-item').value.trim();if(!name)return;state.shoppingList.push({id:'shop-'+Date.now(),name,store:document.getElementById('shopping-store').value,qty:document.getElementById('shopping-qty').value.trim(),done:false});document.getElementById('shopping-item').value='';document.getElementById('shopping-qty').value='';saveState();renderShoppingList();});
+    const _switchTabShopping=switchTab;
+    switchTab=function(tabId,scroll=true){_switchTabShopping(tabId,scroll);if(tabId==='tab-shopping')renderShoppingList();};
+    // Harmonise the foin reference as rounds; one round is 180 kg. Older quantities are converted where possible.
+    const hay=state.foods.find(f=>f.id==='foin'||/foin/i.test(f.name||''));if(hay){hay.unit='round';hay.bagKg=180;hay.name=hay.name||'Foin de prairie';}
+    const hartog=state.foods.find(f=>f.id==='hartog'||/hartog/i.test(f.name||''));if(hartog)hartog.name='HARTOG HAYCOBS';
+    // Keep labels on horse selectors tied to actual horse names, never generic horse numbers.
+    document.querySelectorAll('input[placeholder*="cheval 1"],input[placeholder*="cheval 2"]').forEach((el,i)=>{el.placeholder=i===0?`Part ${state.horses[0]?.name||'Sacramento'} (%)`:`Part ${state.horses[1]?.name||'Bella'} (%)`;});
+    renderShoppingList();
+    renderFoods();
+    renderAllCare();
+    renderPharmacy();
+    renderBudget();
+    renderAlertsAndWeather();
+
 </script>
 </body>
 </html>
