@@ -808,7 +808,7 @@
     <!-- Strict alert widget: hidden/empty when no alert applies to the current tab -->
     <div id="smart-alert-widget" class="smart-widget" aria-live="polite"></div>
 
-    <!-- TAB 1: ALERTES & MÉTÉO -->
+    <!-- TAB 1: MÉTÉO -->
     <section id="tab-home" class="tab-panel">
       <div class="card" id="weather-card">
         <div class="card-header">
@@ -850,13 +850,21 @@
 
     </section>
 
+    <!-- TAB ALERTES : centralisation de toutes les alertes actives -->
+    <section id="tab-alerts" class="tab-panel hidden">
+      <div class="card">
+        <div class="card-header"><div><h2 class="card-title">Toutes les alertes</h2><div class="muted">Les situations urgentes apparaissent en premier, suivies des points à anticiper.</div></div></div>
+        <div id="all-alerts-list" aria-live="polite"><div class="muted">Chargement des alertes…</div></div>
+      </div>
+    </section>
+
     <!-- TAB 2: ALIMENTS -->
     <section id="tab-foods" class="tab-panel hidden">
       <div class="card">
         <div class="card-header">
           <div>
             <h2 class="card-title">Achats, ouvertures & jours de stock</h2>
-            <div class="muted">Aliments solides en kg (foin acheté en rounds de 180 kg ; conversion en kg affichée) (conso en kg/j) • Huile de lin en litres (conso affichée en mL/j, défaut 150 mL/j).</div>
+
           </div>
           <button class="btn btn-primary btn-sm" id="btn-toggle-add-food">+ Nouvel aliment</button>
         </div>
@@ -885,6 +893,7 @@
           </div>
         </div>
 
+        <div id="foods-quick-nav" class="form-row" style="margin:10px 0 14px;gap:8px;flex-wrap:wrap"></div>
         <div id="foods-list"></div>
       </div>
     </section>
@@ -923,7 +932,7 @@
         <!-- SUB-SECTION 1: INTERVENANT -->
         <div id="sub-providers" class="health-subpanel">
           <div class="muted" style="margin-bottom:10px;">Vétérinaire, Maréchal, Ostéopathe, Dentiste : programmez les visites régulières et enregistrez chaque venue.</div>
-          <div class="horse-tabs" id="health-horse-tabs"></div>
+          <div class="muted" style="margin-bottom:10px;">Les intervenants et leurs rendez-vous sont communs à tous les chevaux.</div>
           <div id="health-practitioners-list"></div>
         </div>
 
@@ -1102,8 +1111,12 @@
 
   <nav class="bottom-nav">
     <button class="nav-btn active" data-tab="tab-home">
-      <span class="nav-icon">🌤️</span>
-      <span>Alertes & Météo</span>
+      <span class="nav-icon">🌦️</span>
+      <span>Météo</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-alerts">
+      <span class="nav-icon">🔔</span>
+      <span>Alertes</span>
     </button>
     <button class="nav-btn" data-tab="tab-foods">
       <span class="nav-icon">🌾</span>
@@ -1262,8 +1275,7 @@
 
     const SUPABASE_ANON_KEY = "sb_publishable_rHuM-3QcEcB5dzN96fXBfQ_SCba9syk";
 
-
-    const SUPABASE_TABLE = "equicare_user_data";
+ "equicare_user_data";
     const SUPABASE_STORAGE_BUCKET = "equicare-documents";
     const EQUICARE_AI_ENDPOINT = ""; // URL du Worker Cloudflare IA, à renseigner ultérieurement
     const STORAGE_KEY = "equicare_state_v6";
@@ -1611,6 +1623,31 @@
     }
 
     let state = loadState();
+
+    // Les intervenants sont désormais communs : fusionner les historiques par type
+    // sans perdre les visites déjà enregistrées pour Sacramento ou Bella.
+    function migrateSharedHealthVisits() {
+      const source = state.healthVisits || {};
+      const shared = {};
+      Object.values(source).forEach(providerMap => {
+        Object.entries(providerMap || {}).forEach(([key, provider]) => {
+          if (!provider) return;
+          if (!shared[key]) shared[key] = { ...provider, visits: [] };
+          const target = shared[key];
+          target.label = target.label || provider.label;
+          target.icon = target.icon || provider.icon;
+          target.intervalWeeks = Number(target.intervalWeeks || provider.intervalWeeks || 10);
+          target.appointmentDate = [target.appointmentDate, provider.appointmentDate].filter(Boolean).sort().at(-1) || "";
+          (provider.visits || []).forEach(visit => {
+            if (!target.visits.some(v => v.id === visit.id)) target.visits.push({ ...visit });
+          });
+          target.visits.sort((a,b) => (b.date || "").localeCompare(a.date || ""));
+        });
+      });
+      state.healthVisits = { shared };
+      activeHealthHorse = "shared";
+    }
+    migrateSharedHealthVisits();
     state.protocols ||= [];
     let weatherData = null;
     let activeTab = "tab-home";
@@ -2062,7 +2099,24 @@
       return { lastVisit, nextDate, daysLeft, intervalWeeks };
     }
 
-    /* Returns one alert record per practitioner & horse with an active reminder (<= visitAlertDays or overdue) */
+    /* Un rappel unique par intervenant, commun à tous les chevaux. */
+    function getUpcomingPractitionerReminders() {
+      const th = Number(state.config.visitAlertDays ?? 15);
+      const reminders = [];
+      const providerMap = state.healthVisits?.shared || {};
+      for (const [key, prac] of Object.entries(providerMap)) {
+        const info = getPractitionerNextVisitInfo(prac);
+        const bookedDate = prac.appointmentDate || "";
+        const appointmentAlreadyBooked = bookedDate && signedDaysFromToday(bookedDate) >= 0;
+        if (info.daysLeft <= th && !appointmentAlreadyBooked) {
+          const shortPrac = shortPractitionerLabel(prac);
+          const timingBrief = info.daysLeft < 0 ? `en retard de ${Math.abs(info.daysLeft)} j` : (info.daysLeft === 0 ? "aujourd'hui" : `RDV dans ${info.daysLeft} j`);
+          reminders.push({ horseId: "shared", horseName: "Tous les chevaux", shortHorse: "tous les chevaux", practitionerKey: key, practitionerLabel: prac.label, shortPrac, icon: prac.icon || "🧑‍⚕️", nextDate: info.nextDate, daysLeft: info.daysLeft, intervalWeeks: info.intervalWeeks, briefMessage: `${shortPrac} — tous les chevaux : ${timingBrief}`, metaMessage: `Prendre RDV • Prévu le ${formatDateFR(info.nextDate)} (toutes les ${info.intervalWeeks} sem.)` });
+        }
+      }
+      return reminders;
+    }
+
     function getUpcomingPractitionerReminders() {
       const th = Number(state.config.visitAlertDays ?? 15);
       const reminders = [];
@@ -2280,16 +2334,20 @@
         `);
       }
 
-      // Context filtering by active tab
-      let visibleAlertCards = [];
-      if (activeTab === "tab-home") {
-        visibleAlertCards = [...weatherCards, ...foodCards, ...healthCards];
-      } else if (activeTab === "tab-foods") {
-        visibleAlertCards = [...foodCards];
-      } else if (activeTab === "tab-health") {
-        visibleAlertCards = [...healthCards];
+      // Toutes les alertes sont centralisées dans l'onglet dédié.
+      // Les retards et péremptions dépassées sont affichés en tête.
+      const allAlertCards = [...weatherCards, ...foodCards, ...healthCards];
+      const isUrgentAlert = html => /en retard|périmé depuis|périmée depuis|aujourd'hui|dans 0 j/i.test(html);
+      const urgentAlertCards = allAlertCards.filter(isUrgentAlert);
+      const upcomingAlertCards = allAlertCards.filter(html => !isUrgentAlert(html));
+      const alertsList = document.getElementById("all-alerts-list");
+      if (alertsList) {
+        alertsList.innerHTML = allAlertCards.length
+          ? `${urgentAlertCards.length ? `<h3 class="sub-section-title" style="color:#b91c1c;margin:8px 0">🚨 Urgent / en retard (${urgentAlertCards.length})</h3>${urgentAlertCards.join("")}` : ""}${upcomingAlertCards.length ? `<h3 class="sub-section-title" style="margin:16px 0 8px">À anticiper (${upcomingAlertCards.length})</h3>${upcomingAlertCards.join("")}` : ""}`
+          : '<div class="muted" style="padding:12px 0">Aucune alerte active pour le moment. Tout est à jour.</div>';
       }
 
+      // Le widget contextuel reste masqué : les alertes sont désormais dans leur propre onglet.
       if (widget) widget.innerHTML = "";
 
       document.getElementById("lbl-day-th").textContent = dayTh;
@@ -2455,6 +2513,10 @@
 
     function renderFoods() {
       const container = document.getElementById("foods-list");
+      const quickNav = document.getElementById("foods-quick-nav");
+      if (quickNav) quickNav.innerHTML = (state.foods || []).map(food =>
+        `<button type="button" class="btn btn-outline btn-sm" onclick="scrollToAndHighlight('food-card-${escapeAttr(food.id)}')">${escapeHtml(food.name)}</button>`
+      ).join("");
       container.innerHTML = state.foods.map(food => {
         const m = computeFoodMetrics(food);
         const badgeClass = m.needsReorder ? "badge-danger" : (m.estimatedDaysLeft <= 8 ? "badge-warn" : "badge-ok");
@@ -2467,7 +2529,7 @@
           <div class="item-card" id="food-card-${escapeAttr(food.id)}">
             <div class="item-top">
               <div style="display:flex;gap:10px;align-items:center">${food.productPhoto?((food.productPhotoType||'').includes('pdf')||String(food.productPhoto).startsWith('data:application/pdf')?`<a href="${food.productPhoto}" target="_blank" rel="noopener" title="Ouvrir le PDF" style="width:76px;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;background:var(--surface,#f8fafc);border:1px solid var(--border,#ddd);text-decoration:none;color:inherit"><span style="font-size:30px">📕</span><small>PDF</small></a>`:`<img src="${food.productPhoto}" alt="Fiche produit ${escapeHtml(food.name)}" style="width:76px;height:88px;object-fit:contain;border-radius:8px;background:#fff">`):``}<div>
-                <div class="item-name">${escapeHtml(food.name)}</div>
+                <div class="item-name">${escapeHtml(food.name)}${(food.unit === "round" || food.id === "foin" || /foin/i.test(food.name || "")) ? ` <button type="button" class="btn btn-outline btn-sm" aria-label="Information sur le foin" title="Informations sur les rounds de foin" onclick="alert('Le foin est acheté en rounds de 180 kg. ÉquiCare convertit automatiquement le nombre de rounds en kilogrammes dans les achats et le stock.')" style="display:inline-grid;place-items:center;width:23px;height:23px;padding:0;border-radius:50%;font-weight:700">i</button>` : ""}</div>
                 ${food.productPhoto?`<div class="muted" style="font-size:.75rem">${escapeHtml(food.productPhotoName||'Document joint')}</div>`:''}
                 <div class="muted">Dernier achat : <strong>${formatDateFR(m.lastPurchaseDate)}</strong> • Dernier ${m.containerWord} ouvert : <strong>${formatDateFR(m.lastOpenDate)}</strong></div>
               </div></div>
@@ -2484,9 +2546,8 @@
                 <div class="v">${m.closedBagsRemaining} ${m.containerWord}(s) plein(s) • ${m.openedCount} ${m.containerWord}(s) ouvert(s)</div>
               </div>
               <div class="stat-mini">
-                <div class="k">Moyenne réelle de consommation</div>
+                <div class="k">Moyenne réelle de consommation <button type="button" class="btn btn-outline btn-sm" aria-label="Information sur la moyenne réelle de consommation" title="Information" onclick="alert('Calculée à partir de l’historique des achats successifs.')" style="display:inline-grid;place-items:center;width:21px;height:21px;padding:0;border-radius:50%;font-weight:700;line-height:1">i</button></div>
                 <div class="v">${m.avgDisplay}${m.hasEffectiveHistory ? ` (${avgDaysText})` : ""}</div>
-                <div class="muted" style="font-size:.75rem;margin-top:4px">Calculée à partir de l’historique des achats successifs.</div>
               </div>
               <div class="stat-mini">
                 <div class="k">Total acheté cumulé</div>
@@ -2504,11 +2565,11 @@
 
             <div class="form-row" style="align-items:center;justify-content:space-between">
               <button type="button" class="btn btn-outline btn-sm" onclick="openFoodRation('${escapeAttr(food.id)}')" title="Ouvrir les rations pour modifier les quantités par cheval">
-                Consommation de référence : <strong style="margin-left:5px">${m.referenceDisplay}</strong> · Modifier dans les rations ↗
+                Consommation de référence <strong style="margin-left:5px">${m.referenceDisplay}</strong> · Modifier dans les rations ↗
               </button>
+              <button type="button" class="btn btn-outline btn-sm" aria-label="Information sur la consommation de référence" title="Information" onclick="alert('Total automatique des quantités quotidiennes renseignées dans les rations de tous les chevaux. Cette valeur n’est pas modifiable ici.')" style="display:inline-grid;place-items:center;width:21px;height:21px;padding:0;border-radius:50%;font-weight:700;line-height:1">i</button>
               <label class="btn btn-outline btn-sm">📎 Importer photo / PDF<input type="file" accept="image/*,.pdf,application/pdf" hidden onchange="saveFoodProductPhoto('${escapeAttr(food.id)}',this.files[0]);this.value=''" /></label>${food.productPhoto?`<button class="btn btn-outline btn-sm" onclick="removeFoodProductPhoto('${escapeAttr(food.id)}')">Retirer le document</button>`:''}<button class="btn btn-secondary btn-sm" onclick="extractFoodProduct('${escapeAttr(food.id)}')">Extraire les informations</button><button class="btn btn-outline btn-sm" onclick="deleteFood('${escapeAttr(food.id)}')">Supprimer</button>
             </div>
-            <div class="muted" style="font-size:.75rem;margin-top:4px">Total automatique des quantités quotidiennes renseignées dans les rations de tous les chevaux. Cette valeur n’est pas modifiable ici.</div>
 
             <details class="item-card" style="margin-top:10px;background:var(--surface, #f8fafc)">
               <summary style="cursor:pointer;font-weight:700">Informations nutritionnelles du produit</summary>
@@ -2782,15 +2843,7 @@
     }
 
     function renderHealthVisits() {
-      const tabsEl = document.getElementById("health-horse-tabs");
-      if (!tabsEl) return;
-      tabsEl.innerHTML = state.horses.map(h => `
-        <button class="horse-chip ${h.id === activeHealthHorse ? "active" : ""}" onclick="selectHealthHorse('${escapeAttr(h.id)}')">
-          ${escapeHtml(h.name)}
-        </button>
-      `).join("");
-
-      const horseMap = (state.healthVisits && state.healthVisits[activeHealthHorse]) || {};
+      const horseMap = (state.healthVisits && state.healthVisits.shared) || {};
       const keys = Array.from(new Set([...PRACTITIONER_ORDER, ...Object.keys(horseMap)]));
       const container = document.getElementById("health-practitioners-list");
       const alertTh = Number(state.config.visitAlertDays ?? 15);
@@ -2818,13 +2871,13 @@
                     ${v.provider ? `<span class="muted"> • ${escapeHtml(v.provider)}</span>` : ""}
                   </div>
                   <div style="display:flex;gap:6px;">
-                    <button class="btn btn-outline btn-sm" onclick="openVisitModal('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', '${escapeAttr(v.id)}')">Modifier</button>
-                    <button class="btn btn-outline btn-sm" onclick="deleteHealthVisit('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', '${escapeAttr(v.id)}')">Supprimer</button>
+                    <button class="btn btn-outline btn-sm" onclick="openVisitModal('shared', '${escapeAttr(key)}', '${escapeAttr(v.id)}')">Modifier</button>
+                    <button class="btn btn-outline btn-sm" onclick="deleteHealthVisit('shared', '${escapeAttr(key)}', '${escapeAttr(v.id)}')">Supprimer</button>
                   </div>
                 </div>
                 <div>${escapeHtml(v.details || "Aucun détail renseigné.")}</div>
                 <div class="muted">Coût : ${Number(v.price||0).toFixed(2)} €</div>
-                ${(v.documents||[]).map((d,i)=>`<button class="document-chip" onclick="openVisitDocument('${escapeAttr(activeHealthHorse)}','${escapeAttr(v.id)}',${i})">📎 ${escapeHtml(d.name||"Document")}</button>`).join("")}
+                ${(v.documents||[]).map((d,i)=>`<button class="document-chip" onclick="openVisitDocument('shared','${escapeAttr(v.id)}',${i})">📎 ${escapeHtml(d.name||"Document")}</button>`).join("")}
               </div>
             `).join("")
           : `<div class="muted" style="margin-top:6px;">Aucune venue enregistrée pour le moment.</div>`;
@@ -2844,13 +2897,13 @@
 
             <div class="form-row" style="margin-top:6px;">
               <label class="muted" style="font-size:0.8rem;">Fréquence régulière : toutes les
-                <input type="number" min="1" max="104" step="1" value="${info.intervalWeeks}" style="width:66px;padding:4px 6px;" onchange="updatePractitionerInterval('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', this.value)" />
+                <input type="number" min="1" max="104" step="1" value="${info.intervalWeeks}" style="width:66px;padding:4px 6px;" onchange="updatePractitionerInterval('shared', '${escapeAttr(key)}', this.value)" />
                 semaines
               </label>
               <label class="muted" style="font-size:0.8rem;">Prochain RDV déjà réservé :
-                <input type="date" value="${escapeAttr(prac.appointmentDate || "")}" onchange="updatePractitionerAppointment('${escapeAttr(activeHealthHorse)}','${escapeAttr(key)}',this.value)" style="width:150px;padding:4px 6px;" />
+                <input type="date" value="${escapeAttr(prac.appointmentDate || "")}" onchange="updatePractitionerAppointment('shared','${escapeAttr(key)}',this.value)" style="width:150px;padding:4px 6px;" />
               </label>
-              <button class="btn btn-primary btn-sm" onclick="openVisitModal('${escapeAttr(activeHealthHorse)}', '${escapeAttr(key)}', null)">+ Ajouter une venue</button>
+              <button class="btn btn-primary btn-sm" onclick="openVisitModal('shared', '${escapeAttr(key)}', null)">+ Ajouter une venue</button>
             </div>
 
             ${visitsHtml}
@@ -2865,7 +2918,7 @@
     }
 
     function updatePractitionerAppointment(horseId, pracKey, dateVal) {
-      const prac = state.healthVisits?.[horseId]?.[pracKey];
+      const prac = state.healthVisits?.shared?.[pracKey];
       if (!prac) return;
       prac.appointmentDate = dateVal || "";
       saveState();
@@ -2875,7 +2928,7 @@
 
     function updatePractitionerInterval(horseId, pracKey, weeksVal) {
       const weeks = Math.max(1, parseInt(weeksVal, 10) || 1);
-      const prac = state.healthVisits?.[horseId]?.[pracKey];
+      const prac = state.healthVisits?.shared?.[pracKey];
       if (!prac) return;
       prac.intervalWeeks = weeks;
       saveState();
@@ -2884,18 +2937,17 @@
     }
 
     function openVisitModal(horseId, pracKey, visitId) {
-      const horse = state.horses.find(h => h.id === horseId);
-      const prac = state.healthVisits?.[horseId]?.[pracKey];
-      if (!horse || !prac) return;
+      const prac = state.healthVisits?.shared?.[pracKey];
+      if (!prac) return;
 
       const existing = visitId ? (prac.visits || []).find(v => v.id === visitId) : null;
-      visitModalCtx = { horseId, pracKey, visitId: existing ? existing.id : null };
+      visitModalCtx = { horseId: "shared", pracKey, visitId: existing ? existing.id : null };
 
       document.getElementById("visit-modal-title").textContent = existing
         ? `Modifier la venue — ${prac.label}`
         : `Nouvelle venue — ${prac.label}`;
       document.getElementById("visit-modal-sub").textContent =
-        `${horse.name} • Fréquence actuelle : toutes les ${prac.intervalWeeks} semaines.`;
+        `Intervenant commun • Fréquence actuelle : toutes les ${prac.intervalWeeks} semaines.`;
       document.getElementById("visit-date-input").value = existing ? existing.date : todayISO(0);
       document.getElementById("visit-provider-input").value = existing ? (existing.provider || "") : "";
       document.getElementById("visit-notes-input").value = existing ? (existing.details || "") : "";
@@ -2917,7 +2969,7 @@
     document.getElementById("btn-confirm-visit").addEventListener("click", async () => {
       if (!visitModalCtx) return;
       const { horseId, pracKey, visitId } = visitModalCtx;
-      const prac = state.healthVisits?.[horseId]?.[pracKey];
+      const prac = state.healthVisits?.shared?.[pracKey];
       if (!prac) return;
 
       const dateVal = document.getElementById("visit-date-input").value;
@@ -2926,7 +2978,7 @@
       const priceVal = Math.max(0, Number(document.getElementById("visit-price-input").value)||0);
       if (!dateVal) return;
       const files = Array.from(document.getElementById("visit-files-input").files || []);
-      const uploaded = await uploadVisitDocuments(files, horseId, visitId || ("hv-"+Date.now()));
+      const uploaded = await uploadVisitDocuments(files, "shared", visitId || ("hv-"+Date.now()));
       if(uploaded.error){alert(uploaded.error);return;}
       visitPendingDocuments = [...visitPendingDocuments, ...uploaded.documents];
 
@@ -2960,7 +3012,7 @@
     });
 
     function deleteHealthVisit(horseId, pracKey, visitId) {
-      const prac = state.healthVisits?.[horseId]?.[pracKey];
+      const prac = state.healthVisits?.shared?.[pracKey];
       if (!prac) return;
       prac.visits = (prac.visits || []).filter(v => v.id !== visitId);
       saveState();
@@ -3111,7 +3163,7 @@
       for(const file of files){const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");const path=`${cloudUser.id}/${horseId}/${visitId}/${Date.now()}_${safe}`;const {error}=await supabaseClient.storage.from(SUPABASE_STORAGE_BUCKET).upload(path,file,{upsert:false,contentType:file.type||"application/octet-stream"});if(error)return {error:"Envoi du document impossible : "+error.message};const {data}=supabaseClient.storage.from(SUPABASE_STORAGE_BUCKET).createSignedUrl(path,60*60*24*365);docs.push({name:file.name,path,url:data?.signedUrl||"",bucket:SUPABASE_STORAGE_BUCKET});}
       return {documents:docs};
     }
-    async function openVisitDocument(horseId,visitId,index){const vlist=Object.values(state.healthVisits?.[horseId]||{}).flatMap(p=>p.visits||[]);const v=vlist.find(x=>x.id===visitId);const d=v?.documents?.[index];if(!d)return;if(!supabaseClient){alert("Connecte-toi à ÉquiCare pour ouvrir ce document.");return;}const {data,error}=await supabaseClient.storage.from(d.bucket||SUPABASE_STORAGE_BUCKET).createSignedUrl(d.path,300);if(error){alert("Impossible d'ouvrir le document : "+error.message);return;}window.open(data.signedUrl,"_blank","noopener");}
+    async function openVisitDocument(horseId,visitId,index){const vlist=Object.values(state.healthVisits?.shared||{}).flatMap(p=>p.visits||[]);const v=vlist.find(x=>x.id===visitId);const d=v?.documents?.[index];if(!d)return;if(!supabaseClient){alert("Connecte-toi à ÉquiCare pour ouvrir ce document.");return;}const {data,error}=await supabaseClient.storage.from(d.bucket||SUPABASE_STORAGE_BUCKET).createSignedUrl(d.path,300);if(error){alert("Impossible d'ouvrir le document : "+error.message);return;}window.open(data.signedUrl,"_blank","noopener");}
     function renderVisitDocuments(){const el=document.getElementById("visit-documents-list");if(el)el.innerHTML=visitPendingDocuments.map((d,i)=>`<span class="document-chip">📎 ${escapeHtml(d.name)} <button type="button" onclick="removeVisitDocument(${i})">×</button></span>`).join("");}
     function removeVisitDocument(i){visitPendingDocuments.splice(i,1);renderVisitDocuments();}
     document.getElementById("btn-ai-visit-analysis")?.addEventListener("click",async()=>{const status=document.getElementById("visit-ai-status");if(!EQUICARE_AI_ENDPOINT){status.textContent="Service IA non configuré : il faudra déployer le Worker Cloudflare et renseigner son URL. Aucun document n'est envoyé.";return;}status.textContent="L'analyse IA sera activée après raccordement du service sécurisé.";});
@@ -3132,6 +3184,9 @@
       if (horseId && subId === "sub-providers") {
         activeHealthHorse = horseId;
         renderHealthVisits();
+      }
+      if (horseId && subId === "sub-weight") {
+        activeWeightHorse = horseId;
       }
       if (activeTab !== "tab-health") {
         switchTab("tab-health", true);
@@ -3181,6 +3236,10 @@
     function selectContactHorse(id) { activeContactHorse=id; renderContacts(); }
     function selectWeightHorse(id) { activeWeightHorse=id; renderWeight(); }
 
+    function showNutritionProfileHelp() {
+      alert("Le dernier poids enregistré est repris automatiquement. Ces critères servent à déterminer les besoins énergétiques et protéiques ; le niveau de travail s’apprécie sur l’ensemble de la semaine, pas sur une seule séance.\n\nRéférentiel indicatif : l’IFCE distingue notamment le travail léger (environ 1–3 h/semaine) et l’activité modérée à intense (environ 5 à 6–7 h/semaine). Les besoins dépendent aussi du format, de la race, de l’âge et du stade physiologique. La note d’état corporel aide à vérifier l’adéquation réelle de la ration.");
+    }
+
     function renderHorseProfile() {
       ensureHorseInfo();
       renderHorseTabs("info-horse-tabs", activeInfoHorse, "selectInfoHorse");
@@ -3209,10 +3268,9 @@
           <label class="info-field">Mère<input id="profile-siremother" value="${escapeHtml(d.mother || "")}"></label>
         </div>
         <div class="item-card" style="margin-top:12px">
-          <div class="item-name">Profil nutritionnel – critères IFCE</div>
-          <div class="muted">Le dernier poids enregistré est repris automatiquement. Ces critères servent à déterminer les besoins énergétiques et protéiques ; le niveau de travail s’apprécie sur l’ensemble de la semaine, pas sur une seule séance.</div>
+          <div class="item-name" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Profil nutritionnel – critères IFCE <button type="button" class="btn btn-outline btn-sm" aria-label="Informations sur le profil nutritionnel" title="Informations" style="border-radius:50%;width:30px;height:30px;padding:0;min-width:30px" onclick="showNutritionProfileHelp()">i</button></div>
           <div class="form-row" style="margin-top:8px">
-            <label class="info-field">Dernier poids estimé (kg)<input value="${(()=>{const rs=[...(state.weightRecords[h.id]||[])].sort((a,b)=>(b.date||'').localeCompare(a.date||''));const w=rs.length?getEstimatedWeightRecord(rs[0]):null;return w?`${w.toFixed(1)} kg${rs[0].date?' – '+rs[0].date:''}`:'Aucune pesée';})()}" readonly></label>
+            <label class="info-field"><button type="button" class="btn btn-link" style="padding:0;text-align:left;font:inherit;color:inherit;text-decoration:underline" onclick="openHealthSub('sub-weight','${escapeAttr(h.id)}','weight-add-section')">Dernier poids estimé (kg)</button><input value="${(()=>{const rs=[...(state.weightRecords[h.id]||[])].sort((a,b)=>(b.date||'').localeCompare(a.date||''));const w=rs.length?getEstimatedWeightRecord(rs[0]):null;return w?`${w.toFixed(1)} kg${rs[0].date?' – '+rs[0].date:''}`:'Aucune pesée';})()}" readonly></label>
             <label class="info-field">Format<select id="profile-format"><option value="" ${!d.format?"selected":""}>À préciser</option><option value="poney" ${d.format==="poney"?"selected":""}>Poney / petit format</option><option value="selle" ${d.format==="selle"?"selected":""}>Cheval de selle / sang</option><option value="trait" ${d.format==="trait"?"selected":""}>Cheval de trait</option></select></label>
           </div>
           <div class="form-row">
@@ -3223,7 +3281,7 @@
             <label class="info-field">État physiologique<select id="profile-physiology"><option value="adult" ${(!d.physiologicalStage||d.physiologicalStage==="adult")?"selected":""}>Adulte à l’entretien</option><option value="growth" ${d.physiologicalStage==="growth"?"selected":""}>En croissance</option><option value="gestation" ${d.physiologicalStage==="gestation"?"selected":""}>Jument gestante</option><option value="lactation" ${d.physiologicalStage==="lactation"?"selected":""}>Jument allaitante</option><option value="stallion" ${d.physiologicalStage==="stallion"?"selected":""}>Étalon reproducteur</option></select></label>
             <label class="info-field">Mois de gestation / lactation<input id="profile-physio-month" type="number" min="1" max="11" value="${escapeHtml(d.physiologicalMonth ?? "")}" placeholder="Si concerné"></label>
           </div>
-          <div class="muted">Référentiel indicatif : l’IFCE distingue notamment le travail léger (environ 1–3 h/semaine) et l’activité modérée à intense (environ 5 à 6–7 h/semaine). Les besoins dépendent aussi du format, de la race, de l’âge et du stade physiologique. La note d’état corporel aide à vérifier l’adéquation réelle de la ration.</div>
+
         </div>
         <div class="item-card" id="horse-ration-section" style="margin-top:12px">
           <div class="item-name">Ration quotidienne</div>
@@ -3493,7 +3551,7 @@
       const records=[...(state.weightRecords[activeWeightHorse]||[])].sort((a,b)=>a.date.localeCompare(b.date));
       const chart=buildWeightChart(records);
       document.getElementById("weight-content").innerHTML=`
-        <div class="item-card">
+        <div class="item-card" id="weight-add-section">
           <strong>Ajouter une pesée</strong>
           <div class="form-row">
             <label class="info-field">Date<input id="weight-date" type="date" value="${todayISO(0)}"></label>
@@ -3937,7 +3995,7 @@
           <p class="muted">Les mesures PT et HG sont à saisir en centimètres. Cette formule donne une estimation, pas une pesée réelle.</p>
           <p class="muted">Source mentionnée : YouTube · Crazy Horses – Chaîne équestre.</p>
         </div>
-        <div class="item-card">
+        <div class="item-card" id="weight-add-section">
           <strong>Ajouter une pesée</strong>
           <div class="form-row">
             <label class="info-field">Date<input id="weight-date" type="date" value="${todayISO(0)}"></label>
