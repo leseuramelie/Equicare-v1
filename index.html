@@ -854,7 +854,7 @@
     <section id="tab-alerts" class="tab-panel hidden">
       <div class="card">
         <div class="card-header"><div><h2 class="card-title">Toutes les alertes</h2><div class="muted">Les situations urgentes apparaissent en premier, suivies des points à anticiper.</div></div></div>
-        <div id="all-alerts-list" aria-live="polite"><div class="muted">Chargement des alertes…</div></div>
+        <div id="all-alerts-list" aria-live="polite"><div class="muted">Les alertes seront actualisées automatiquement.</div></div>
       </div>
     </section>
 
@@ -2193,7 +2193,7 @@
       openHealthSub("sub-providers", horseId, pracKey ? `sub-health-${escapeAttr(pracKey)}` : "health-practitioners-list");
     }
 
-    function renderAlertsAndWeather() {
+    function renderAlertsAndWeatherCore() {
       const widget = document.getElementById("smart-alert-widget");
       const dayTh = Number(state.config.dayThreshold ?? 5);
       const coldTh = Number(state.config.coldThreshold ?? 5);
@@ -2444,6 +2444,19 @@
       if(rainDays.length)parts.push(`<div class="weather-alert">🌧️ <strong>Pluies fortes dans les 7 jours (≥ 20 mm/jour) :</strong> ${rainDays.map(escapeHtml).join(" ; ")}</div>`);
       else parts.push('<div class="weather-alert ok">✓ Aucune pluie forte (≥ 20 mm/jour) détectée sur les 7 prochains jours.</div>');
       alerts.innerHTML=parts.join("");
+    }
+
+    // Garde-fou : une donnée manquante ne doit jamais bloquer la navigation.
+    function renderAlertsAndWeather() {
+      try {
+        renderAlertsAndWeatherCore();
+      } catch (error) {
+        console.error("Erreur pendant l’actualisation des alertes ÉquiCare", error);
+        const list = document.getElementById("all-alerts-list");
+        if (list) {
+          list.innerHTML = '<div class="muted" style="padding:12px 0">Certaines alertes n’ont pas pu être actualisées. Les autres onglets restent accessibles ; vérifie les informations renseignées puis réessaie.</div>';
+        }
+      }
     }
 
     function renderStatusDashboard(){
