@@ -1144,8 +1144,8 @@
   <script>
     // CONFIGURATION SUPABASE : remplacer ces deux valeurs après création du projet.
     // La clé anon/publishable est destinée au navigateur ; la sécurité repose sur les règles RLS SQL.
-    const SUPABASE_URL = "https://njlqlcwrhpktmxyopvzc.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_rHuM-3QcEcB5dzN96fXBfQ_SCba9syk";
+    const SUPABASE_URL = "https://VOTRE-PROJET.supabase.co";
+    const SUPABASE_ANON_KEY = "VOTRE_CLE_PUBLIQUE_SUPABASE";
     const SUPABASE_TABLE = "equicare_user_data";
     const STORAGE_KEY = "equicare_state_v6";
     const LAT = 43.4536;
@@ -1539,9 +1539,10 @@
     }
 
     async function syncStateToCloud() {
-      if (!supabaseClient || !cloudUser) return;
-      if (cloudSaveInProgress) { cloudSaveQueued = true; return; }
+      if (!supabaseClient || !cloudUser) return false;
+      if (cloudSaveInProgress) { cloudSaveQueued = true; return false; }
       cloudSaveInProgress = true;
+      let succeeded = false;
       try {
         const snapshot = JSON.parse(JSON.stringify(state));
         const { error } = await supabaseClient.from(SUPABASE_TABLE).upsert({
@@ -1550,6 +1551,7 @@
           updated_at: new Date().toISOString()
         }, { onConflict: "user_id" });
         if (error) throw error;
+        succeeded = true;
         setCloudStatus("Données synchronisées", "online");
       } catch (error) {
         console.error("Erreur de synchronisation ÉquiCare", error);
@@ -1558,8 +1560,9 @@
         if (msg) msg.textContent = "Synchronisation impossible : " + (error.message || "vérifie ta connexion et la configuration Supabase.");
       } finally {
         cloudSaveInProgress = false;
-        if (cloudSaveQueued) { cloudSaveQueued = false; syncStateToCloud(); }
+        if (cloudSaveQueued) { cloudSaveQueued = false; await syncStateToCloud(); }
       }
+      return succeeded;
     }
 
     function rerenderAfterCloudLoad() {
@@ -1587,7 +1590,8 @@
       const localRaw = localStorage.getItem(STORAGE_KEY);
       if (!data) {
         // Première connexion : le contenu local est envoyé vers le compte.
-        await syncStateToCloud();
+        const saved = await syncStateToCloud();
+        if (!saved) throw new Error("La première sauvegarde cloud a échoué. Consulte le message affiché dans le compte ÉquiCare.");
         setCloudStatus("Première sauvegarde cloud effectuée", "online");
         return;
       }
@@ -3149,8 +3153,11 @@
     document.getElementById("btn-cloud-login").addEventListener("click", () => cloudAuthAction("login"));
     document.getElementById("btn-cloud-signup").addEventListener("click", () => cloudAuthAction("signup"));
     document.getElementById("btn-cloud-sync-now").addEventListener("click", async () => {
-      await syncStateToCloud();
-      document.getElementById("cloud-auth-message").textContent = "Synchronisation terminée (si aucune erreur n'est affichée).";
+      const msg = document.getElementById("cloud-auth-message");
+      msg.textContent = "Synchronisation en cours…";
+      const succeeded = await syncStateToCloud();
+      if (succeeded) msg.textContent = "Synchronisation réussie : les données ont été envoyées à Supabase.";
+      // En cas d'échec, conserver le message d'erreur précis affiché par syncStateToCloud().
     });
     document.getElementById("btn-cloud-logout").addEventListener("click", async () => {
       if (supabaseClient) await supabaseClient.auth.signOut();
