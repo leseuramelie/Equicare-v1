@@ -436,7 +436,7 @@
     /* 4 sub-tabs inside Santé */
     .health-subnav {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr)); /* mêmes styles d’origine, une colonne par onglet */
+      grid-template-columns: repeat(7, minmax(0, 1fr)); /* mêmes styles d’origine, une colonne par onglet */
       gap: 6px;
       background: var(--surface-soft);
       border: 1px solid var(--border);
@@ -663,8 +663,9 @@
       z-index: 25;
       background: var(--surface);
       border-top: 1px solid var(--border);
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
       padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
       gap: 6px;
     }
@@ -682,9 +683,11 @@
       flex-direction: column;
       align-items: center;
       gap: 3px;
-      min-width: 0;
+      min-width: 58px;
+      flex: 1 0 58px;
     }
 
+    .bottom-nav::-webkit-scrollbar { display:none; }
     .nav-btn span:last-child {
       white-space: nowrap;
       overflow: hidden;
@@ -696,6 +699,9 @@
       background: var(--primary-light);
       color: var(--primary);
     }
+    .activity-entry { margin:8px 0; }
+    .activity-done { opacity:.68; }
+    .activity-done strong { text-decoration:line-through; }
 
     .nav-icon {
       font-size: 1.15rem;
@@ -945,6 +951,7 @@
             <span>Pharmacie</span>
           </button>
           <button class="health-subbtn" data-sub="sub-weight"><span>⚖️</span><span>Poids</span></button>
+          <button class="health-subbtn" data-sub="sub-protocols"><span>📋</span><span>Protocoles</span></button>
         </div>
 
         <!-- SUB-SECTION 1: INTERVENANT -->
@@ -969,6 +976,17 @@
         </div>
 
         <div id="sub-weight" class="health-subpanel hidden"><div class="muted" style="margin-bottom:10px;">Suivi du poids, de la hauteur au garrot et du périmètre thoracique.</div><div class="horse-tabs" id="weight-horse-tabs"></div><div id="weight-content"></div></div>
+
+        <div id="sub-protocols" class="health-subpanel hidden">
+          <div class="muted" style="margin-bottom:10px">Conserve les protocoles transmis par ton vétérinaire pour les retrouver facilement. Ils servent de référence et ne remplacent pas un avis vétérinaire adapté à la situation du moment.</div>
+          <div class="form-row" style="align-items:center;margin-bottom:12px">
+            <button type="button" class="btn btn-primary" onclick="openProtocolForm()">+ Ajouter un protocole</button>
+            <input id="protocol-search" type="search" placeholder="Rechercher par mot-clé…" oninput="renderProtocolList()" style="flex:1;min-width:180px">
+            <select id="protocol-horse-filter" onchange="renderProtocolList()" style="min-width:150px"><option value="all">Tous les chevaux</option></select>
+          </div>
+          <div id="protocol-editor" class="item-card hidden"></div>
+          <div id="protocol-list"></div>
+        </div>
 
         <!-- SUB-SECTION 4: PHARMACIE -->
         <div id="sub-pharmacy" class="health-subpanel hidden">
@@ -1010,20 +1028,67 @@
         <div class="info-subnav" role="tablist" aria-label="Sections Informations">
           <button class="info-subbtn active" data-info-sub="info-horses">🐴 Chevaux</button>
           <button class="info-subbtn" data-info-sub="info-contacts">📞 Intervenants</button>
+          <button class="info-subbtn" data-info-sub="info-structure">🏡 Structure</button>
         </div>
         <div id="info-horses" class="info-panel">
-          <div class="horse-tabs" id="info-horse-tabs"></div>
+          <div class="form-row" style="justify-content:space-between;align-items:center"><div class="horse-tabs" id="info-horse-tabs"></div><button type="button" class="btn btn-primary btn-sm" onclick="openAddHorseForm()">+ Ajouter un cheval</button></div>
+          <div id="add-horse-editor" class="item-card hidden"></div>
           <div id="horse-profile-content"></div>
         </div>
         <div id="info-contacts" class="info-panel hidden">
           <div class="muted">Liste commune des intervenants pour les deux chevaux. Les boutons ouvrent ton application SMS ou Gmail avec le message prérempli.</div>
           <div id="contacts-content"></div>
         </div>
+        <div id="info-structure" class="info-panel hidden">
+          <div id="structure-content"></div>
+        </div>
       </div>
     </section>
 
     <!-- TAB COURSES -->
     <section id="tab-shopping" class="tab-panel hidden"><div class="card"><div class="card-header"><div><h2 class="card-title">Liste de courses</h2><div class="muted">Classe tes achats par magasin et coche-les au fur et à mesure.</div></div></div><div class="form-row"><input id="shopping-item" placeholder="Article à acheter" style="flex:1;min-width:160px"><select id="shopping-store"><option>Coopérative Kramer</option><option>Équitation</option><option>Agradi</option><option>Decathlon</option></select><input id="shopping-qty" placeholder="Quantité" style="width:100px"><button type="button" class="btn btn-primary btn-sm" id="shopping-add">Ajouter</button></div><div id="shopping-list"></div></div></section>
+
+    <!-- TAB ACTIVITÉS -->
+    <section id="tab-activities" class="tab-panel hidden">
+      <div class="card">
+        <div class="card-header"><div><h2 class="card-title">Activités des chevaux</h2><div class="muted">Journal des séances et planning à réaliser, cheval par cheval.</div></div></div>
+        <div class="horse-tabs" id="activities-horse-tabs"></div>
+        <div class="sub-section">
+          <h3 class="sub-section-title">Enregistrer une activité réalisée</h3>
+          <div class="form-row">
+            <label class="info-field">Date<input id="activity-date" type="date"></label>
+            <label class="info-field">Activité<select id="activity-type"><option value="Balade">Balade</option><option value="Travail à pied">Travail à pied</option><option value="Longe">Longe</option><option value="Plat">Plat</option><option value="Obstacle">Obstacle</option></select></label>
+            <label class="info-field">Durée (minutes)<input id="activity-duration" type="number" min="1" max="600" step="5" placeholder="Ex. 30"></label>
+          </div>
+          <label class="info-field" style="margin-top:8px">Commentaire (facultatif)<input id="activity-note" placeholder="Ex. séance calme, terrain humide…"></label>
+          <div class="form-row"><button class="btn btn-primary btn-sm" id="btn-save-activity">Enregistrer l'activité</button></div>
+        </div>
+        <div class="sub-section">
+          <h3 class="sub-section-title">Créer un programme avec l'IA</h3>
+          <p class="muted">Décris ton objectif et tes disponibilités. L'IA pourra proposer des séances datées qui seront ajoutées au planning, prêtes à être cochées après réalisation.</p>
+          <label class="info-field">Objectif / demande<textarea id="activity-ai-goal" rows="3" placeholder="Ex. Reprendre progressivement le travail, améliorer la condition physique et varier les séances…"></textarea></label>
+          <div class="form-row">
+            <label class="info-field">Durée du programme<select id="activity-ai-weeks"><option value="1">1 semaine</option><option value="2" selected>2 semaines</option><option value="3">3 semaines</option><option value="4">4 semaines</option><option value="6">6 semaines</option><option value="8">8 semaines</option></select></label>
+            <label class="info-field">Séances par semaine<select id="activity-ai-frequency"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></label>
+            <label class="info-field">Début du programme<input id="activity-ai-start" type="date"></label>
+          </div>
+          <div class="form-row"><button class="btn btn-primary btn-sm" id="btn-generate-activity-plan">✨ Générer le planning avec l'IA</button></div>
+          <div class="muted" id="activity-ai-status" aria-live="polite">Le service IA sécurisé doit être configuré pour générer automatiquement un programme. Tu peux déjà ajouter des séances manuellement ci-dessous.</div>
+        </div>
+        <div class="sub-section">
+          <h3 class="sub-section-title">Ajouter une séance au planning manuellement</h3>
+          <div class="form-row">
+            <label class="info-field">Date<input id="activity-plan-date" type="date"></label>
+            <label class="info-field">Activité<select id="activity-plan-type"><option>Balade</option><option>Travail à pied</option><option>Longe</option><option>Plat</option><option>Obstacle</option></select></label>
+            <label class="info-field">Durée (minutes)<input id="activity-plan-duration" type="number" min="1" max="600" step="5" placeholder="Ex. 30"></label>
+          </div>
+          <label class="info-field" style="margin-top:8px">Consignes (facultatif)<input id="activity-plan-note" placeholder="Ex. échauffement long, transitions…"></label>
+          <div class="form-row"><button class="btn btn-outline btn-sm" id="btn-add-planned-activity">Ajouter au planning</button></div>
+        </div>
+        <div class="sub-section"><div class="sub-section-header"><h3 class="sub-section-title">Planning à réaliser</h3><span class="muted" id="activity-plan-count"></span></div><div id="activity-plan-list"></div></div>
+        <div class="sub-section"><div class="sub-section-header"><h3 class="sub-section-title">Historique des activités</h3><span class="muted" id="activity-history-count"></span></div><div id="activity-history-list"></div></div>
+      </div>
+    </section>
 
     <!-- TAB 5 : BUDGET -->
     <section id="tab-budget" class="tab-panel hidden">
@@ -1047,6 +1112,10 @@
     <button class="nav-btn" data-tab="tab-health">
       <span class="nav-icon">🩺</span>
       <span>Santé</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-activities">
+      <span class="nav-icon">🐎</span>
+      <span>Activités</span>
     </button>
     <button class="nav-btn" data-tab="tab-info">
       <span class="nav-icon">📋</span>
@@ -1261,8 +1330,12 @@
         { id: "arabe", name: "Pur-Sang Arabe (15 ans)" }
       ],
       horseProfiles: {},
+      structure: {},
       practitionerContacts: {},
       weightRecords: {},
+      activityRecords: {},
+      activityPlans: {},
+      protocols: [],
       foods: [
         {
           id: "exquis",
@@ -1501,6 +1574,7 @@
             unit,
             bagKg: defaultQty,
             estimatedDailyKg: defaultDailyL,
+            nutrition: f.nutrition || {},
             purchases,
             openedBags
           };
@@ -1518,8 +1592,12 @@
           ...parsed,
           horses,
           horseProfiles: parsed.horseProfiles || {},
+          structure: parsed.structure || {},
           practitionerContacts: parsed.practitionerContacts || {},
           weightRecords: parsed.weightRecords || {},
+          activityRecords: parsed.activityRecords || {},
+          activityPlans: parsed.activityPlans || {},
+          protocols: Array.isArray(parsed.protocols) ? parsed.protocols : [],
           config: { ...DEFAULT_STATE.config, ...(parsed.config || {}) },
           foods: sanitizeFoods(parsed.foods || DEFAULT_STATE.foods),
           pharmacy: Array.isArray(parsed.pharmacy) ? parsed.pharmacy : structuredClone(DEFAULT_STATE.pharmacy),
@@ -1531,12 +1609,14 @@
     }
 
     let state = loadState();
+    state.protocols ||= [];
     let weatherData = null;
     let activeTab = "tab-home";
     let activeHealthSubTab = "sub-providers";
     let activeDewormHorse = state.horses[0].id;
     let activeVaccineHorse = state.horses[0].id;
     let activeHealthHorse = state.horses[0].id;
+    let activeActivityHorse = state.horses[0].id;
     let buyingFoodId = null;
     let visitPendingDocuments = [];
     let openingFoodId = null;
@@ -1669,6 +1749,9 @@
         horseProfiles: incoming.horseProfiles || {},
         practitionerContacts: incoming.practitionerContacts || {},
         weightRecords: incoming.weightRecords || {},
+        activityRecords: incoming.activityRecords || {},
+        activityPlans: incoming.activityPlans || {},
+        protocols: Array.isArray(incoming.protocols) ? incoming.protocols : [],
         config: { ...DEFAULT_STATE.config, ...(incoming.config || {}) },
         foods: sanitizeFoods(incoming.foods || DEFAULT_STATE.foods),
         pharmacy: Array.isArray(incoming.pharmacy) ? incoming.pharmacy : structuredClone(DEFAULT_STATE.pharmacy),
@@ -2404,6 +2487,16 @@
               <label class="btn btn-outline btn-sm">📄 Photo fiche produit<input type="file" accept="image/*" hidden onchange="saveFoodProductPhoto('${escapeAttr(food.id)}',this.files[0])"></label><button class="btn btn-secondary btn-sm" onclick="extractFoodProduct('${escapeAttr(food.id)}')">Extraire les informations</button><button class="btn btn-outline btn-sm" onclick="deleteFood('${escapeAttr(food.id)}')">Supprimer</button>
             </div>
 
+            <details class="item-card" style="margin-top:10px;background:var(--surface, #f8fafc)">
+              <summary style="cursor:pointer;font-weight:700">Informations nutritionnelles du produit</summary>
+              <div class="muted" style="margin:6px 0">Renseigne les valeurs de l’étiquette ou de l’analyse, de préférence par kg de matière sèche (MS). Ne laisse pas l’IA inventer les valeurs.</div>
+              <div class="form-row">
+                <label class="info-field">Matière sèche (%)<input id="food-ms-${escapeAttr(food.id)}" type="number" min="1" max="100" step="0.1" value="${food.nutrition?.msPercent ?? 88}" /></label>
+                <label class="info-field">UFC / kg MS<input id="food-ufc-${escapeAttr(food.id)}" type="number" min="0" step="0.01" value="${food.nutrition?.ufcPerKgMS ?? ""}" placeholder="Ex. 0,85" /></label>
+                <label class="info-field">Densité (kg/L, si liquide)<input id="food-density-${escapeAttr(food.id)}" type="number" min="0.01" step="0.01" value="${food.nutrition?.densityKgL ?? ""}" placeholder="Si nécessaire" /></label>
+              </div>
+              <button class="btn btn-primary btn-sm" type="button" onclick="saveFoodNutrition('${escapeAttr(food.id)}')">Enregistrer les valeurs nutritionnelles</button>
+            </details>
             <div class="purchase-log">
               <div>Achats enregistrés :</div>
               <div class="purchase-pills">
@@ -2814,7 +2907,8 @@
           <div class="item-card" id="pharma-card-${escapeAttr(item.id)}">
             <div class="item-top">
               <div>
-                <div class="item-name">${escapeHtml(item.name)}</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div class="item-name">${escapeHtml(item.name)}</div><button type="button" class="btn btn-outline btn-sm" style="width:26px;height:26px;min-width:26px;padding:0;border-radius:50%;font-weight:700" aria-label="À quoi sert ce produit ?" title="À quoi sert ce produit ?" onclick="explainPharmaProduct('${escapeAttr(item.id)}')">?</button></div>
+                <div id="pharma-ai-info-${escapeAttr(item.id)}" class="muted hidden" style="margin-top:8px;padding:10px;border-left:3px solid #789b8a;background:var(--surface-2,rgba(120,155,138,.10));border-radius:6px;white-space:normal"></div>
                 <div class="muted">Achat : <strong>${formatDateFR(item.purchaseDate||"")}</strong> • Péremption : <strong>${formatDateFR(item.expiryDate)}</strong>${item.qty ? ` • ${escapeHtml(item.qty)}` : ""}</div>
                 ${item.notes ? `<div class="muted" style="margin-top:3px;">${escapeHtml(item.notes)}</div>` : ""}
                 <div class="muted">Achat : ${Number(item.price||0).toFixed(2)} € • ${item.horseId && item.horseId!="shared" ? escapeHtml(state.horses.find(h=>h.id===item.horseId)?.name||"") : "Commun"}</div>
@@ -2938,6 +3032,7 @@
     function switchHealthSubTab(subId) {
       activeHealthSubTab = subId;
       if(subId === "sub-weight") renderWeight();
+      if(subId === "sub-protocols") renderProtocolList();
       document.querySelectorAll(".health-subpanel").forEach(p => {
         p.classList.toggle("hidden", p.id !== subId);
       });
@@ -3026,6 +3121,30 @@
           <label class="info-field">Père<input id="profile-sirefather" value="${escapeHtml(d.father || "")}"></label>
           <label class="info-field">Mère<input id="profile-siremother" value="${escapeHtml(d.mother || "")}"></label>
         </div>
+        <div class="item-card" style="margin-top:12px">
+          <div class="item-name">Profil nutritionnel – critères IFCE</div>
+          <div class="muted">Le dernier poids enregistré est repris automatiquement. Ces critères servent à déterminer les besoins énergétiques et protéiques ; le niveau de travail s’apprécie sur l’ensemble de la semaine, pas sur une seule séance.</div>
+          <div class="form-row" style="margin-top:8px">
+            <label class="info-field">Dernier poids estimé (kg)<input value="${(()=>{const rs=[...(state.weightRecords[h.id]||[])].sort((a,b)=>(b.date||'').localeCompare(a.date||''));const w=rs.length?getEstimatedWeightRecord(rs[0]):null;return w?`${w.toFixed(1)} kg${rs[0].date?' – '+rs[0].date:''}`:'Aucune pesée';})()}" readonly></label>
+            <label class="info-field">Format<select id="profile-format"><option value="" ${!d.format?"selected":""}>À préciser</option><option value="poney" ${d.format==="poney"?"selected":""}>Poney / petit format</option><option value="selle" ${d.format==="selle"?"selected":""}>Cheval de selle / sang</option><option value="trait" ${d.format==="trait"?"selected":""}>Cheval de trait</option></select></label>
+          </div>
+          <div class="form-row">
+            <label class="info-field">Niveau d’activité hebdomadaire<select id="profile-activity"><option value="" ${!d.activityLevel?"selected":""}>À préciser</option><option value="repos" ${d.activityLevel==="repos"?"selected":""}>Sans activité / entretien</option><option value="light" ${d.activityLevel==="light"?"selected":""}>Travail léger (environ 1 à 3 h/semaine)</option><option value="light-moderate" ${d.activityLevel==="light-moderate"?"selected":""}>Travail léger à modéré (environ 3 à 5 h/semaine)</option><option value="moderate-intense" ${d.activityLevel==="moderate-intense"?"selected":""}>Travail modéré à intense (environ 5 à 7 h/semaine)</option><option value="intense" ${d.activityLevel==="intense"?"selected":""}>Travail intense / compétition</option></select></label>
+            <label class="info-field">Heures de travail / semaine<input id="profile-weekly-hours" type="number" min="0" max="40" step="0.5" value="${escapeHtml(d.weeklyWorkHours ?? "")}" placeholder="Ex. 2,5"></label>
+          </div>
+          <div class="form-row">
+            <label class="info-field">État physiologique<select id="profile-physiology"><option value="adult" ${(!d.physiologicalStage||d.physiologicalStage==="adult")?"selected":""}>Adulte à l’entretien</option><option value="growth" ${d.physiologicalStage==="growth"?"selected":""}>En croissance</option><option value="gestation" ${d.physiologicalStage==="gestation"?"selected":""}>Jument gestante</option><option value="lactation" ${d.physiologicalStage==="lactation"?"selected":""}>Jument allaitante</option><option value="stallion" ${d.physiologicalStage==="stallion"?"selected":""}>Étalon reproducteur</option></select></label>
+            <label class="info-field">Mois de gestation / lactation<input id="profile-physio-month" type="number" min="1" max="11" value="${escapeHtml(d.physiologicalMonth ?? "")}" placeholder="Si concerné"></label>
+          </div>
+          <div class="muted">Référentiel indicatif : l’IFCE distingue notamment le travail léger (environ 1–3 h/semaine) et l’activité modérée à intense (environ 5 à 6–7 h/semaine). Les besoins dépendent aussi du format, de la race, de l’âge et du stade physiologique. La note d’état corporel aide à vérifier l’adéquation réelle de la ration.</div>
+        </div>
+        <div class="item-card" style="margin-top:12px">
+          <div class="item-name">Ration quotidienne</div>
+          <div class="muted">Ajoute les aliments distribués à ce cheval et indique la quantité moyenne par jour. La liste reprend automatiquement les aliments de l’onglet Aliments.</div>
+          <div id="horse-ration-editor"></div>
+          <div class="form-row"><button class="btn btn-secondary btn-sm" type="button" onclick="addHorseRationLine()">+ Ajouter un aliment à la ration</button><button class="btn btn-primary btn-sm" type="button" onclick="saveHorseRation()">Enregistrer la ration</button></div>
+          <div id="horse-ration-summary" style="margin-top:10px"></div>
+        </div>
         <label class="info-field" style="margin-top:9px">Notes<textarea id="profile-notes" rows="3" placeholder="Particularités, informations utiles...">${escapeHtml(d.notes || "")}</textarea></label>
         <div class="form-row">
           <button class="btn btn-primary" onclick="saveHorseProfile()">Enregistrer la fiche</button>
@@ -3034,9 +3153,33 @@
         <div class="sire-note">Photographie la page d'identification du livret. L'extraction automatique nécessite de configurer un service IA sécurisé (API côté serveur). Sans ce service, la photo pourra être sélectionnée mais les champs devront être saisis ou vérifiés manuellement.</div>
         <div id="sire-import-status" class="muted" style="margin-top:7px"></div>
       `;
+      renderHorseRationEditor();
       document.getElementById("horse-photo-input").addEventListener("change", e => handleHorsePhoto(e.target.files[0]));
       document.getElementById("sire-photo-input").addEventListener("change", e => importSirePhoto(e.target.files[0]));
     }
+
+    function renderHorseRationEditor() {
+      const host=document.getElementById("horse-ration-editor");
+      if(!host)return;
+      const d=state.horseProfiles[activeInfoHorse]||{};
+      if(!Array.isArray(d.ration))d.ration=state.foods.map(f=>{const last=[...(f.purchases||[])].sort((a,b)=>(b.date||"").localeCompare(a.date||""))[0];const share=Number(last?.allocation?.[activeInfoHorse] ?? (state.horses.length>1?50:100));return {foodId:f.id,qty:Number(f.estimatedDailyKg||0)*share/100};}).filter(x=>x.qty>0);
+      host.innerHTML=d.ration.map((line,i)=>{
+        const food=state.foods.find(f=>f.id===line.foodId);
+        const options=state.foods.map(f=>`<option value="${escapeAttr(f.id)}" ${f.id===line.foodId?"selected":""}>${escapeHtml(f.name)}</option>`).join("");
+        const isOil=food&&isOilFood(food);
+        return `<div class="form-row" style="align-items:end;margin:8px 0"><label class="info-field" style="flex:2">Aliment<select id="ration-food-${i}" onchange="changeHorseRationFood(${i},this.value)"><option value="">Choisir un aliment</option>${options}</select></label><label class="info-field" style="flex:1">Quantité / jour (${isOil?"mL":"kg"})<input id="ration-qty-${i}" type="number" min="0" step="${isOil?"10":"0.05"}" value="${isOil?Number(line.qty||0)*1000:Number(line.qty||0)}" onchange="changeHorseRationQty(${i},this.value,${isOil?"true":"false"})"></label><button class="btn btn-outline btn-sm" type="button" onclick="removeHorseRationLine(${i})">×</button></div>`;
+      }).join("")||'<div class="muted">Aucun aliment dans cette ration pour le moment.</div>';
+      renderHorseRationSummary();
+    }
+    function addHorseRationLine(){const d=state.horseProfiles[activeInfoHorse]|| (state.horseProfiles[activeInfoHorse]={});d.ration=Array.isArray(d.ration)?d.ration:[];const f=state.foods.find(x=>!d.ration.some(r=>r.foodId===x.id))||state.foods[0];if(!f){alert("Ajoute d’abord un aliment dans l’onglet Aliments.");return;}d.ration.push({foodId:f.id,qty:0});renderHorseRationEditor();}
+    function changeHorseRationFood(i,id){const d=state.horseProfiles[activeInfoHorse];if(!d?.ration?.[i])return;d.ration[i].foodId=id;d.ration[i].qty=0;renderHorseRationEditor();}
+    function changeHorseRationQty(i,v,isOil){const d=state.horseProfiles[activeInfoHorse];if(!d?.ration?.[i])return;const n=Math.max(0,Number(v)||0);d.ration[i].qty=isOil?n/1000:n;renderHorseRationSummary();}
+    function removeHorseRationLine(i){const d=state.horseProfiles[activeInfoHorse];if(!d?.ration)return;d.ration.splice(i,1);renderHorseRationEditor();}
+    function calculateHorseRation(horseId){const d=state.horseProfiles[horseId]||{};let total=0,complete=true,details=[],used=0;for(const line of (d.ration||[])){const f=state.foods.find(x=>x.id===line.foodId);if(!f||!(Number(line.qty)>0))continue;const n=f.nutrition||{};const ufc=Number(n.ufcPerKgMS);const ms=Number(n.msPercent);let kgAsFed=Number(line.qty);if(isOilFood(f)){const density=Number(n.densityKgL);if(!density||!ufc||!ms){complete=false;details.push({name:f.name,missing:true});continue;}kgAsFed*=density;}if(!ufc||!ms){complete=false;details.push({name:f.name,missing:true});continue;}const contribution=kgAsFed*(ms/100)*ufc;total+=contribution;used++;details.push({name:f.name,ufc:contribution,qty:line.qty,ms,ufcKg:ufc});}if(!used)complete=false;return {total,complete,details};}
+    function renderHorseRationSummary(){const host=document.getElementById("horse-ration-summary");if(!host)return;const result=calculateHorseRation(activeInfoHorse);const d=state.horseProfiles[activeInfoHorse]||{};const target=Number(d.targetUfcPerDay)||0;const missing=result.details.filter(x=>x.missing).map(x=>x.name);let status='';if(target>0&&result.complete){const pct=(result.total-target)/target*100;const cls=Math.abs(pct)<=5?'badge-ok':Math.abs(pct)<=10?'badge-warn':'badge-danger';status=`<span class="badge ${cls}">${Math.abs(pct)<=5?'Dans la plage cible IFCE (±5 %)':Math.abs(pct)<=10?'Tolérance élargie IFCE (±10 %)':'Hors tolérance IFCE'}</span>`;}else{status='<span class="badge badge-warn">Objectif UFC à renseigner</span>';}host.innerHTML=`<div class="stats-grid"><div class="stat-mini"><div class="k">Apport énergétique calculé</div><div class="v">${result.total.toFixed(2)} UFC/j</div></div><div class="stat-mini"><div class="k">Objectif journalier</div><div class="v">${target?target.toFixed(2)+' UFC/j':'Non renseigné'}</div></div></div><div style="margin-top:8px">${status}</div>${missing.length?`<div class="muted" style="margin-top:6px">Valeurs nutritionnelles manquantes pour : ${escapeHtml(missing.join(', '))}. Complète la fiche produit dans l’onglet Aliments.</div>`:''}<label class="info-field" style="margin-top:8px">Besoin énergétique cible selon le profil IFCE (UFC/j)<input id="ration-target-ufc" type="number" min="0" step="0.1" value="${target||''}" placeholder="À reporter depuis le calcul IFCE" onchange="updateHorseUfcTarget(this.value)"></label><div class="muted">Le besoin dépend du poids, du format, de l’activité et de l’état physiologique. L’application calcule les apports à partir des aliments, mais ne fixe pas automatiquement le besoin sans ces paramètres complets.</div>`;}
+    function updateHorseUfcTarget(v){const d=state.horseProfiles[activeInfoHorse]||(state.horseProfiles[activeInfoHorse]={});d.targetUfcPerDay=Number(v)||null;renderHorseRationSummary();}
+    function saveHorseRation(){const d=state.horseProfiles[activeInfoHorse];if(!d)return;d.ration=(d.ration||[]).filter(x=>x.foodId&&Number(x.qty)>=0);saveState();renderHorseRationEditor();alert("Ration enregistrée pour ce cheval.");}
+    function saveFoodNutrition(foodId){const f=state.foods.find(x=>x.id===foodId);if(!f)return;const ms=Number(document.getElementById(`food-ms-${foodId}`)?.value);const ufcRaw=document.getElementById(`food-ufc-${foodId}`)?.value;const densityRaw=document.getElementById(`food-density-${foodId}`)?.value;f.nutrition={...(f.nutrition||{}),msPercent:ms>0&&ms<=100?ms:null,ufcPerKgMS:ufcRaw===''?null:Number(ufcRaw),densityKgL:densityRaw===''?null:Number(densityRaw)};saveState();renderFoods();renderHorseProfile();alert("Informations nutritionnelles enregistrées.");}
 
     function saveHorseProfile() {
       const h = state.horses.find(x => x.id === activeInfoHorse);
@@ -3047,7 +3190,10 @@
         ...(state.horseProfiles[h.id] || {}),
         callName:val("profile-callname"), breed:val("profile-breed"), heightAtWithers:Number(val("profile-height"))||null, sex:val("profile-sex"),
         birthDate:val("profile-birth"), sireNumber:val("profile-sire"), chipNumber:val("profile-chip"),
-        father:val("profile-sirefather"), mother:val("profile-siremother"), notes:val("profile-notes")
+        father:val("profile-sirefather"), mother:val("profile-siremother"), notes:val("profile-notes"),
+        format:val("profile-format"),
+        activityLevel:val("profile-activity"), weeklyWorkHours:val("profile-weekly-hours")===""?null:Number(val("profile-weekly-hours")),
+        physiologicalStage:val("profile-physiology"), physiologicalMonth:val("profile-physio-month")===""?null:Number(val("profile-physio-month"))
       };
       saveState(); renderHorseProfile(); renderHealthVisits(); renderAllCare(); if(activeWeightHorse===h.id) renderWeight();
     }
@@ -3163,6 +3309,97 @@
       }
     }
 
+    function ensureActivityData() {
+      state.activityRecords ||= {};
+      state.activityPlans ||= {};
+      (state.horses || []).forEach(h => {
+        state.activityRecords[h.id] ||= [];
+        state.activityPlans[h.id] ||= [];
+      });
+    }
+
+    function selectActivityHorse(id) {
+      activeActivityHorse = id;
+      renderActivities();
+    }
+
+    function renderActivities() {
+      ensureActivityData();
+      renderHorseTabs("activities-horse-tabs", activeActivityHorse, "selectActivityHorse");
+      const plans = [...(state.activityPlans[activeActivityHorse] || [])].sort((a,b)=>a.date.localeCompare(b.date));
+      const records = [...(state.activityRecords[activeActivityHorse] || [])].sort((a,b)=>b.date.localeCompare(a.date));
+      const pending = plans.filter(x=>!x.completed);
+      const planHost=document.getElementById("activity-plan-list");
+      const historyHost=document.getElementById("activity-history-list");
+      document.getElementById("activity-plan-count").textContent=`${pending.length} à faire · ${plans.filter(x=>x.completed).length} réalisée(s)`;
+      document.getElementById("activity-history-count").textContent=`${records.length} séance(s)`;
+      planHost.innerHTML=plans.length?plans.map(a=>`<div class="item-card activity-entry ${a.completed?'activity-done':''}"><div class="budget-row"><label style="display:flex;gap:9px;align-items:flex-start;flex:1"><input type="checkbox" ${a.completed?'checked':''} onchange="togglePlannedActivity('${escapeAttr(a.id)}',this.checked)" style="width:18px;height:18px;margin-top:2px"><span><strong>${formatDateFR(a.date)} · ${escapeHtml(a.type)}</strong><br><span class="muted">${Number(a.duration)||0} min${a.note?' · '+escapeHtml(a.note):''}</span></span></label><button class="btn btn-outline btn-sm" onclick="deletePlannedActivity('${escapeAttr(a.id)}')">✕</button></div></div>`).join(""):'<div class="muted">Aucune séance planifiée pour le moment.</div>';
+      historyHost.innerHTML=records.length?records.map(a=>`<div class="item-card"><div class="budget-row"><span><strong>${formatDateFR(a.date)} · ${escapeHtml(a.type)}</strong><br><span class="muted">${Number(a.duration)||0} min${a.note?' · '+escapeHtml(a.note):''}</span></span><button class="btn btn-outline btn-sm" onclick="deleteActivityRecord('${escapeAttr(a.id)}')">✕</button></div></div>`).join(""):'<div class="muted">Aucune activité enregistrée pour ce cheval.</div>';
+      const today=document.getElementById("activity-date"); if(today&&!today.value)today.value=todayISO(0);
+      const planDate=document.getElementById("activity-plan-date"); if(planDate&&!planDate.value)planDate.value=todayISO(0);
+      const aiStart=document.getElementById("activity-ai-start"); if(aiStart&&!aiStart.value)aiStart.value=todayISO(1);
+    }
+
+    function saveActivityRecord() {
+      ensureActivityData();
+      const date=document.getElementById("activity-date").value;
+      const type=document.getElementById("activity-type").value;
+      const duration=Number(document.getElementById("activity-duration").value);
+      const note=document.getElementById("activity-note").value.trim();
+      if(!date||!Number.isFinite(duration)||duration<=0){alert("Indique une date et une durée valides.");return;}
+      state.activityRecords[activeActivityHorse].push({id:"activity-"+Date.now(),date,type,duration,note,completed:true});
+      document.getElementById("activity-duration").value=""; document.getElementById("activity-note").value="";
+      saveState(); renderActivities();
+    }
+
+    function addPlannedActivity(data) {
+      ensureActivityData();
+      const date=data.date, type=data.type, duration=Number(data.duration), note=data.note||"";
+      if(!date||!Number.isFinite(duration)||duration<=0) return false;
+      state.activityPlans[activeActivityHorse].push({id:"planned-"+Date.now()+"-"+Math.random().toString(36).slice(2,7),date,type,duration,note,completed:false});
+      return true;
+    }
+
+    function addManualPlannedActivity() {
+      const ok=addPlannedActivity({date:document.getElementById("activity-plan-date").value,type:document.getElementById("activity-plan-type").value,duration:document.getElementById("activity-plan-duration").value,note:document.getElementById("activity-plan-note").value.trim()});
+      if(!ok){alert("Indique une date et une durée valides.");return;}
+      document.getElementById("activity-plan-duration").value="";document.getElementById("activity-plan-note").value="";
+      saveState();renderActivities();
+    }
+
+    function togglePlannedActivity(id, checked) {
+      ensureActivityData();
+      const item=state.activityPlans[activeActivityHorse].find(x=>x.id===id); if(!item)return;
+      item.completed=!!checked;
+      if(checked && !state.activityRecords[activeActivityHorse].some(x=>x.sourcePlanId===id)) state.activityRecords[activeActivityHorse].push({id:"activity-"+Date.now(),sourcePlanId:id,date:item.date,type:item.type,duration:item.duration,note:item.note||"",completed:true});
+      if(!checked) state.activityRecords[activeActivityHorse]=state.activityRecords[activeActivityHorse].filter(x=>x.sourcePlanId!==id);
+      saveState();renderActivities();
+    }
+
+    function deletePlannedActivity(id) { state.activityPlans[activeActivityHorse]=(state.activityPlans[activeActivityHorse]||[]).filter(x=>x.id!==id);state.activityRecords[activeActivityHorse]=(state.activityRecords[activeActivityHorse]||[]).filter(x=>x.sourcePlanId!==id);saveState();renderActivities(); }
+    function deleteActivityRecord(id) { state.activityRecords[activeActivityHorse]=(state.activityRecords[activeActivityHorse]||[]).filter(x=>x.id!==id);saveState();renderActivities(); }
+
+    async function generateActivityPlan() {
+      const status=document.getElementById("activity-ai-status");
+      const goal=document.getElementById("activity-ai-goal").value.trim();
+      if(!goal){status.textContent="Décris d'abord ton objectif pour que le programme soit adapté.";return;}
+      if(!EQUICARE_AI_ENDPOINT){status.textContent="Le service IA n'est pas encore connecté. Pour le moment, aucun programme ne peut être généré automatiquement : il faut d'abord déployer le service IA sécurisé et renseigner son URL dans EQUICARE_AI_ENDPOINT. Tu peux ajouter des séances manuellement en attendant.";return;}
+      const horse=state.horses.find(h=>h.id===activeActivityHorse);
+      const weeks=Number(document.getElementById("activity-ai-weeks").value), frequency=Number(document.getElementById("activity-ai-frequency").value), startDate=document.getElementById("activity-ai-start").value;
+      status.textContent="Génération du programme en cours…";
+      try {
+        const response=await fetch(EQUICARE_AI_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({task:"generate_activity_plan",horse:{name:horse?.name||"Cheval",profile:state.horseProfiles?.[activeActivityHorse]||{}},goal,weeks,frequency,startDate,allowedActivities:["Balade","Travail à pied","Longe","Plat","Obstacle"],instructions:"Proposer un programme progressif, varié et réaliste pour un cheval. Tenir compte du profil fourni, ne pas diagnostiquer ni remplacer l'avis vétérinaire. Répondre en JSON avec une propriété activities contenant des objets date (YYYY-MM-DD), type (une des activités autorisées), duration (minutes), note (consignes courtes). Ne jamais imposer d'obstacle ou d'effort intense si l'état de santé ou la condition physique ne le permet pas; signaler les précautions."})});
+        if(!response.ok)throw new Error("Erreur du service IA ("+response.status+").");
+        const payload=await response.json();
+        const list=Array.isArray(payload)?payload:(payload.activities||payload.plan?.activities||payload.data?.activities||[]);
+        const allowed=["Balade","Travail à pied","Longe","Plat","Obstacle"];
+        const valid=list.filter(a=>a&&/^\d{4}-\d{2}-\d{2}$/.test(a.date)&&allowed.includes(a.type)&&Number(a.duration)>0);
+        if(!valid.length)throw new Error("La réponse IA ne contient pas de séances valides. Vérifie le format JSON attendu par le service.");
+        valid.forEach(a=>addPlannedActivity({date:a.date,type:a.type,duration:a.duration,note:String(a.note||"")}));
+        saveState();renderActivities();status.textContent=valid.length+" séance(s) ajoutée(s) au planning. Vérifie que le programme convient à ton cheval avant de le suivre.";
+      } catch(error) { status.textContent="Impossible de générer le programme : "+error.message; }
+    }
+
     function renderWeight() {
       ensureHorseInfo();
       renderHorseTabs("weight-horse-tabs",activeWeightHorse,"selectWeightHorse");
@@ -3204,10 +3441,71 @@
       state.weightRecords[activeWeightHorse]=state.weightRecords[activeWeightHorse].filter(r=>r.id!==id);
       saveState();renderWeight();
     }
+    // ---------- Protocoles vétérinaires ----------
+    let editingProtocolId = null;
+    function openProtocolForm(id=null) {
+      editingProtocolId=id;
+      const existing=state.protocols.find(p=>p.id===id);
+      const host=document.getElementById('protocol-editor'); if(!host)return;
+      const horseOptions=state.horses.map(h=>`<option value="${escapeAttr(h.id)}" ${existing?.horseId===h.id?'selected':''}>${escapeHtml(h.name)}</option>`).join('');
+      const steps=existing?.steps?.length?existing.steps:[{product:'',stock:false,comments:''}];
+      host.classList.remove('hidden');
+      host.innerHTML=`<div class="item-name">${existing?'Modifier le protocole':'Nouveau protocole vétérinaire'}</div>
+        <label class="info-field">Problème / maladie rencontré(e)<input id="protocol-problem" value="${escapeHtml(existing?.problem||'')}" placeholder="Ex. ulcères gastriques, abcès, plaie…"></label>
+        <label class="info-field" style="margin-top:8px">Cheval concerné<select id="protocol-horse">${horseOptions}</select></label>
+        <div style="margin-top:12px"><strong>Étapes du protocole</strong><div id="protocol-steps">${steps.map((st,i)=>protocolStepHtml(st,i)).join('')}</div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addProtocolStep()">+ Ajouter une étape</button></div>
+        <div class="form-row" style="margin-top:12px"><button type="button" class="btn btn-primary" onclick="saveProtocol()">Enregistrer le protocole</button><button type="button" class="btn btn-outline" onclick="closeProtocolForm()">Annuler</button></div>`;
+    }
+    function protocolStepHtml(st,i){return `<div class="item-card" style="margin:8px 0"><div class="form-row" style="align-items:center;justify-content:space-between"><strong>Étape ${i+1}</strong>${i>0?`<button type="button" class="btn btn-outline btn-sm" onclick="removeProtocolStep(${i})">Supprimer</button>`:''}</div><label class="info-field">Produit utilisé<input class="protocol-product" value="${escapeHtml(st.product||'')}" placeholder="Nom du produit / médicament"></label><label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input class="protocol-stock" type="checkbox" ${st.stock?'checked':''}> Produit en stock</label><label class="info-field">Commentaires et mode d’utilisation<textarea class="protocol-comments" rows="2" placeholder="Dose, fréquence, durée, précautions…">${escapeHtml(st.comments||'')}</textarea></label></div>`;}
+    function addProtocolStep(){const host=document.getElementById('protocol-steps');if(!host)return;const i=host.querySelectorAll('.item-card').length;host.insertAdjacentHTML('beforeend',protocolStepHtml({product:'',stock:false,comments:''},i));}
+    function removeProtocolStep(i){const host=document.getElementById('protocol-steps');const cards=host?.querySelectorAll('.item-card');if(!cards||cards.length<=1)return;cards[i]?.remove();[...host.querySelectorAll('.item-card')].forEach((el,n)=>{const title=el.querySelector('strong');if(title)title.textContent=`Étape ${n+1}`;});}
+    function closeProtocolForm(){const host=document.getElementById('protocol-editor');if(host){host.classList.add('hidden');host.innerHTML='';}editingProtocolId=null;}
+    function saveProtocol(){const problem=document.getElementById('protocol-problem')?.value.trim();const horseId=document.getElementById('protocol-horse')?.value;if(!problem||!horseId){alert('Indique le problème rencontré et le cheval concerné.');return;}const steps=[...document.querySelectorAll('#protocol-steps .item-card')].map(el=>({product:el.querySelector('.protocol-product')?.value.trim()||'',stock:!!el.querySelector('.protocol-stock')?.checked,comments:el.querySelector('.protocol-comments')?.value.trim()||''}));const old=state.protocols.find(p=>p.id===editingProtocolId);const record={id:editingProtocolId||'protocol-'+Date.now(),problem,horseId,steps,updatedAt:new Date().toISOString(),createdAt:old?.createdAt||new Date().toISOString()};if(old)Object.assign(old,record);else state.protocols.unshift(record);saveState();closeProtocolForm();renderProtocolList();alert('Protocole enregistré.');}
+    function deleteProtocol(id){if(!confirm('Supprimer définitivement ce protocole ?'))return;state.protocols=state.protocols.filter(p=>p.id!==id);saveState();renderProtocolList();}
+    function renderProtocolList(){const host=document.getElementById('protocol-list');if(!host)return;const filter=document.getElementById('protocol-horse-filter');if(filter){const val=filter.value||'all';filter.innerHTML='<option value="all">Tous les chevaux</option>'+state.horses.map(h=>`<option value="${escapeAttr(h.id)}">${escapeHtml(h.name)}</option>`).join('');filter.value=state.horses.some(h=>h.id===val)?val:'all';}const q=(document.getElementById('protocol-search')?.value||'').trim().toLocaleLowerCase('fr');const horseId=filter?.value||'all';const rows=state.protocols.filter(p=>(horseId==='all'||p.horseId===horseId)&&(!q||[p.problem,...(p.steps||[]).flatMap(st=>[st.product,st.comments])].join(' ').toLocaleLowerCase('fr').includes(q)));host.innerHTML=rows.map(p=>{const horse=state.horses.find(h=>h.id===p.horseId);return `<div class="item-card" style="margin:10px 0"><div class="form-row" style="justify-content:space-between;align-items:flex-start"><div><strong>${escapeHtml(p.problem)}</strong><div class="muted">${escapeHtml(horse?.name||'Cheval supprimé')}</div></div><div><button type="button" class="btn btn-outline btn-sm" onclick="openProtocolForm('${escapeAttr(p.id)}')">Modifier</button> <button type="button" class="btn btn-outline btn-sm" onclick="deleteProtocol('${escapeAttr(p.id)}')">Supprimer</button></div></div>${(p.steps||[]).map((st,i)=>`<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:8px"><strong>Étape ${i+1} — ${escapeHtml(st.product||'Produit non renseigné')}</strong><div class="muted">${st.stock?'✓ En stock':'○ Non en stock'}</div>${st.comments?`<div style="white-space:pre-wrap">${escapeHtml(st.comments)}</div>`:''}</div>`).join('')}</div>`;}).join('')||'<div class="muted" style="padding:12px">Aucun protocole ne correspond à ta recherche.</div>';}
+
+    function openAddHorseForm(){const host=document.getElementById('add-horse-editor');if(!host)return;host.classList.remove('hidden');host.innerHTML=`<strong>Ajouter un cheval</strong><div class="form-row" style="margin-top:8px"><label class="info-field">Nom du cheval<input id="new-horse-name" placeholder="Nom du cheval"></label><label class="info-field">Nom usuel (facultatif)<input id="new-horse-callname" placeholder="Nom d’écurie"></label></div><div class="form-row"><button type="button" class="btn btn-primary" onclick="createHorse()">Enregistrer le cheval</button><button type="button" class="btn btn-outline" onclick="document.getElementById('add-horse-editor').classList.add('hidden')">Annuler</button></div>`;}
+    function createHorse(){const name=document.getElementById('new-horse-name')?.value.trim();const callName=document.getElementById('new-horse-callname')?.value.trim()||'';if(!name){alert('Saisis le nom du cheval.');return;}const id='horse-'+Date.now();state.horses.push({id,name});state.horseProfiles[id]={callName};state.weightRecords[id]=[];state.practitionerContacts[id]=[];state.horseProfiles[id].ration=[];activeInfoHorse=id;activeWeightHorse=id;activeHealthHorse=id;activeActivityHorse=id;saveState();const host=document.getElementById('add-horse-editor');if(host)host.classList.add('hidden');renderHorseProfile();renderProtocolList();renderAllCare();renderHealthVisits();alert(`${name} a été ajouté à la liste des chevaux.`);}
+
+    function toggleNecHelp(){document.getElementById('weight-nec-help')?.classList.toggle('hidden');}
+
+    function renderStructure() {
+      const host=document.getElementById("structure-content");
+      if(!host)return;
+      const d=state.structure||(state.structure={});
+      const count=state.horses.length;
+      const field=(label,id,value,comment,placeholder="")=>`<div class="item-card" style="margin:8px 0"><label class="info-field">${label}<input id="${id}" value="${escapeHtml(value??"")}" placeholder="${placeholder}"></label><label class="info-field" style="margin-top:7px">Commentaire<textarea id="${id}-comment" rows="2" placeholder="Précisions, remarques…">${escapeHtml(comment||"")}</textarea></label></div>`;
+      host.innerHTML=`
+        <div class="card" style="padding:14px;margin:10px 0">
+          <div class="card-header"><div><h3 class="card-title">🏡 Fiche descriptive de la structure</h3><div class="muted">Renseigne ici les caractéristiques générales de ton lieu de vie et d’hébergement des chevaux.</div></div></div>
+          <div class="sub-section"><h3 class="sub-section-title">Identité et localisation</h3>
+            ${field("Nom / prénom du propriétaire","structure-owner",d.owner,d.ownerComment,"Nom et prénom")}
+            ${field("Adresse de la structure","structure-address",d.address,d.addressComment,"Adresse complète, code postal, commune")}
+            <div class="item-card" style="margin:8px 0"><label class="info-field">Nombre de chevaux enregistrés<input value="${count}" readonly></label><div class="muted">Ce nombre est calculé automatiquement à partir de la rubrique Informations &gt; Chevaux.</div><label class="info-field" style="margin-top:7px">Commentaire<textarea id="structure-count-comment" rows="2" placeholder="Précisions éventuelles…">${escapeHtml(d.horseCountComment||"")}</textarea></label></div>
+          </div>
+          <div class="sub-section"><h3 class="sub-section-title">Hébergement et litière</h3>
+            <div class="item-card" style="margin:8px 0"><label class="info-field">Type d’abri<select id="structure-shelter"><option value="">À préciser</option>${["Abri en dur","Abri en bois","Tunnel","Pas d’abri"].map(v=>`<option ${d.shelter===v?'selected':''}>${v}</option>`).join("")}</select></label><label class="info-field" style="margin-top:7px">Commentaire<textarea id="structure-shelter-comment" rows="2">${escapeHtml(d.shelterComment||"")}</textarea></label></div>
+            <div class="item-card" style="margin:8px 0"><label class="info-field">Type de litière<select id="structure-bedding"><option value="">À préciser</option>${["Paille","Lin","Miscanthus","Pellets","Sable","Pas de litière","Autre"].map(v=>`<option ${d.bedding===v?'selected':''}>${v}</option>`).join("")}</select></label><label class="info-field" style="margin-top:7px">Commentaire<textarea id="structure-bedding-comment" rows="2" placeholder="Préciser le type si ‘Autre’, quantité, organisation…">${escapeHtml(d.beddingComment||"")}</textarea></label></div>
+            <div class="item-card" style="margin:8px 0"><label class="info-field">Fréquence de nettoyage de la litière<div class="form-row" style="align-items:center"><input id="structure-bedding-frequency" type="number" min="0" step="1" style="max-width:140px" value="${escapeHtml(d.beddingFrequency??"")}" placeholder="Ex. 2"><span>semaines</span></div></label><label class="info-field" style="margin-top:7px">Commentaire<textarea id="structure-bedding-frequency-comment" rows="2">${escapeHtml(d.beddingFrequencyComment||"")}</textarea></label></div>
+          </div>
+          <div class="sub-section"><h3 class="sub-section-title">Gestion de l’eau</h3>
+            <div class="item-card" style="margin:8px 0"><label class="info-field">Source d’eau<select id="structure-water"><option value="">À préciser</option>${["Eau de ville","Eau de pluie","Eau du puits"].map(v=>`<option ${d.water===v?'selected':''}>${v}</option>`).join("")}</select></label><label class="info-field" style="margin-top:7px">Commentaire<textarea id="structure-water-comment" rows="2">${escapeHtml(d.waterComment||"")}</textarea></label></div>
+            <div class="item-card" style="margin:8px 0"><label class="info-field">Fréquence de nettoyage de l’abreuvoir<input id="structure-water-frequency" value="${escapeHtml(d.waterFrequency??"")}" placeholder="Ex. tous les jours, 2 fois par semaine…"></label><label class="info-field" style="margin-top:7px">Commentaire<textarea id="structure-water-frequency-comment" rows="2">${escapeHtml(d.waterFrequencyComment||"")}</textarea></label></div>
+          </div>
+          <div class="form-row" style="justify-content:flex-end;margin-top:12px"><button type="button" class="btn btn-primary" onclick="saveStructure()">Enregistrer la fiche structure</button></div>
+        </div>`;
+    }
+    function saveStructure(){
+      const val=id=>document.getElementById(id)?.value??"";
+      state.structure={owner:val("structure-owner").trim(),ownerComment:val("structure-owner-comment"),address:val("structure-address").trim(),addressComment:val("structure-address-comment"),horseCountComment:val("structure-count-comment"),shelter:val("structure-shelter"),shelterComment:val("structure-shelter-comment"),bedding:val("structure-bedding"),beddingComment:val("structure-bedding-comment"),beddingFrequency:val("structure-bedding-frequency"),beddingFrequencyComment:val("structure-bedding-frequency-comment"),water:val("structure-water"),waterComment:val("structure-water-comment"),waterFrequency:val("structure-water-frequency").trim(),waterFrequencyComment:val("structure-water-frequency-comment")};
+      saveState();alert("Fiche structure enregistrée.");
+    }
     function renderInformation() {
       ensureHorseInfo();
       if(activeInfoSub==="info-horses")renderHorseProfile();
       if(activeInfoSub==="info-contacts")renderContacts();
+      if(activeInfoSub==="info-structure")renderStructure();
     }
 
     function switchTab(tabId, skipScrollTop = false) {
@@ -3219,6 +3517,7 @@
       });
       renderAlertsAndWeather();
       if (tabId === "tab-info") renderInformation();
+      if (tabId === "tab-activities") renderActivities();
       if (tabId === "tab-budget") renderBudget();
       if (!skipScrollTop) {
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -3228,6 +3527,10 @@
     document.querySelectorAll(".nav-btn").forEach(btn => {
       btn.addEventListener("click", () => switchTab(btn.dataset.tab));
     });
+
+    document.getElementById("btn-save-activity")?.addEventListener("click", saveActivityRecord);
+    document.getElementById("btn-add-planned-activity")?.addEventListener("click", addManualPlannedActivity);
+    document.getElementById("btn-generate-activity-plan")?.addEventListener("click", generateActivityPlan);
 
     document.querySelectorAll(".health-subbtn").forEach(btn => {
       btn.addEventListener("click", () => switchHealthSubTab(btn.dataset.sub));
@@ -3417,7 +3720,27 @@
     function renderContacts(){
       const contacts=state.practitionerContacts.shared||[];
       const host=document.getElementById('contacts-content'); if(!host)return;
-      host.innerHTML=`<div class="item-card"><strong>Ajouter un intervenant commun</strong><div class="form-row"><label class="info-field">Spécialité / type<input id="contact-type" placeholder="Vétérinaire, maréchal…"></label><label class="info-field">Nom<input id="contact-name" placeholder="Nom / cabinet"></label></div><div class="form-row"><label class="info-field">Téléphone<input id="contact-phone" type="tel" placeholder="06…"></label><label class="info-field">E-mail<input id="contact-email" type="email" placeholder="contact@…"></label></div><label class="info-field">Photo<input id="contact-photo-new" type="file" accept="image/*"></label><label class="info-field">Commentaires<textarea id="contact-comments" rows="2"></textarea></label><label class="info-field">Message type<textarea id="contact-template" rows="2" placeholder="Bonjour, je souhaiterais convenir d'un rendez-vous."></textarea></label><button class="btn btn-primary btn-sm" onclick="addPractitionerContact()">Ajouter le contact</button></div>${contacts.map(c=>`<div class="contact-card"><div class="identity-layout">${c.photoData?`<img class="identity-photo" src="${c.photoData}" alt="Photo de ${escapeHtml(c.name||'intervenant')}">`:`<div class="identity-photo" style="display:grid;place-items:center;font-size:2rem">👤</div>`}<div style="flex:1;min-width:0"><strong>${escapeHtml(c.name||'Intervenant')}</strong><div class="muted">${escapeHtml(c.type||'')}</div><div class="muted">${escapeHtml(c.phone||'')}</div><div class="muted">${escapeHtml(c.email||'')}</div><div style="margin-top:8px"><button class="btn btn-outline btn-sm" onclick="deletePractitionerContact('${escapeAttr(c.id)}')">Supprimer</button></div></div></div><div class="muted" style="margin:8px 0">${escapeHtml(c.comments||'')}</div><label class="info-field">Photo de l’intervenant<input type="file" accept="image/*" onchange="updateContactPhoto('${escapeAttr(c.id)}',this.files[0])"></label><div class="form-row"><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','sms')">SMS</button><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','email')">Gmail / e-mail</button></div><label class="info-field">Modifier les commentaires<textarea onchange="updateContactComments('${escapeAttr(c.id)}',this.value)">${escapeHtml(c.comments||'')}</textarea></label></div>`).join('')||'<div class="muted">Aucun intervenant enregistré.</div>'}`;
+      host.innerHTML=`
+        <div style="margin:10px 0 14px;">
+          <button type="button" class="btn btn-primary" id="btn-show-new-contact" onclick="toggleNewContactForm(true)">+ Ajouter un intervenant</button>
+        </div>
+        <div class="item-card hidden" id="new-contact-form">
+          <div class="item-name" style="margin-bottom:8px;">Nouvel intervenant</div>
+          <div class="form-row"><label class="info-field">Spécialité / type<input id="contact-type" placeholder="Vétérinaire, maréchal…"></label><label class="info-field">Nom<input id="contact-name" placeholder="Nom / cabinet"></label></div>
+          <div class="form-row"><label class="info-field">Téléphone<input id="contact-phone" type="tel" placeholder="06…"></label><label class="info-field">E-mail<input id="contact-email" type="email" placeholder="contact@…"></label></div>
+          <label class="info-field">Photo<input id="contact-photo-new" type="file" accept="image/*"></label>
+          <label class="info-field">Commentaires<textarea id="contact-comments" rows="2"></textarea></label>
+          <label class="info-field">Message type<textarea id="contact-template" rows="2" placeholder="Bonjour, je souhaiterais convenir d'un rendez-vous."></textarea></label>
+          <div class="form-row"><button type="button" class="btn btn-primary btn-sm" onclick="addPractitionerContact()">Enregistrer l’intervenant</button><button type="button" class="btn btn-outline btn-sm" onclick="toggleNewContactForm(false)">Annuler</button></div>
+        </div>
+        ${contacts.map(c=>`<div class="contact-card"><div class="identity-layout">${c.photoData?`<img class="identity-photo" src="${c.photoData}" alt="Photo de ${escapeHtml(c.name||'intervenant')}">`:`<div class="identity-photo" style="display:grid;place-items:center;font-size:2rem">👤</div>`}<div style="flex:1;min-width:0"><strong>${escapeHtml(c.name||'Intervenant')}</strong><div class="muted">${escapeHtml(c.type||'')}</div><div class="muted">${escapeHtml(c.phone||'')}</div><div class="muted">${escapeHtml(c.email||'')}</div><div style="margin-top:8px"><button class="btn btn-outline btn-sm" onclick="deletePractitionerContact('${escapeAttr(c.id)}')">Supprimer</button></div></div></div><div class="muted" style="margin:8px 0">${escapeHtml(c.comments||'')}</div><label class="info-field">Photo de l’intervenant<input type="file" accept="image/*" onchange="updateContactPhoto('${escapeAttr(c.id)}',this.files[0])"></label><div class="form-row"><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','sms')">SMS</button><button class="btn btn-secondary btn-sm" onclick="prepareContactAppointment('${escapeAttr(c.id)}','email')">Gmail / e-mail</button></div><label class="info-field">Modifier les commentaires<textarea onchange="updateContactComments('${escapeAttr(c.id)}',this.value)">${escapeHtml(c.comments||'')}</textarea></label></div>`).join('')||'<div class="muted">Aucun intervenant enregistré.</div>'}`;
+    }
+    function toggleNewContactForm(show){
+      const form=document.getElementById('new-contact-form');
+      const button=document.getElementById('btn-show-new-contact');
+      if(form)form.classList.toggle('hidden',!show);
+      if(button)button.classList.toggle('hidden',!!show);
+      if(show)document.getElementById('contact-type')?.focus();
     }
     async function addPractitionerContact(){
       const v=id=>document.getElementById(id)?.value.trim()||'';const type=v('contact-type'),name=v('contact-name');if(!type||!name){alert('Renseigne le type et le nom.');return;}
@@ -3429,15 +3752,142 @@
     function deletePractitionerContact(id){state.practitionerContacts.shared=(state.practitionerContacts.shared||[]).filter(c=>c.id!==id);saveState();renderContacts();}
     function prepareContactAppointment(id,mode){const c=(state.practitionerContacts.shared||[]).find(x=>x.id===id);if(!c)return;const message=(c.template||'Bonjour, je souhaiterais convenir d’un rendez-vous.').replaceAll('{cheval}','Sacramento ou Bella');if(mode==='sms'){if(!c.phone){alert('Ajoute un numéro de téléphone.');return;}location.href=`sms:${c.phone.replace(/\s/g,'')}?body=${encodeURIComponent(message)}`;}else{if(!c.email){alert('Ajoute une adresse e-mail.');return;}location.href=`mailto:${encodeURIComponent(c.email)}?subject=${encodeURIComponent('Demande de rendez-vous')}&body=${encodeURIComponent(message)}`;}}
 
-    // Photos de galerie pour les pesées : sauvegardées dans la fiche de chaque mesure.
-    const _renderWeightOriginal=renderWeight;
-    renderWeight=function(){_renderWeightOriginal();const input=document.createElement('input');input.type='file';input.accept='image/*';input.id='weight-photo-input';input.style.display='none';document.getElementById('weight-content')?.querySelector('.item-card')?.appendChild(input);const label=document.createElement('label');label.className='btn btn-secondary btn-sm';label.textContent='📷 Photo de la pesée';label.appendChild(input);document.getElementById('weight-content')?.querySelector('.item-card')?.appendChild(label);};
-    const _addWeightRecordOriginal=addWeightRecord;
-    addWeightRecord=async function(){const file=document.getElementById('weight-photo-input')?.files?.[0];let photoData='';if(file)photoData=await resizeImageFile(file,900,.72);const date=document.getElementById('weight-date').value,kg=Number(document.getElementById('weight-value').value),note=document.getElementById('weight-note').value.trim(),height=Number(document.getElementById('weight-height')?.value)||null,girth=Number(document.getElementById('weight-girth')?.value)||null;if(!date||!Number.isFinite(kg)||kg<=0||!girth){alert('Saisis une date, un poids et un périmètre thoracique valides.');return;}state.weightRecords[activeWeightHorse] ||= [];state.weightRecords[activeWeightHorse].push({id:'weight-'+Date.now(),date,kg,note,photoData,heightAtWithers:height,girth});saveState();renderWeight();};
+
+    // Suivi du poids estimé : formule PT/HG et histogramme.
+    function estimateHorseWeight(girthCm, heightCm) {
+      const pt = Number(girthCm), hg = Number(heightCm);
+      if (!Number.isFinite(pt) || !Number.isFinite(hg) || pt <= 0 || hg <= 0) return null;
+      const estimate = (4.3 * pt) + (3 * hg) - 785;
+      return Number.isFinite(estimate) && estimate > 0 ? Math.round(estimate * 10) / 10 : null;
+    }
+
+    function toggleWeightHelp() {
+      const panel = document.getElementById("weight-help-panel");
+      if (panel) panel.classList.toggle("hidden");
+    }
+
+    function updateWeightEstimatePreview() {
+      const height = Number(document.getElementById("weight-height")?.value);
+      const girth = Number(document.getElementById("weight-girth")?.value);
+      const estimate = estimateHorseWeight(girth, height);
+      const output = document.getElementById("weight-estimate-preview");
+      if (output) output.textContent = estimate === null
+        ? "Renseigne le périmètre thoracique pour calculer le poids estimé."
+        : `Poids estimé : ${estimate.toLocaleString("fr-FR")} kg`;
+    }
+
+    function getEstimatedWeightRecord(record) {
+      const height = Number(record.heightAtWithers);
+      const girth = Number(record.girth);
+      const calculated = estimateHorseWeight(girth, height);
+      if (calculated !== null) return calculated;
+      const saved = Number(record.estimatedKg);
+      return Number.isFinite(saved) && saved > 0 ? saved : null;
+    }
+
+    function buildWeightHistogram(records) {
+      const points = records
+        .map(r => ({ date: r.date, kg: getEstimatedWeightRecord(r) }))
+        .filter(p => p.kg !== null && Number.isFinite(p.kg))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      if (!points.length) {
+        return '<div class="muted">Aucun poids estimé disponible. Renseigne une hauteur au garrot dans la fiche du cheval et un périmètre thoracique à chaque pesée.</div>';
+      }
+
+      const min = Math.min(...points.map(p => p.kg));
+      const max = Math.max(...points.map(p => p.kg));
+      const lo = Math.max(0, Math.floor((min - Math.max(20, (max-min)*.2)) / 50) * 50);
+      const hi = Math.ceil((max + Math.max(20, (max-min)*.2)) / 50) * 50 || max + 50;
+      const range = Math.max(1, hi - lo);
+      const chartW = 360, chartH = 190, left = 42, right = 10, top = 12, bottom = 42;
+      const plotH = chartH - top - bottom, plotW = chartW - left - right;
+      const slot = plotW / points.length, barW = Math.min(38, Math.max(12, slot * .58));
+      const grid = [0,1,2,3].map(i => {
+        const val = hi - (range * i / 3), y = top + (plotH * i / 3);
+        return `<line x1="${left}" y1="${y}" x2="${chartW-right}" y2="${y}" stroke="#ddd6ca" stroke-dasharray="3 3"/><text x="${left-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#5d6860">${Math.round(val)}</text>`;
+      }).join("");
+      const bars = points.map((p,i) => {
+        const h = Math.max(2, ((p.kg-lo)/range)*plotH), x = left + i*slot + (slot-barW)/2, y = top + plotH - h;
+        const dateLabel = formatDateFR(p.date);
+        return `<g><rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="4" fill="#4f8a68"><title>${dateLabel} : ${p.kg.toLocaleString("fr-FR")} kg estimés</title></rect><text x="${x+barW/2}" y="${Math.max(10,y-5)}" text-anchor="middle" font-size="9" fill="#34483b">${Math.round(p.kg)}</text><text x="${x+barW/2}" y="${chartH-18}" text-anchor="middle" font-size="9" fill="#5d6860">${dateLabel}</text></g>`;
+      }).join("");
+      return `<svg class="weight-chart" viewBox="0 0 ${chartW} ${chartH}" role="img" aria-label="Histogramme du poids estimé">${grid}${bars}</svg>`;
+    }
+
+    function renderWeight() {
+      ensureHorseInfo();
+      renderHorseTabs("weight-horse-tabs", activeWeightHorse, "selectWeightHorse");
+      const records = [...(state.weightRecords[activeWeightHorse] || [])].sort((a,b) => a.date.localeCompare(b.date));
+      const height = Number(state.horseProfiles[activeWeightHorse]?.heightAtWithers) || "";
+      const chart = buildWeightHistogram(records);
+      const history = [...records].reverse().map(r => {
+        const estimated = getEstimatedWeightRecord(r);
+        return `<div class="weight-row"><span><strong>${formatDateFR(r.date)}</strong>${r.note ? `<br><span class="muted">${escapeHtml(r.note)}</span>` : ""}${r.photoData ? `<br><img src="${r.photoData}" alt="Photo de la pesée" style="width:76px;height:64px;object-fit:cover;border-radius:8px;margin-top:6px">` : ""}</span><span><strong>${estimated !== null ? `${estimated.toLocaleString("fr-FR")} kg estimés` : `${Number(r.kg || 0).toLocaleString("fr-FR")} kg (ancienne donnée)`}</strong>${r.heightAtWithers ? `<div class="muted">Garrot : ${r.heightAtWithers} cm</div>` : ""}${r.girth ? `<div class="muted">Périmètre thoracique : ${r.girth} cm</div>` : ""}${r.bodyConditionScore!==undefined&&r.bodyConditionScore!==null?`<div class="muted">État corporel : ${r.bodyConditionScore}/5</div>`:""}<button class="btn btn-outline btn-sm" onclick="deleteWeightRecord('${escapeAttr(r.id)}')">✕</button></span></div>`;
+      }).join("") || '<div class="muted">Aucune pesée enregistrée pour ce cheval.</div>';
+
+      document.getElementById("weight-content").innerHTML = `
+        <div class="sub-section-header" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+          <strong class="sub-section-title">Suivi du poids estimé</strong>
+          <button type="button" class="btn btn-outline btn-sm" aria-label="Comment mesurer le cheval et calculer son poids" title="Comment mesurer et calculer ?" onclick="toggleWeightHelp()">? Comment mesurer</button>
+        </div>
+        <div id="weight-help-panel" class="item-card hidden" style="margin-bottom:12px">
+          <strong>Comment mesurer le cheval</strong>
+          <p>Placez le cheval bien droit (« au carré ») sur un sol plat.</p>
+          <p><strong>Périmètre thoracique (PT) :</strong> entourez le tronc juste derrière les coudes, au passage de sangle, en passant par le point le plus bas du garrot, sans serrer.</p>
+          <p><strong>Hauteur au garrot (HG) :</strong> mesurez verticalement du sol jusqu'au sommet du garrot à l'aide d'une toise.</p>
+          <strong>Formule courante (cheval de selle, entretien / travail)</strong>
+          <p style="font-weight:700;text-align:center;font-size:1rem">(4,3 × PT) + (3 × HG) − 785 = poids estimé en kg</p>
+          <p class="muted">Les mesures PT et HG sont à saisir en centimètres. Cette formule donne une estimation, pas une pesée réelle.</p>
+          <p class="muted">Source mentionnée : YouTube · Crazy Horses – Chaîne équestre.</p>
+        </div>
+        <div class="item-card">
+          <strong>Ajouter une pesée</strong>
+          <div class="form-row">
+            <label class="info-field">Date<input id="weight-date" type="date" value="${todayISO(0)}"></label>
+            <label class="info-field">Hauteur au garrot (cm)<input id="weight-height" type="number" value="${escapeHtml(height)}" readonly></label>
+            <label class="info-field">Périmètre thoracique (cm)<input id="weight-girth" type="number" min="50" max="300" step=".5" placeholder="Ex. 185" oninput="updateWeightEstimatePreview()"></label>
+          </div>
+          <div id="weight-estimate-preview" class="item-card" style="margin-top:8px;background:var(--surface-2,#f2f4ef)">Renseigne le périmètre thoracique pour calculer le poids estimé.</div>
+          <div class="form-row" style="align-items:end;margin-top:8px"><label class="info-field">Note d’état corporel (0 à 5)<input id="weight-nec" type="number" min="0" max="5" step="0.25" placeholder="Ex. 3"></label><button type="button" class="btn btn-outline btn-sm" onclick="toggleNecHelp()">? Comprendre la note</button></div>
+          <div id="weight-nec-help" class="item-card hidden" style="margin-top:8px"><strong>Échelle d’état corporel (NEC)</strong><p><b>0 – Cadavérique :</b> maigreur extrême, os très saillants, absence de réserves graisseuses.</p><p><b>1 – Très maigre :</b> côtes, hanches, colonne et garrot très apparents, très peu de couverture.</p><p><b>2 – Maigre :</b> côtes facilement visibles ou palpables, reliefs osseux marqués, couverture graisseuse faible.</p><p><b>3 – État modéré :</b> côtes palpables sous une fine couverture, silhouette équilibrée, reliefs osseux peu visibles.</p><p><b>4 – Gras :</b> dépôts graisseux visibles, côtes difficiles à sentir, encolure et arrière-main arrondies.</p><p><b>5 – Obèse :</b> dépôts graisseux importants, côtes difficiles à palper, bourrelets marqués.</p><p class="muted">Évalue par observation et palpation de plusieurs zones (encolure, garrot, côtes, dos, arrière-main). En cas de doute, demande au vétérinaire de t’aider à noter ton cheval.</p></div>
+          <label class="info-field" style="margin-top:8px">Commentaire (facultatif)<input id="weight-note" placeholder="Ex. mesure du matin…"></label>
+          <input id="weight-photo-input" type="file" accept="image/*" style="display:none">
+          <label for="weight-photo-input" class="btn btn-secondary btn-sm" style="display:inline-flex;margin-top:8px">📷 Photo de la pesée</label>
+          <div class="form-row"><button class="btn btn-primary btn-sm" onclick="addWeightRecord()">Enregistrer la pesée</button></div>
+        </div>
+        <div class="sub-section"><div class="sub-section-header"><strong class="sub-section-title">Évolution du poids estimé</strong><span class="muted">${records.filter(r => getEstimatedWeightRecord(r) !== null).length} mesure(s)</span></div>${chart}</div>
+        <div class="weight-history">${history}</div>`;
+      updateWeightEstimatePreview();
+    }
+
+    async function addWeightRecord() {
+      const date = document.getElementById("weight-date")?.value;
+      const height = Number(document.getElementById("weight-height")?.value) || null;
+      const girth = Number(document.getElementById("weight-girth")?.value) || null;
+      const note = document.getElementById("weight-note")?.value.trim() || "";
+      const necRaw = document.getElementById("weight-nec")?.value;
+      const bodyConditionScore = necRaw === "" || necRaw == null ? null : Number(necRaw);
+      const estimate = estimateHorseWeight(girth, height);
+      if (!date || !height || !girth || estimate === null) {
+        alert("Vérifie la hauteur au garrot dans la fiche du cheval et saisis un périmètre thoracique valide.");
+        return;
+      }
+      const file = document.getElementById("weight-photo-input")?.files?.[0];
+      let photoData = "";
+      if (file) photoData = await resizeImageFile(file, 900, .72);
+      state.weightRecords[activeWeightHorse] ||= [];
+      state.weightRecords[activeWeightHorse].push({
+        id: "weight-" + Date.now(), date, kg: estimate, estimatedKg: estimate,
+        note, photoData, heightAtWithers: height, girth, bodyConditionScore
+      });
+      saveState();
+      renderWeight();
+    }
 
     // Camemberts et filtre mensuel + comparaison de l'année précédente.
     const _renderBudgetOriginal=renderBudget;
-    renderBudget=function(){_renderBudgetOriginal();const monthSel=document.getElementById('budget-month');if(!monthSel)return;const year=Number(document.getElementById('budget-year').value)||new Date().getFullYear(),month=monthSel.value;const entries=[];(state.foods||[]).forEach(f=>(f.purchases||[]).forEach(p=>entries.push({date:p.date,cat:'Alimentation',price:Number(p.totalPrice||0),allocation:p.allocation||{}})));(state.pharmacy||[]).forEach(p=>entries.push({date:p.purchaseDate||p.expiryDate,cat:'Pharmacie',price:Number(p.price||0),horseId:p.horseId||'shared'}));Object.entries(state.healthVisits||{}).forEach(([hid,ps])=>Object.values(ps||{}).forEach(pr=>(pr.visits||[]).forEach(v=>entries.push({date:v.date,cat:'Interventions',price:Number(v.price||0),horseId:hid}))));const horse=document.getElementById('budget-horse').value;function totals(y){const a={};entries.filter(e=>Number((e.date||'').slice(0,4))===y&&(month==='all'||(e.date||'').slice(5,7)===month)).forEach(e=>{let val=e.price;if(e.cat==='Alimentation'&&horse!=='all')val*=Number(e.allocation[horse]||0)/100;else if(e.cat!=='Alimentation'&&horse!=='all'&&e.horseId!==horse&&e.horseId!=='shared')val=0;else if(e.cat!=='Alimentation'&&horse!=='all'&&e.horseId==='shared')val/=state.horses.length||1;if(val>0)a[e.cat]=(a[e.cat]||0)+val;});return a;}function pie(obj){const vals=Object.values(obj),sum=vals.reduce((a,b)=>a+b,0);if(!sum)return '<p class="muted">Aucune dépense</p>';let angle=0;const colors=['#315b45','#c69b55','#789b8a','#a96b55','#77839b'];const stops=Object.entries(obj).map(([k,v],i)=>{const start=angle;angle+=v/sum*360;return `${colors[i%colors.length]} ${start}deg ${angle}deg`;}).join(',');return `<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div style="width:150px;height:150px;border-radius:50%;background:conic-gradient(${stops})"></div><div>${Object.entries(obj).map(([k,v],i)=>`<div class="budget-row"><span>${escapeHtml(k)}</span><strong>${v.toFixed(2)} €</strong></div>`).join('')}</div></div>`;}const current=totals(year),previous=totals(year-1);const panel=document.createElement('div');panel.innerHTML=`<h3>Répartition ${year}${month==='all'?'':' – '+month}</h3>${pie(current)}<h3>Comparaison avec ${year-1}</h3>${pie(previous)}`;document.getElementById('budget-content').appendChild(panel);};
+    renderBudget=function(){_renderBudgetOriginal();const monthSel=document.getElementById('budget-month');if(!monthSel)return;const year=Number(document.getElementById('budget-year').value)||new Date().getFullYear(),month=monthSel.value;const entries=[];(state.foods||[]).forEach(f=>(f.purchases||[]).forEach(p=>entries.push({date:p.date,cat:'Alimentation',price:Number(p.totalPrice||0),allocation:p.allocation||{}})));(state.pharmacy||[]).forEach(p=>entries.push({date:p.purchaseDate||p.expiryDate,cat:'Pharmacie',price:Number(p.price||0),horseId:p.horseId||'shared'}));Object.entries(state.healthVisits||{}).forEach(([hid,ps])=>Object.values(ps||{}).forEach(pr=>(pr.visits||[]).forEach(v=>entries.push({date:v.date,cat:'Interventions',price:Number(v.price||0),horseId:hid}))));const horse=document.getElementById('budget-horse').value;function totals(y){const a={};entries.filter(e=>Number((e.date||'').slice(0,4))===y&&(month==='all'||(e.date||'').slice(5,7)===month)).forEach(e=>{let val=e.price;if(e.cat==='Alimentation'&&horse!=='all')val*=Number(e.allocation[horse]||0)/100;else if(e.cat!=='Alimentation'&&horse!=='all'&&e.horseId!==horse&&e.horseId!=='shared')val=0;else if(e.cat!=='Alimentation'&&horse!=='all'&&e.horseId==='shared')val/=state.horses.length||1;if(val>0)a[e.cat]=(a[e.cat]||0)+val;});return a;}function pie(obj){const vals=Object.values(obj),sum=vals.reduce((a,b)=>a+b,0);if(!sum)return '<p class="muted">Aucune dépense</p>';let angle=0;const colors=['#315b45','#c69b55','#789b8a','#a96b55','#77839b'];const stops=Object.entries(obj).map(([k,v],i)=>{const start=angle;angle+=v/sum*360;return `${colors[i%colors.length]} ${start}deg ${angle}deg`;}).join(',');return `<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div style="width:150px;height:150px;border-radius:50%;background:conic-gradient(${stops})"></div><div>${Object.entries(obj).map(([k,v],i)=>`<div class="budget-row"><span style="display:inline-flex;align-items:center;gap:8px"><span aria-hidden="true" style="display:inline-block;width:12px;height:12px;flex:0 0 12px;border-radius:2px;background:${colors[i%colors.length]};border:1px solid #0002"></span>${escapeHtml(k)}</span><strong>${v.toFixed(2)} €</strong></div>`).join('')}</div></div>`;}const current=totals(year),previous=totals(year-1);const panel=document.createElement('div');panel.innerHTML=`<h3>Répartition ${year}${month==='all'?'':' – '+month}</h3>${pie(current)}<h3>Comparaison avec ${year-1}</h3>${pie(previous)}`;document.getElementById('budget-content').appendChild(panel);};
     document.getElementById('budget-month')?.addEventListener('change',renderBudget);
     document.getElementById('budget-year')?.addEventListener('change',renderBudget);
     document.getElementById('budget-horse')?.addEventListener('change',renderBudget);
@@ -3468,6 +3918,31 @@
     renderPharmacy();
     renderBudget();
     renderAlertsAndWeather();
+
+    // Informations générales sur les produits de pharmacie via un service IA sécurisé.
+    // Le Worker doit accepter {task, productName, quantity, notes, species, safetyInstructions}
+    // et retourner {description, indications, precautions, sources}.
+    async function explainPharmaProduct(id){
+      const item=(state.pharmacy||[]).find(p=>p.id===id); if(!item)return;
+      const panel=document.getElementById('pharma-ai-info-'+escapeAttr(id)); if(!panel)return;
+      panel.classList.remove('hidden');
+      if(!EQUICARE_AI_ENDPOINT){
+        panel.innerHTML='<strong>Informations non disponibles pour le moment.</strong><div style="margin-top:4px">Le service d’intelligence artificielle sécurisé n’est pas encore connecté à ÉquiCare. Le bouton est prêt, mais il faut raccorder le service pour obtenir une fiche fiable. Aucune indication médicale n’est inventée.</div>';
+        return;
+      }
+      panel.textContent='Recherche des informations sur ce produit…';
+      try{
+        const response=await fetch(EQUICARE_AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'pharmacy_product_info',productName:item.name,quantity:item.qty||'',notes:item.notes||'',species:'cheval',safetyInstructions:'Fournir uniquement des informations générales fiables sur la fonction du produit et les situations d’utilisation. Ne jamais inventer de posologie, dose, fréquence, intervalle ou durée. Préciser les limites, contre-indications et quand demander conseil au vétérinaire. Distinguer médicament vétérinaire, dispositif, complément et produit de soin. Si le produit est ambigu, demander la composition exacte ou le principe actif.'})});
+        if(!response.ok)throw new Error('Le service IA a répondu avec une erreur ('+response.status+').');
+        const data=await response.json();
+        const description=data.description||data.summary||'';
+        const indications=data.indications||data.usageContext||'';
+        const precautions=data.precautions||data.cautions||'';
+        const sources=data.sources||data.source||'';
+        if(!description&&!indications&&!precautions)throw new Error('La réponse IA ne contient pas les champs attendus.');
+        panel.innerHTML=`<strong>À quoi sert ce produit ?</strong>${description?`<p>${escapeHtml(description)}</p>`:''}${indications?`<strong>Dans quels cas l’utiliser ?</strong><p>${escapeHtml(indications)}</p>`:''}${precautions?`<strong>Précautions</strong><p>${escapeHtml(precautions)}</p>`:''}${sources?`<div class="muted">Sources : ${escapeHtml(Array.isArray(sources)?sources.join(' • '):sources)}</div>`:''}<div class="muted" style="margin-top:6px">Ces informations générales ne remplacent pas la notice ni les consignes du vétérinaire. La posologie et la durée doivent être confirmées par le vétérinaire.</div>`;
+      }catch(error){panel.textContent='Impossible de récupérer les informations : '+error.message;}
+    }
 
 </script>
 </body>
