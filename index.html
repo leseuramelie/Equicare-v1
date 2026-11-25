@@ -745,6 +745,14 @@
     .sire-note { background:var(--info-light); color:#1e3a8a; padding:10px 12px; border-radius:10px; font-size:.8rem; margin-top:8px; }
     @media(max-width:380px) { .info-subbtn {font-size:.7rem;padding:9px 2px;} .horse-photo{width:76px;height:76px;} }
 
+    .cloud-status { font-size:.72rem; color:var(--muted); white-space:nowrap; }
+    .cloud-status.online { color:var(--ok); }
+    .cloud-status.error { color:var(--danger); }
+    .auth-help { font-size:.82rem; color:var(--muted); margin:0 0 12px; }
+    .auth-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+    .auth-actions .btn { flex:1; min-width:120px; }
+    .cloud-banner { padding:9px 11px; border-radius:10px; background:var(--primary-light); color:var(--primary); font-size:.8rem; margin:10px 0; }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -760,6 +768,7 @@
     <div class="header-actions">
       <button class="icon-btn" id="btn-refresh-weather" title="Actualiser la météo">↻</button>
       <button class="icon-btn" id="btn-export-json" title="Exporter mes données">⬇</button>
+      <button class="icon-btn" id="btn-cloud-account" title="Compte et synchronisation">☁</button>
       <button class="icon-btn" id="btn-info" title="Aide & installation">i</button>
     </div>
   </header>
@@ -1013,6 +1022,36 @@
     </button>
   </nav>
 
+  <!-- Compte et synchronisation cloud -->
+  <div class="modal-backdrop" id="cloud-auth-modal">
+    <div class="modal-box">
+      <h3 style="margin-top:0;">Compte ÉquiCare</h3>
+      <p class="auth-help">Connecte-toi pour retrouver tes données sur tes différents appareils. Tes données locales restent également sauvegardées sur cet appareil.</p>
+      <div id="cloud-config-warning" class="cloud-banner hidden">La connexion Supabase n'est pas encore configurée. Ajoute l'URL et la clé publique de ton projet dans les paramètres du fichier HTML.</div>
+      <div id="cloud-auth-form">
+        <label class="info-field" style="margin-bottom:10px;">Adresse e-mail
+          <input type="email" id="cloud-email" autocomplete="email" placeholder="tonadresse@exemple.fr" />
+        </label>
+        <label class="info-field">Mot de passe
+          <input type="password" id="cloud-password" autocomplete="current-password" placeholder="8 caractères minimum" />
+        </label>
+        <div class="auth-actions">
+          <button class="btn btn-primary" id="btn-cloud-login">Se connecter</button>
+          <button class="btn btn-outline" id="btn-cloud-signup">Créer mon compte</button>
+        </div>
+      </div>
+      <div id="cloud-account-info" class="hidden">
+        <div class="cloud-banner" id="cloud-user-label"></div>
+        <div class="auth-actions">
+          <button class="btn btn-outline" id="btn-cloud-sync-now">Synchroniser maintenant</button>
+          <button class="btn btn-outline" id="btn-cloud-logout">Se déconnecter</button>
+        </div>
+      </div>
+      <p class="auth-help" id="cloud-auth-message" aria-live="polite"></p>
+      <div style="text-align:right;margin-top:10px;"><button class="btn btn-outline btn-sm" id="btn-cloud-close">Fermer</button></div>
+    </div>
+  </div>
+
   <!-- Purchase Modal -->
   <div class="modal-backdrop" id="buy-modal">
     <div class="modal-box">
@@ -1101,7 +1140,13 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // CONFIGURATION SUPABASE : remplacer ces deux valeurs après création du projet.
+    // La clé anon/publishable est destinée au navigateur ; la sécurité repose sur les règles RLS SQL.
+    const SUPABASE_URL = "https://njlqlcwrhpktmxyopvzc.supabase.co/rest/v1/";
+    const SUPABASE_ANON_KEY = "sb_publishable_rHuM-3QcEcB5dzN96fXBfQ_SCba9syk";
+    const SUPABASE_TABLE = "equicare_user_data";
     const STORAGE_KEY = "equicare_state_v6";
     const LAT = 43.4536;
     const LON = 1.3661;
@@ -1461,8 +1506,190 @@
     let openingFoodId = null;
     let visitModalCtx = null;
 
+    let supabaseClient = null;
+    let cloudUser = null;
+    let cloudSaveTimer = null;
+    let cloudSaveInProgress = false;
+    let cloudSaveQueued = false;
+    let cloudHydrationDoneFor = null;
+
+    function isSupabaseConfigured() {
+      return SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("VOTRE-PROJET") &&
+        SUPABASE_ANON_KEY.length > 20 && !SUPABASE_ANON_KEY.includes("VOTRE_CLE");
+    }
+
+    function setCloudStatus(message, kind = "") {
+      const button = document.getElementById("btn-cloud-account");
+      if (!button) return;
+      button.title = message;
+      button.dataset.status = kind;
+      button.style.color = kind === "error" ? "var(--danger)" : (kind === "online" ? "var(--ok)" : "");
+    }
+
     function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      // Sauvegarde locale immédiate : l'application reste utilisable hors connexion.
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+      catch (e) { console.warn("Sauvegarde locale impossible", e); }
+      // Synchronisation cloud différée pour regrouper les modifications rapprochées.
+      if (supabaseClient && cloudUser) {
+        clearTimeout(cloudSaveTimer);
+        cloudSaveTimer = setTimeout(syncStateToCloud, 900);
+        setCloudStatus("Modifications en attente de synchronisation", "");
+      }
+    }
+
+    async function syncStateToCloud() {
+      if (!supabaseClient || !cloudUser) return;
+      if (cloudSaveInProgress) { cloudSaveQueued = true; return; }
+      cloudSaveInProgress = true;
+      try {
+        const snapshot = JSON.parse(JSON.stringify(state));
+        const { error } = await supabaseClient.from(SUPABASE_TABLE).upsert({
+          user_id: cloudUser.id,
+          state: snapshot,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "user_id" });
+        if (error) throw error;
+        setCloudStatus("Données synchronisées", "online");
+      } catch (error) {
+        console.error("Erreur de synchronisation ÉquiCare", error);
+        setCloudStatus("Erreur de synchronisation : " + (error.message || "connexion"), "error");
+        const msg = document.getElementById("cloud-auth-message");
+        if (msg) msg.textContent = "Synchronisation impossible : " + (error.message || "vérifie ta connexion et la configuration Supabase.");
+      } finally {
+        cloudSaveInProgress = false;
+        if (cloudSaveQueued) { cloudSaveQueued = false; syncStateToCloud(); }
+      }
+    }
+
+    function rerenderAfterCloudLoad() {
+      ensureHorseInfo();
+      syncConfigInputs();
+      renderFoods();
+      renderAllCare();
+      renderPharmacy();
+      renderAlertsAndWeather();
+      if (activeTab === "tab-info") renderInformation();
+    }
+
+    async function loadCloudStateForUser(user) {
+      if (!user || cloudHydrationDoneFor === user.id) return;
+      cloudHydrationDoneFor = user.id;
+      setCloudStatus("Chargement des données cloud…", "");
+      const { data, error } = await supabaseClient.from(SUPABASE_TABLE)
+        .select("state, updated_at").eq("user_id", user.id).maybeSingle();
+      if (error) {
+        cloudHydrationDoneFor = null;
+        setCloudStatus("Erreur de lecture cloud", "error");
+        throw error;
+      }
+
+      const localRaw = localStorage.getItem(STORAGE_KEY);
+      if (!data) {
+        // Première connexion : le contenu local est envoyé vers le compte.
+        await syncStateToCloud();
+        setCloudStatus("Première sauvegarde cloud effectuée", "online");
+        return;
+      }
+
+      if (!localRaw) {
+        state = normalizeImportedState(data.state);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        rerenderAfterCloudLoad();
+        setCloudStatus("Données chargées depuis le cloud", "online");
+        return;
+      }
+
+      const choice = prompt(
+        "Une sauvegarde ÉquiCare existe déjà en ligne.\n\n" +
+        "Tape 1 pour charger la sauvegarde en ligne sur cet appareil.\n" +
+        "Tape 2 pour envoyer les données de cet appareil vers le cloud (elles remplaceront la sauvegarde en ligne).\n" +
+        "Annule pour ne rien modifier pour le moment."
+      );
+      if (choice === "1") {
+        state = normalizeImportedState(data.state);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        rerenderAfterCloudLoad();
+        setCloudStatus("Données cloud chargées", "online");
+      } else if (choice === "2") {
+        await syncStateToCloud();
+      } else {
+        setCloudStatus("Connecté — synchronisation en attente", "");
+      }
+    }
+
+    function normalizeImportedState(parsed) {
+      const incoming = parsed && typeof parsed === "object" ? parsed : structuredClone(DEFAULT_STATE);
+      const horses = Array.isArray(incoming.horses) && incoming.horses.length ? incoming.horses : structuredClone(DEFAULT_STATE.horses);
+      return {
+        ...structuredClone(DEFAULT_STATE), ...incoming, horses,
+        horseProfiles: incoming.horseProfiles || {},
+        practitionerContacts: incoming.practitionerContacts || {},
+        weightRecords: incoming.weightRecords || {},
+        config: { ...DEFAULT_STATE.config, ...(incoming.config || {}) },
+        foods: sanitizeFoods(incoming.foods || DEFAULT_STATE.foods),
+        pharmacy: Array.isArray(incoming.pharmacy) ? incoming.pharmacy : structuredClone(DEFAULT_STATE.pharmacy),
+        healthVisits: normalizeHealthVisits(incoming.healthVisits, horses)
+      };
+    }
+
+    function openCloudAccountModal() {
+      document.getElementById("cloud-auth-modal").classList.add("open");
+      const configured = isSupabaseConfigured() && !!window.supabase;
+      document.getElementById("cloud-config-warning").classList.toggle("hidden", configured);
+      document.getElementById("cloud-auth-form").classList.toggle("hidden", !!cloudUser);
+      document.getElementById("cloud-account-info").classList.toggle("hidden", !cloudUser);
+      document.getElementById("cloud-user-label").textContent = cloudUser ? "Connecté : " + cloudUser.email : "";
+      if (!configured) document.getElementById("cloud-auth-message").textContent = "La synchronisation sera disponible après configuration de Supabase.";
+    }
+
+    async function cloudAuthAction(action) {
+      const msg = document.getElementById("cloud-auth-message");
+      if (!isSupabaseConfigured() || !supabaseClient) { msg.textContent = "Supabase n'est pas encore configuré dans ce fichier."; return; }
+      const email = document.getElementById("cloud-email").value.trim();
+      const password = document.getElementById("cloud-password").value;
+      if (!email || !password) { msg.textContent = "Saisis ton adresse e-mail et ton mot de passe."; return; }
+      msg.textContent = "Connexion en cours…";
+      try {
+        const result = action === "signup"
+          ? await supabaseClient.auth.signUp({ email, password })
+          : await supabaseClient.auth.signInWithPassword({ email, password });
+        if (result.error) throw result.error;
+        if (action === "signup" && !result.data.session) {
+          msg.textContent = "Compte créé. Vérifie ta boîte e-mail pour confirmer l'inscription, puis connecte-toi.";
+        } else {
+          cloudUser = result.data.user;
+          msg.textContent = "Compte connecté. Préparation de la synchronisation…";
+          await loadCloudStateForUser(cloudUser);
+          openCloudAccountModal();
+          msg.textContent = "Compte connecté. " + (cloudUser.email || "");
+        }
+      } catch (error) { msg.textContent = error.message || "Erreur de connexion."; }
+    }
+
+    async function initCloudSync() {
+      if (!isSupabaseConfigured() || !window.supabase?.createClient) {
+        setCloudStatus("Stockage local uniquement — Supabase à configurer", "");
+        return;
+      }
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { data, error } = await supabaseClient.auth.getSession();
+      if (error) { setCloudStatus("Impossible de vérifier la session", "error"); return; }
+      if (data.session?.user) {
+        cloudUser = data.session.user;
+        try { await loadCloudStateForUser(cloudUser); } catch (e) { console.error(e); }
+      }
+      supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        if (event === "SIGNED_OUT") {
+          cloudUser = null; cloudHydrationDoneFor = null;
+          setCloudStatus("Déconnecté — données locales conservées", "");
+        } else if (session?.user && event === "SIGNED_IN") {
+          cloudUser = session.user;
+          try { await loadCloudStateForUser(cloudUser); } catch (e) { console.error(e); }
+        }
+      });
+      if (cloudUser) setCloudStatus("Compte connecté", "online");
+      else setCloudStatus("Non connecté — stockage local", "");
     }
 
     function scrollToAndHighlight(elementId) {
@@ -2917,6 +3144,19 @@
       URL.revokeObjectURL(url);
     });
 
+    document.getElementById("btn-cloud-account").addEventListener("click", openCloudAccountModal);
+    document.getElementById("btn-cloud-close").addEventListener("click", () => document.getElementById("cloud-auth-modal").classList.remove("open"));
+    document.getElementById("btn-cloud-login").addEventListener("click", () => cloudAuthAction("login"));
+    document.getElementById("btn-cloud-signup").addEventListener("click", () => cloudAuthAction("signup"));
+    document.getElementById("btn-cloud-sync-now").addEventListener("click", async () => {
+      await syncStateToCloud();
+      document.getElementById("cloud-auth-message").textContent = "Synchronisation terminée (si aucune erreur n'est affichée).";
+    });
+    document.getElementById("btn-cloud-logout").addEventListener("click", async () => {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      document.getElementById("cloud-auth-modal").classList.remove("open");
+    });
+
     document.getElementById("btn-info").addEventListener("click", () => {
       document.getElementById("info-modal").classList.add("open");
     });
@@ -2946,6 +3186,7 @@
     renderPharmacy();
     renderAlertsAndWeather();
     fetchWeather();
+    initCloudSync();
   </script>
 </body>
 </html>
