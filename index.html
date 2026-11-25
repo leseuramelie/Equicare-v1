@@ -739,6 +739,15 @@
     .horse-photo { width:94px; height:94px; border-radius:14px; object-fit:cover; background:var(--surface-soft); border:1px solid var(--border); }
     .profile-placeholder { display:grid; place-items:center; font-size:2rem; color:var(--muted); }
     .weight-chart { width:100%; height:auto; display:block; background:var(--surface-soft); border:1px solid var(--border); border-radius:12px; }
+
+    .budget-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}
+    .budget-kpi{background:var(--surface-soft);border:1px solid var(--border);border-radius:12px;padding:12px}
+    .budget-kpi .value{font-size:1.35rem;font-weight:800;margin-top:4px}
+    .budget-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.9rem}
+    .budget-bar{height:8px;background:var(--surface-soft);border-radius:20px;overflow:hidden;margin-top:5px}
+    .budget-bar span{display:block;height:100%;background:var(--green);border-radius:20px}
+    .document-chip{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;background:var(--surface-soft);border:1px solid var(--border);border-radius:9px;margin:4px 4px 0 0;font-size:.82rem}
+
     .weight-history { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
     .weight-row { display:flex; justify-content:space-between; gap:8px; align-items:center; background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:8px 10px; font-size:.82rem; }
     .contact-card { background:var(--surface-soft); border:1px solid var(--border); border-radius:12px; padding:12px; margin:9px 0; }
@@ -884,9 +893,12 @@
             <input type="number" id="new-food-bags" placeholder="Nb" min="1" step="1" style="width:74px;" />
             <input type="number" id="new-food-bag-qty" placeholder="Qté / unité" step="0.5" style="width:108px;" />
             <input type="date" id="new-food-date" />
+            <input type="number" id="new-food-price" placeholder="Prix total (€)" min="0" step="0.01" style="width:130px;" />
           </div>
           <div class="form-row">
             <input type="number" id="new-food-daily-rate" placeholder="Conso / j (kg ou mL)" step="1" style="width:185px;" />
+            <input type="number" id="new-food-share-1" placeholder="Part cheval 1 (%)" min="0" max="100" value="50" style="width:130px;" />
+            <input type="number" id="new-food-share-2" placeholder="Part cheval 2 (%)" min="0" max="100" value="50" style="width:130px;" />
             <button class="btn btn-primary btn-sm" id="btn-create-food">Ajouter</button>
             <button class="btn btn-outline btn-sm" id="btn-cancel-food">Annuler</button>
           </div>
@@ -959,6 +971,8 @@
               <input type="text" id="new-pharma-name" placeholder="Produit (ex. Bétadine, Compresses, Pansement...)" style="flex:1;min-width:190px;" />
               <input type="text" id="new-pharma-qty" placeholder="Quantité / format (ex. 1 flacon, 10)" style="width:155px;" />
               <input type="date" id="new-pharma-expiry" />
+              <input type="number" id="new-pharma-price" placeholder="Prix (€)" min="0" step="0.01" style="width:110px;" />
+              <select id="new-pharma-horse" style="min-width:150px;"><option value="shared">Commun aux chevaux</option></select>
             </div>
             <div class="form-row">
               <input type="text" id="new-pharma-notes" placeholder="Notes / usage (optionnel)" style="flex:1;min-width:180px;" />
@@ -1001,6 +1015,15 @@
         </div>
       </div>
     </section>
+
+    <!-- TAB 5 : BUDGET -->
+    <section id="tab-budget" class="tab-panel hidden">
+      <div class="card">
+        <div class="card-header"><div><h2 class="card-title">Budget des chevaux</h2><div class="muted">Dépenses enregistrées par année et par cheval.</div></div></div>
+        <div class="form-row"><label class="muted">Année : <select id="budget-year"></select></label><label class="muted">Cheval : <select id="budget-horse"><option value="all">Tous les chevaux</option></select></label></div>
+        <div id="budget-content"></div>
+      </div>
+    </section>
   </main>
 
   <nav class="bottom-nav">
@@ -1019,6 +1042,10 @@
     <button class="nav-btn" data-tab="tab-info">
       <span class="nav-icon">📋</span>
       <span>Informations</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-budget">
+      <span class="nav-icon">💶</span>
+      <span>Budget</span>
     </button>
   </nav>
 
@@ -1067,7 +1094,9 @@
         <label class="muted"><span id="buy-qty-label">Poids / sac (kg)</span> :
           <input type="number" id="buy-qty-input" min="0.5" step="0.5" style="width:92px;" />
         </label>
+        <label class="muted">Prix total (€) : <input type="number" id="buy-price-input" min="0" step="0.01" style="width:110px;" /></label>
       </div>
+      <div class="form-row"><label class="muted">Part du prix pour le cheval 1 (%) : <input type="number" id="buy-share-1" min="0" max="100" value="50" style="width:90px;" /></label><label class="muted">Part pour le cheval 2 (%) : <input type="number" id="buy-share-2" min="0" max="100" value="50" style="width:90px;" /></label></div>
       <div class="form-row" style="justify-content:flex-end;margin-top:14px;">
         <button class="btn btn-outline btn-sm" id="btn-close-buy-modal">Annuler</button>
         <button class="btn btn-primary btn-sm" id="btn-confirm-buy">Enregistrer l'achat</button>
@@ -1113,6 +1142,11 @@
           <textarea id="visit-notes-input" rows="3" placeholder="Soins effectués, ferrure, bilan ostéo, remarques..." style="width:100%;margin-top:4px;"></textarea>
         </label>
       </div>
+      <div class="form-row"><label class="muted">Coût de l'intervention (€) : <input type="number" id="visit-price-input" min="0" step="0.01" style="width:120px;" /></label></div>
+      <div class="form-row"><label class="muted" style="width:100%;">Documents (facture, analyse, compte rendu) : <input type="file" id="visit-files-input" accept=".pdf,image/*" multiple style="width:100%;margin-top:5px;" /></label></div>
+      <div id="visit-documents-list" class="muted"></div>
+      <div class="form-row"><button type="button" class="btn btn-outline btn-sm" id="btn-ai-visit-analysis">✨ Analyser les documents avec l'IA</button></div>
+      <div class="muted" id="visit-ai-status" aria-live="polite">L'analyse IA nécessitera la configuration du service sécurisé.</div>
       <div class="form-row" style="justify-content:flex-end;margin-top:14px;">
         <button class="btn btn-outline btn-sm" id="btn-close-visit-modal">Annuler</button>
         <button class="btn btn-primary btn-sm" id="btn-confirm-visit">Enregistrer la venue</button>
@@ -1150,6 +1184,8 @@
 
 
     const SUPABASE_TABLE = "equicare_user_data";
+    const SUPABASE_STORAGE_BUCKET = "equicare-documents";
+    const EQUICARE_AI_ENDPOINT = ""; // URL du Worker Cloudflare IA, à renseigner ultérieurement
     const STORAGE_KEY = "equicare_state_v6";
     const LAT = 43.4536;
     const LON = 1.3661;
@@ -1506,6 +1542,7 @@
     let activeVaccineHorse = state.horses[0].id;
     let activeHealthHorse = state.horses[0].id;
     let buyingFoodId = null;
+    let visitPendingDocuments = [];
     let openingFoodId = null;
     let visitModalCtx = null;
 
@@ -1534,6 +1571,7 @@
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
       catch (e) { console.warn("Sauvegarde locale impossible", e); }
       // Synchronisation cloud différée pour regrouper les modifications rapprochées.
+      if (typeof renderBudget === "function" && document.getElementById("budget-content")) renderBudget();
       if (supabaseClient && cloudUser) {
         clearTimeout(cloudSaveTimer);
         cloudSaveTimer = setTimeout(syncStateToCloud, 900);
@@ -2340,17 +2378,35 @@
             <div class="purchase-log">
               <div>Achats enregistrés :</div>
               <div class="purchase-pills">
-                ${m.purchases.map(p => `<span class="p-pill">${formatDateFR(p.date)} • ${p.bags} ${m.containerWord}(s) × ${p.kgPerBag} ${m.unitLabel}</span>`).join("")}
+                ${m.purchases.map((p, idx) => `<span class="p-pill">${formatDateFR(p.date)} • ${p.bags} ${m.containerWord}(s) × ${p.kgPerBag} ${m.unitLabel} • ${Number(p.totalPrice||0).toFixed(2)} € <button class="btn btn-outline btn-sm" onclick="editFoodPurchase('${escapeAttr(food.id)}',${idx})">✎</button><button class="btn btn-outline btn-sm" onclick="deleteFoodPurchase('${escapeAttr(food.id)}',${idx})">×</button></span>`).join("")}
               </div>
               <div style="margin-top:6px;">${m.oil ? "Bidons ouverts enregistrés :" : "Sacs ouverts enregistrés :"}</div>
               <div class="purchase-pills">
-                ${m.openedBags.map((o, idx) => `<span class="p-pill">${m.oil ? "Bidon" : "Sac"} #${idx + 1} ouvert le ${formatDateFR(o.date)} (${o.kgPerBag} ${m.unitLabel})</span>`).join("")}
+                ${m.openedBags.map((o, idx) => `<span class="p-pill">${m.oil ? "Bidon" : "Sac"} #${idx + 1} ouvert le ${formatDateFR(o.date)} (${o.kgPerBag} ${m.unitLabel}) <button class="btn btn-outline btn-sm" onclick="editFoodOpening('${escapeAttr(food.id)}',${idx})">✎</button><button class="btn btn-outline btn-sm" onclick="deleteFoodOpening('${escapeAttr(food.id)}',${idx})">×</button></span>`).join("")}
               </div>
             </div>
           </div>
         `;
       }).join("");
     }
+
+    function editFoodPurchase(foodId, idx) {
+      const f=state.foods.find(x=>x.id===foodId), p=f?.purchases?.[idx]; if(!p)return;
+      const date=prompt("Date de l'achat (AAAA-MM-JJ)",p.date); if(date===null)return;
+      const bags=prompt("Nombre de sacs/bidons",p.bags); if(bags===null)return;
+      const qty=prompt("Contenance par sac/bidon",p.kgPerBag); if(qty===null)return;
+      const price=prompt("Prix total payé (€)",p.totalPrice??0); if(price===null)return;
+      p.date=date; p.bags=Math.max(1,Number(bags)||1); p.kgPerBag=Math.max(.01,Number(qty)||p.kgPerBag); p.totalPrice=Math.max(0,Number(price)||0);
+      const h1=state.horses[0],h2=state.horses[1];
+      const a1=prompt(`Part de ${h1?.name||"cheval 1"} (%)`,p.allocation?.[h1?.id]??50); if(a1===null)return;
+      const a2=prompt(`Part de ${h2?.name||"cheval 2"} (%)`,p.allocation?.[h2?.id]??(100-Number(a1))); if(a2===null)return;
+      if(h1&&h2&&Math.round(Number(a1)+Number(a2))!==100){alert("La répartition doit totaliser 100 %.");return;}
+      p.allocation={[h1?.id]:Math.max(0,Math.min(100,Number(a1)||0)),[h2?.id]:Math.max(0,Math.min(100,Number(a2)||0))};
+      f.purchases.sort((a,b)=>a.date.localeCompare(b.date)); saveState(); renderFoods(); renderBudget();
+    }
+    function deleteFoodPurchase(foodId,idx){const f=state.foods.find(x=>x.id===foodId);if(!f||!confirm("Supprimer cet achat de l'historique ?"))return;f.purchases.splice(idx,1);saveState();renderFoods();renderBudget();}
+    function editFoodOpening(foodId,idx){const f=state.foods.find(x=>x.id===foodId),o=f?.openedBags?.[idx];if(!o)return;const d=prompt("Date d'ouverture (AAAA-MM-JJ)",o.date);if(d===null)return;const q=prompt("Contenance",o.kgPerBag);if(q===null)return;o.date=d;o.kgPerBag=Math.max(.01,Number(q)||o.kgPerBag);saveState();renderFoods();}
+    function deleteFoodOpening(foodId,idx){const f=state.foods.find(x=>x.id===foodId);if(!f||!confirm("Supprimer cette ouverture ?"))return;f.openedBags.splice(idx,1);saveState();renderFoods();}
 
     function updateFoodDailyEstimate(foodId, val) {
       const n = parseFloat(val);
@@ -2384,6 +2440,8 @@
       document.getElementById("buy-date-input").value = todayISO(0);
       document.getElementById("buy-bags-input").value = 1;
       document.getElementById("buy-qty-input").value = food.bagKg || (oil ? 5 : 20);
+      document.getElementById("buy-price-input").value = "";
+      document.getElementById("buy-share-1").value = 50; document.getElementById("buy-share-2").value = 50;
       document.getElementById("buy-modal").classList.add("open");
     }
 
@@ -2405,12 +2463,13 @@
       if (!food) return;
 
       food.purchases = food.purchases || [];
-      const existingIdx = food.purchases.findIndex(p => p.date === dateVal && Number(p.kgPerBag) === qtyVal);
-      if (existingIdx >= 0) {
-        food.purchases[existingIdx].bags = Number(food.purchases[existingIdx].bags || 1) + bagsVal;
-      } else {
-        food.purchases.push({ date: dateVal, bags: bagsVal, kgPerBag: qtyVal });
-      }
+      const price = Math.max(0, Number(document.getElementById("buy-price-input").value) || 0);
+      const h1 = state.horses[0], h2 = state.horses[1];
+      const a1 = Math.max(0, Math.min(100, Number(document.getElementById("buy-share-1").value) || 0));
+      const a2 = Math.max(0, Math.min(100, Number(document.getElementById("buy-share-2").value) || 0));
+      if(h1&&h2&&Math.round(a1+a2)!==100){alert("La répartition des deux chevaux doit totaliser 100 %.");return;}
+      const allocation = {}; if(h1) allocation[h1.id]=a1; if(h2) allocation[h2.id]=a2;
+      food.purchases.push({ id:"buy-"+Date.now(), date:dateVal, bags:bagsVal, kgPerBag:qtyVal, totalPrice:price, allocation });
       food.purchases.sort((a, b) => a.date.localeCompare(b.date));
       food.bagKg = qtyVal;
 
@@ -2563,6 +2622,8 @@
                   </div>
                 </div>
                 <div>${escapeHtml(v.details || "Aucun détail renseigné.")}</div>
+                <div class="muted">Coût : ${Number(v.price||0).toFixed(2)} €</div>
+                ${(v.documents||[]).map((d,i)=>`<button class="document-chip" onclick="openVisitDocument('${escapeAttr(activeHealthHorse)}','${escapeAttr(v.id)}',${i})">📎 ${escapeHtml(d.name||"Document")}</button>`).join("")}
               </div>
             `).join("")
           : `<div class="muted" style="margin-top:6px;">Aucune venue enregistrée pour le moment.</div>`;
@@ -2625,6 +2686,11 @@
       document.getElementById("visit-date-input").value = existing ? existing.date : todayISO(0);
       document.getElementById("visit-provider-input").value = existing ? (existing.provider || "") : "";
       document.getElementById("visit-notes-input").value = existing ? (existing.details || "") : "";
+      document.getElementById("visit-price-input").value = existing ? (existing.price ?? "") : "";
+      visitPendingDocuments = existing ? [...(existing.documents||[])] : [];
+      document.getElementById("visit-files-input").value = "";
+      renderVisitDocuments();
+      document.getElementById("visit-ai-status").textContent = "L'analyse IA nécessite la configuration du service sécurisé.";
       document.getElementById("visit-modal").classList.add("open");
     }
 
@@ -2635,7 +2701,7 @@
 
     document.getElementById("btn-close-visit-modal").addEventListener("click", closeVisitModal);
 
-    document.getElementById("btn-confirm-visit").addEventListener("click", () => {
+    document.getElementById("btn-confirm-visit").addEventListener("click", async () => {
       if (!visitModalCtx) return;
       const { horseId, pracKey, visitId } = visitModalCtx;
       const prac = state.healthVisits?.[horseId]?.[pracKey];
@@ -2644,7 +2710,12 @@
       const dateVal = document.getElementById("visit-date-input").value;
       const providerVal = document.getElementById("visit-provider-input").value.trim();
       const detailsVal = document.getElementById("visit-notes-input").value.trim();
+      const priceVal = Math.max(0, Number(document.getElementById("visit-price-input").value)||0);
       if (!dateVal) return;
+      const files = Array.from(document.getElementById("visit-files-input").files || []);
+      const uploaded = await uploadVisitDocuments(files, horseId, visitId || ("hv-"+Date.now()));
+      if(uploaded.error){alert(uploaded.error);return;}
+      visitPendingDocuments = [...visitPendingDocuments, ...uploaded.documents];
 
       prac.visits = prac.visits || [];
       if (visitId) {
@@ -2653,13 +2724,17 @@
           target.date = dateVal;
           target.provider = providerVal;
           target.details = detailsVal;
+          target.price = priceVal;
+          target.documents = visitPendingDocuments;
         }
       } else {
         prac.visits.unshift({
           id: "hv-" + Date.now(),
           date: dateVal,
           provider: providerVal,
-          details: detailsVal
+          details: detailsVal,
+          price: priceVal,
+          documents: visitPendingDocuments
         });
       }
       prac.visits.sort((a, b) => b.date.localeCompare(a.date));
@@ -2667,6 +2742,7 @@
       saveState();
       closeVisitModal();
       renderHealthVisits();
+      renderBudget();
       renderAlertsAndWeather();
     });
 
@@ -2708,6 +2784,7 @@
                 <div class="item-name">${escapeHtml(item.name)}</div>
                 <div class="muted">Péremption : <strong>${formatDateFR(item.expiryDate)}</strong>${item.qty ? ` • ${escapeHtml(item.qty)}` : ""}</div>
                 ${item.notes ? `<div class="muted" style="margin-top:3px;">${escapeHtml(item.notes)}</div>` : ""}
+                <div class="muted">Achat : ${Number(item.price||0).toFixed(2)} € • ${item.horseId && item.horseId!="shared" ? escapeHtml(state.horses.find(h=>h.id===item.horseId)?.name||"") : "Commun"}</div>
               </div>
               <span class="badge ${badgeClass}">${badgeText}</span>
             </div>
@@ -2715,6 +2792,7 @@
               <label class="muted" style="font-size:0.78rem;">Date péremption :
                 <input type="date" value="${item.expiryDate}" onchange="updatePharmaExpiry('${escapeAttr(item.id)}', this.value)" />
               </label>
+              <button class="btn btn-outline btn-sm" onclick="editPharmaItem('${escapeAttr(item.id)}')">Modifier</button>
               <button class="btn btn-outline btn-sm" onclick="deletePharmaItem('${escapeAttr(item.id)}')">Supprimer</button>
             </div>
           </div>
@@ -2732,15 +2810,19 @@
       renderAlertsAndWeather();
     }
 
+    function editPharmaItem(id){const x=(state.pharmacy||[]).find(p=>p.id===id);if(!x)return;const name=prompt("Nom du produit",x.name);if(name===null)return;const qty=prompt("Quantité / format",x.qty||"");if(qty===null)return;const expiry=prompt("Date de péremption (AAAA-MM-JJ)",x.expiryDate);if(expiry===null)return;const purchaseDate=prompt("Date d'achat (AAAA-MM-JJ)",x.purchaseDate||todayISO(0));if(purchaseDate===null)return;const price=prompt("Prix payé (€)",x.price??0);if(price===null)return;x.name=name;x.qty=qty;x.expiryDate=expiry;x.purchaseDate=purchaseDate;x.price=Math.max(0,Number(price)||0);saveState();renderPharmacy();renderBudget();}
+
     function deletePharmaItem(id) {
       state.pharmacy = (state.pharmacy || []).filter(p => p.id !== id);
       saveState();
       renderPharmacy();
+      renderBudget();
       renderAlertsAndWeather();
     }
 
     document.getElementById("btn-toggle-add-pharma").addEventListener("click", () => {
       document.getElementById("new-pharma-expiry").value = todayISO(60);
+      document.getElementById("new-pharma-horse").innerHTML = '<option value="shared">Commun aux chevaux</option>'+state.horses.map(h=>`<option value="${escapeAttr(h.id)}">${escapeHtml(h.name)}</option>`).join("");
       document.getElementById("add-pharma-form").classList.toggle("hidden");
     });
 
@@ -2761,18 +2843,57 @@
         name,
         qty,
         expiryDate,
-        notes
+        notes,
+        price: Math.max(0, Number(document.getElementById("new-pharma-price").value)||0),
+        horseId: document.getElementById("new-pharma-horse").value || "shared",
+        purchaseDate: todayISO(0)
       });
 
       document.getElementById("new-pharma-name").value = "";
       document.getElementById("new-pharma-qty").value = "";
       document.getElementById("new-pharma-notes").value = "";
+      document.getElementById("new-pharma-price").value = "";
       document.getElementById("add-pharma-form").classList.add("hidden");
 
       saveState();
       renderPharmacy();
+      renderBudget();
       renderAlertsAndWeather();
     });
+
+    function renderBudget(){
+      const host=document.getElementById("budget-content"); if(!host)return;
+      const yearSel=document.getElementById("budget-year"),horseSel=document.getElementById("budget-horse");
+      const entries=[];
+      (state.foods||[]).forEach(f=>(f.purchases||[]).forEach(p=>{if(Number(p.totalPrice||0)>0)entries.push({date:p.date,category:"Alimentation",name:f.name,price:Number(p.totalPrice),allocation:p.allocation||{}})}));
+      (state.pharmacy||[]).forEach(p=>{if(Number(p.price||0)>0)entries.push({date:p.purchaseDate||p.expiryDate,category:"Pharmacie",name:p.name,price:Number(p.price),horseId:p.horseId||"shared"})});
+      Object.entries(state.healthVisits||{}).forEach(([hid,providers])=>Object.values(providers||{}).forEach(pr=>(pr.visits||[]).forEach(v=>{if(Number(v.price||0)>0)entries.push({date:v.date,category:pr.label||"Intervention",name:v.provider||pr.label||"Visite",price:Number(v.price),horseId:hid})})));
+      const years=[...new Set([new Date().getFullYear(),...entries.map(e=>Number((e.date||"").slice(0,4))).filter(Boolean)])].sort((a,b)=>b-a);
+      const oldYear=yearSel.value, oldHorse=horseSel.value||"all";
+      yearSel.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join("");
+      yearSel.value=years.includes(Number(oldYear))?oldYear:String(years[0]||new Date().getFullYear());
+      horseSel.innerHTML='<option value="all">Tous les chevaux</option>'+state.horses.map(h=>`<option value="${escapeAttr(h.id)}">${escapeHtml(h.name)}</option>`).join("");
+      horseSel.value=state.horses.some(h=>h.id===oldHorse)?oldHorse:"all";
+      const y=Number(yearSel.value)||new Date().getFullYear(),hid=horseSel.value||"all";
+      const rows=[]; entries.filter(e=>Number((e.date||"").slice(0,4))===y).forEach(e=>{let amount=e.price;if(e.category==="Alimentation"&&hid!=="all")amount=e.price*(Number(e.allocation?.[hid]??0)/100);else if(e.category!=="Alimentation"&&hid!=="all"&&e.horseId!==hid&&e.horseId!=="shared")amount=0;else if(e.category!=="Alimentation"&&hid!=="all"&&e.horseId==="shared")amount=e.price/(state.horses.length||1);if(amount>0)rows.push({...e,amount})});
+      const total=rows.reduce((a,e)=>a+e.amount,0),months=total/12;
+      const cats=[...new Set(rows.map(r=>r.category))].map(c=>({name:c,total:rows.filter(r=>r.category===c).reduce((a,e)=>a+e.amount,0)})).sort((a,b)=>b.total-a.total);
+      host.innerHTML=`<div class="budget-kpis"><div class="budget-kpi"><div class="muted">Total ${y}</div><div class="value">${total.toFixed(2)} €</div></div><div class="budget-kpi"><div class="muted">Moyenne mensuelle</div><div class="value">${months.toFixed(2)} €</div></div></div><h3>Répartition</h3>${cats.length?cats.map(c=>`<div style="margin:10px 0"><div class="budget-row"><span>${escapeHtml(c.name)}</span><strong>${c.total.toFixed(2)} €</strong></div><div class="budget-bar"><span style="width:${total?c.total/total*100:0}%"></span></div></div>`).join(""):'<div class="muted">Aucune dépense avec prix enregistré pour cette période.</div>'}<h3 style="margin-top:18px">Détail des dépenses</h3>${rows.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<div class="budget-row"><span>${formatDateFR(r.date)} · ${escapeHtml(r.name)}<br><span class="muted">${escapeHtml(r.category)}</span></span><strong>${r.amount.toFixed(2)} €</strong></div>`).join("")}`;
+    }
+    document.getElementById("budget-year")?.addEventListener("change",renderBudget);
+    document.getElementById("budget-horse")?.addEventListener("change",renderBudget);
+
+    async function uploadVisitDocuments(files,horseId,visitId){
+      if(!files.length)return {documents:[]};
+      if(!supabaseClient||!cloudUser)return {error:"Connecte-toi à ton compte ÉquiCare avant d'ajouter des documents."};
+      const docs=[];
+      for(const file of files){const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");const path=`${cloudUser.id}/${horseId}/${visitId}/${Date.now()}_${safe}`;const {error}=await supabaseClient.storage.from(SUPABASE_STORAGE_BUCKET).upload(path,file,{upsert:false,contentType:file.type||"application/octet-stream"});if(error)return {error:"Envoi du document impossible : "+error.message};const {data}=supabaseClient.storage.from(SUPABASE_STORAGE_BUCKET).createSignedUrl(path,60*60*24*365);docs.push({name:file.name,path,url:data?.signedUrl||"",bucket:SUPABASE_STORAGE_BUCKET});}
+      return {documents:docs};
+    }
+    async function openVisitDocument(horseId,visitId,index){const vlist=Object.values(state.healthVisits?.[horseId]||{}).flatMap(p=>p.visits||[]);const v=vlist.find(x=>x.id===visitId);const d=v?.documents?.[index];if(!d)return;if(!supabaseClient){alert("Connecte-toi à ÉquiCare pour ouvrir ce document.");return;}const {data,error}=await supabaseClient.storage.from(d.bucket||SUPABASE_STORAGE_BUCKET).createSignedUrl(d.path,300);if(error){alert("Impossible d'ouvrir le document : "+error.message);return;}window.open(data.signedUrl,"_blank","noopener");}
+    function renderVisitDocuments(){const el=document.getElementById("visit-documents-list");if(el)el.innerHTML=visitPendingDocuments.map((d,i)=>`<span class="document-chip">📎 ${escapeHtml(d.name)} <button type="button" onclick="removeVisitDocument(${i})">×</button></span>`).join("");}
+    function removeVisitDocument(i){visitPendingDocuments.splice(i,1);renderVisitDocuments();}
+    document.getElementById("btn-ai-visit-analysis")?.addEventListener("click",async()=>{const status=document.getElementById("visit-ai-status");if(!EQUICARE_AI_ENDPOINT){status.textContent="Service IA non configuré : il faudra déployer le Worker Cloudflare et renseigner son URL. Aucun document n'est envoyé.";return;}status.textContent="L'analyse IA sera activée après raccordement du service sécurisé.";});
 
     function switchHealthSubTab(subId) {
       activeHealthSubTab = subId;
@@ -3055,6 +3176,7 @@
       });
       renderAlertsAndWeather();
       if (tabId === "tab-info") renderInformation();
+      if (tabId === "tab-budget") renderBudget();
       if (!skipScrollTop) {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -3071,6 +3193,8 @@
     document.getElementById("btn-toggle-add-food").addEventListener("click", () => {
       document.getElementById("new-food-date").value = todayISO(0);
       document.getElementById("new-food-bags").value = 1;
+      document.getElementById("new-food-price").value = "";
+      document.getElementById("new-food-share-1").value = 50; document.getElementById("new-food-share-2").value = 50;
       document.getElementById("add-food-form").classList.toggle("hidden");
     });
 
@@ -3084,6 +3208,12 @@
       const bags = Math.max(1, parseInt(document.getElementById("new-food-bags").value, 10) || 1);
       const qtyPerUnit = parseFloat(document.getElementById("new-food-bag-qty").value) || (unit === "L" ? 5 : 20);
       const dateVal = document.getElementById("new-food-date").value || todayISO(0);
+      const purchasePrice = Math.max(0, Number(document.getElementById("new-food-price").value) || 0);
+      const horsesNow = state.horses || [];
+      const share1 = Math.max(0, Math.min(100, Number(document.getElementById("new-food-share-1").value) || 0));
+      const share2 = Math.max(0, Math.min(100, Number(document.getElementById("new-food-share-2").value) || 0));
+      if(horsesNow.length >= 2 && Math.round(share1+share2)!==100){alert("La répartition des deux chevaux doit totaliser 100 %.");return;}
+      const allocation = {}; if(horsesNow[0]) allocation[horsesNow[0].id]=share1; if(horsesNow[1]) allocation[horsesNow[1].id]=share2;
       const rawRate = parseFloat(document.getElementById("new-food-daily-rate").value);
       const dailyInBase = rawRate > 0
         ? (unit === "L" ? rawRate / 1000 : rawRate)
@@ -3097,7 +3227,7 @@
         unit,
         bagKg: qtyPerUnit,
         estimatedDailyKg: dailyInBase,
-        purchases: [{ date: dateVal, bags, kgPerBag: qtyPerUnit }],
+        purchases: [{ id: "buy-"+Date.now(), date: dateVal, bags, kgPerBag: qtyPerUnit, totalPrice: purchasePrice, allocation }],
         openedBags: [{ date: dateVal, kgPerBag: qtyPerUnit }]
       });
 
@@ -3105,6 +3235,7 @@
       document.getElementById("new-food-bags").value = "";
       document.getElementById("new-food-bag-qty").value = "";
       document.getElementById("new-food-daily-rate").value = "";
+      document.getElementById("new-food-price").value = "";
       document.getElementById("add-food-form").classList.add("hidden");
 
       saveState();
@@ -3194,6 +3325,7 @@
     renderFoods();
     renderAllCare();
     renderPharmacy();
+    renderBudget();
     renderAlertsAndWeather();
     fetchWeather();
     initCloudSync();
