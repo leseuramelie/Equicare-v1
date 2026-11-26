@@ -1623,6 +1623,7 @@ const SUPABASE_TABLE = "equicare_user_data";
     }
 
     let state = loadState();
+    let activeHealthHorse = "shared";
 
     // Les intervenants sont désormais communs : fusionner les historiques par type
     // sans perdre les visites déjà enregistrées pour Sacramento ou Bella.
@@ -1654,7 +1655,6 @@ const SUPABASE_TABLE = "equicare_user_data";
     let activeHealthSubTab = "sub-providers";
     let activeDewormHorse = state.horses[0].id;
     let activeVaccineHorse = state.horses[0].id;
-    let activeHealthHorse = state.horses[0].id;
     let activeActivityHorse = state.horses[0].id;
     let buyingFoodId = null;
     let visitPendingDocuments = [];
