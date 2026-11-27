@@ -1549,6 +1549,11 @@ const SUPABASE_TABLE = "equicare_user_data";
           };
         }
       }
+      // Conserver également les éventuelles données déjà partagées.
+      // Elles ne doivent pas être perdues lors du chargement/normalisation.
+      if (rawHealth && rawHealth.shared && typeof rawHealth.shared === "object") {
+        result.shared = structuredClone(rawHealth.shared);
+      }
       return result;
     }
 
@@ -1645,7 +1650,8 @@ const SUPABASE_TABLE = "equicare_user_data";
           target.visits.sort((a,b) => (b.date || "").localeCompare(a.date || ""));
         });
       });
-      state.healthVisits = { shared };
+      // La vue commune est ajoutée sans supprimer les historiques par cheval.
+      state.healthVisits = { ...source, shared };
       activeHealthHorse = "shared";
     }
     migrateSharedHealthVisits();
@@ -1754,7 +1760,6 @@ const SUPABASE_TABLE = "equicare_user_data";
 
       if (!localRaw) {
         state = normalizeImportedState(data.state);
-        applyEquicareCleanup();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         rerenderAfterCloudLoad();
         setCloudStatus("Données chargées depuis le cloud", "online");
@@ -1769,7 +1774,6 @@ const SUPABASE_TABLE = "equicare_user_data";
       );
       if (choice === "1") {
         state = normalizeImportedState(data.state);
-        applyEquicareCleanup();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         rerenderAfterCloudLoad();
         setCloudStatus("Données cloud chargées", "online");
@@ -3552,7 +3556,7 @@ const SUPABASE_TABLE = "equicare_user_data";
       const weeks=Number(document.getElementById("activity-ai-weeks").value), frequency=Number(document.getElementById("activity-ai-frequency").value), startDate=document.getElementById("activity-ai-start").value;
       status.textContent="Génération du programme en cours…";
       try {
-        const response=await fetch(EQUICARE_AI_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({task:"generate_activity_plan",horse:{name:horse?.name||"Cheval",profile:state.horseProfiles?.[activeActivityHorse]||{}},goal,weeks,frequency,startDate,allowedActivities:["Balade","Travail à pied","Longe","Plat","Obstacle"],instructions:`Proposer un programme progressif, varié et réaliste pour un cheval. Tenir compte du profil fourni, ne pas diagnostiquer ni remplacer l'avis vétérinaire. Répondre en JSON avec une propriété activities contenant des objets date (YYYY-MM-DD), type (une des activités autorisées), duration (minutes), note (consignes courtes). Ne jamais imposer d'obstacle ou d'effort intense si l'état de santé ou la condition physique ne le permet pas; signaler les précautions.`})});
+        const response=await fetch(EQUICARE_AI_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({task:"generate_activity_plan",horse:{name:horse?.name||"Cheval",profile:state.horseProfiles?.[activeActivityHorse]||{}},goal,weeks,frequency,startDate,allowedActivities:["Balade","Travail à pied","Longe","Plat","Obstacle"],instructions:"Proposer un programme progressif, varié et réaliste pour un cheval. Tenir compte du profil fourni, ne pas diagnostiquer ni remplacer l'avis vétérinaire. Répondre en JSON avec une propriété activities contenant des objets date (YYYY-MM-DD), type (une des activités autorisées), duration (minutes), note (consignes courtes). Ne jamais imposer d'obstacle ou d'effort intense si l'état de santé ou la condition physique ne le permet pas; signaler les précautions."})});
         if(!response.ok)throw new Error("Erreur du service IA ("+response.status+").");
         const payload=await response.json();
         const list=Array.isArray(payload)?payload:(payload.activities||payload.plan?.activities||payload.data?.activities||[]);
@@ -3849,25 +3853,9 @@ const SUPABASE_TABLE = "equicare_user_data";
     fetchWeather();
     initCloudSync();
   
-    // ÉquiCare – évolutions demandées (migration idempotente)
-    const EQUICARE_CLEANUP_VERSION = '2026-11-25-clean-false-histories';
-    function applyEquicareCleanup() {
-      if (state._migrationFlags?.includes(EQUICARE_CLEANUP_VERSION)) return;
-      (state.foods || []).forEach(f => { f.purchases = []; f.openedBags = []; });
-      state.pharmacy = [];
-      if (state.dewormings) Object.keys(state.dewormings).forEach(k => { state.dewormings[k] = []; });
-      state._migrationFlags = [...(state._migrationFlags || []), EQUICARE_CLEANUP_VERSION];
-      // Contacts become one shared list, merging any previous per-horse lists without duplicates.
-      const merged = [];
-      Object.values(state.practitionerContacts || {}).flat().forEach(c => {
-        if (c && /Arthur\s+Luserne/i.test(c.name||'')) c.name = 'Arthur HAYCOBS';
-        if (c && !merged.some(x => x.id === c.id || (x.name === c.name && x.phone === c.phone))) merged.push(c);
-      });
-      state.practitionerContacts = { shared: merged };
-      Object.values(state.healthVisits || {}).forEach(group => Object.values(group || {}).forEach(pr => (pr.visits || []).forEach(v => { if (/Arthur\s+Luserne/i.test(v.provider || '')) v.provider = 'Arthur HAYCOBS'; })));
-      saveState();
-    }
-    applyEquicareCleanup();
+    // Migration destructive désactivée : aucune suppression automatique d'historiques,
+    // de pharmacie, de vermifuges ou de contacts au démarrage ou au chargement cloud.
+
 
     // Confirmation visible à l'écran, sans prétendre que le cloud est synchronisé avant son retour.
     function equicareToast(message, error=false) {
@@ -4120,7 +4108,7 @@ const SUPABASE_TABLE = "equicare_user_data";
       }
       panel.textContent='Recherche des informations sur ce produit…';
       try{
-        const response=await fetch(EQUICARE_AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'pharmacy_product_info',productName:item.name,quantity:item.qty||'',notes:item.notes||'',species:'cheval',safetyInstructions:`Fournir uniquement des informations générales fiables sur la fonction du produit et les situations d’utilisation. Ne jamais inventer de posologie, dose, fréquence, intervalle ou durée. Préciser les limites, contre-indications et quand demander conseil au vétérinaire. Distinguer médicament vétérinaire, dispositif, complément et produit de soin. Si le produit est ambigu, demander la composition exacte ou le principe actif.`})});
+        const response=await fetch(EQUICARE_AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'pharmacy_product_info',productName:item.name,quantity:item.qty||'',notes:item.notes||'',species:'cheval',safetyInstructions:'Fournir uniquement des informations générales fiables sur la fonction du produit et les situations d’utilisation. Ne jamais inventer de posologie, dose, fréquence, intervalle ou durée. Préciser les limites, contre-indications et quand demander conseil au vétérinaire. Distinguer médicament vétérinaire, dispositif, complément et produit de soin. Si le produit est ambigu, demander la composition exacte ou le principe actif.'})});
         if(!response.ok)throw new Error('Le service IA a répondu avec une erreur ('+response.status+').');
         const data=await response.json();
         const description=data.description||data.summary||'';
